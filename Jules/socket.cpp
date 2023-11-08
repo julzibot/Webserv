@@ -1,0 +1,58 @@
+#include "socket.hpp"
+
+int main (void)
+{
+
+    // SERVER
+    struct sockaddr_in saddr = {
+        .sin_family = AF_INET,
+        .sin_addr.s_addr = INADDR_ANY,
+        .sin_port = htons(PORT)
+    };
+
+    int option = 1;
+    int saddr_size = sizeof(saddr);
+    int servsock = socket(AF_INET, SOCK_STREAM, 0);
+    setsockopt(servsock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option));
+    if (servsock == -1)
+    {
+        std::cerr << "error encountered while trying to create socket !" << std::endl;
+        return (-1);
+    }
+
+    // CLIENT
+    struct sockaddr_in caddr;
+    socklen_t caddrsize = sizeof(caddr);
+    int clientsock;
+
+    // BINDING
+    bind(servsock, (struct sockaddr*)&saddr, sizeof(saddr));
+
+    //LISTENING
+    listen(servsock, SOMAXCONN);
+    // std::stringstream ss;
+    // ss << PORT;
+    std::cout << "[Server] listening on port " << PORT << std::endl;
+
+
+    //LISTENING LOOP
+    char buff[4096];
+    int recvsize;
+    while (true)
+    {
+        clientsock = accept(servsock, (struct sockaddr*)&caddr, (socklen_t*)&caddrsize);
+        std::cout << "[Server] Client connected with success" << std::endl;
+
+        recvsize = recv(clientsock, buff, 4096, 0);
+        if (recvsize == -1)
+        { std::cerr << "Error encountered receiving message"; break;}
+        else if (!recvsize)
+        {std::cout << "Client disconnected" << std::endl; break;}
+
+        send(clientsock, buff, recvsize + 1, 0);
+
+        std::cout << std::string(buff, 0, recvsize) << std::endl;
+        close(clientsock);
+    }
+    return(0);
+}
