@@ -10,10 +10,10 @@ int main (void)
         .sin_port = htons(PORT)
     };
 
-    int option = 1;
+    // int option = 1;
     int saddr_size = sizeof(saddr);
     int servsock = socket(AF_INET, SOCK_STREAM, 0);
-    setsockopt(servsock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option));
+    // setsockopt(servsock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option));
     if (servsock == -1)
     {
         std::cerr << "error encountered while trying to create socket !" << std::endl;
@@ -30,12 +30,10 @@ int main (void)
 
     //LISTENING
     listen(servsock, SOMAXCONN);
-    // std::stringstream ss;
-    // ss << PORT;
     std::cout << "[Server] listening on port " << PORT << std::endl;
 
 
-    //LISTENING LOOP
+    //LISTENING
     char buff[4096];
     int recvsize;
     while (true)
@@ -43,16 +41,22 @@ int main (void)
         clientsock = accept(servsock, (struct sockaddr*)&caddr, (socklen_t*)&caddrsize);
         std::cout << "[Server] Client connected with success" << std::endl;
 
-        recvsize = recv(clientsock, buff, 4096, 0);
-        if (recvsize == -1)
-        { std::cerr << "Error encountered receiving message"; break;}
-        else if (!recvsize)
-        {std::cout << "Client disconnected" << std::endl; break;}
+        while (strncmp(buff, strdup("end"), 3) != 0)
+        {
+            memset(buff, 0, 4096);
+            recvsize = recv(clientsock, buff, 4096, 0);
+            if (recvsize == -1)
+            {std::cerr << "Error encountered receiving message"; break;}
+            else if (!recvsize)
+            {std::cout << "Client disconnected" << std::endl; break;}
 
-        send(clientsock, buff, recvsize + 1, 0);
+            send(clientsock, buff, recvsize + 1, 0);
 
-        std::cout << std::string(buff, 0, recvsize) << std::endl;
+            std::cout << std::string(buff, 0, recvsize) << std::endl;
+        }
         close(clientsock);
+        close(servsock);
+        break;
     }
     return(0);
 }
