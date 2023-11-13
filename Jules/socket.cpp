@@ -30,10 +30,9 @@ int main (void)
 
     //LISTENING
     listen(servsock, SOMAXCONN);
-    std::cout << "[Server] listening on port " << PORT << std::endl;
+    std::cout << "[Server] listening on port" << PORT << std::endl;
 
-
-    //LISTENING
+    //WAITING TO ACCEPT
     char buff[4096];
     int recvsize;
     while (true)
