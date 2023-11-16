@@ -34,11 +34,11 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str)
     if (std::getline(requestStream, line) && !line.empty())
         request.body = line;
 
-    // UNCOMMENT TO TEST PARSING RESULT
-    // std::cout << "method: " << request.method << " path: " << request.path << " version: " << request.http_version << std::endl;
-    // for (const auto& header : request.headers)
-    //     std::cout << "Header: " << header.first << " = " << header.second << std::endl;
-    // std::cout << "body: " << request.body << std::endl;
+    // UNCOMMENT BELOW TO TEST PARSING RESULT
+    std::cout << "method: " << request.method << " path: " << request.path << " version: " << request.http_version << std::endl;
+    for (const auto& header : request.headers)
+        std::cout << "Header: " << header.first << " = " << header.second << std::endl;
+    std::cout << "body: " << request.body << std::endl;
 
     return (request);
 }
@@ -49,7 +49,7 @@ int main(void)
                              "Host: localhost:8080\n"
                              "Content-Type: application/json\n"
                              "\n"
-                             "{\"key\": \"value\"}";
+                             "\n";
 
     HttpRequest request = HttpRequestParse::parse(req_str);
 
