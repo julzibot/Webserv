@@ -18,52 +18,66 @@
 //         }
 //         linestream.str(line);
 //         linestream >> dir;
-
-		
 //     }
 // }
 
-int main()
+std::string parse_comments(std::string original_line)
 {
-	std::string str = "somestuff #\"yeah\"\n"
-						"plus#morestufff\n"
-						"##ok\n"
-						"it works\n"
-						"here \"\" is \"#stuff\" good #\"right ?\"";
-
-	std::string line;
-	std::istringstream ss = std::istringstream(str);
+	std::string line(original_line);
 	size_t hashpos;
 	size_t quotepos;
-	size_t sec_quotepos = 0;
+	size_t sq;
+	size_t sec_quotepos;
 
-	while (std::getline(ss, line))
+	hashpos = line.find('#');
+	quotepos = line.find('\"');
+	sq = line.find('\'');
+	quotepos = sq < quotepos ? sq : quotepos;
+	sec_quotepos = 0;
+	while (hashpos != std::string::npos)
 	{
-		std::cout << line;
-		hashpos = line.find('#');
-		quotepos = line.find('"');
-
-		while (hashpos != std::string::npos)
+		if (quotepos != std::string::npos && quotepos < hashpos)
 		{
-			if (quotepos != std::string::npos)
-			{
-				sec_quotepos = line.substr(quotepos + 1).find('"');
-				if (sec_quotepos == std::string::npos)
-					throw std::exception();
-			}
-			std::cout << quotepos << " " << sec_quotepos << " " << hashpos << std::endl;
-			if (quotepos > hashpos)
-			{
-				line = line.substr(0, hashpos);
-				break;
-			}
-			else if (quotepos < hashpos && sec_quotepos < hashpos)
-				quotepos = line.substr(sec_quotepos + 1).find('"');
+			sec_quotepos = line.substr(quotepos + 1).find(line[quotepos]);
+			if (sec_quotepos != std::string::npos)
+				sec_quotepos += quotepos + 1;
 			else
-				hashpos = line.substr(hashpos + 1).find('#');
+				throw std::exception();
 		}
-		
-		std::cout << line << std::endl;
+		if (quotepos > hashpos)
+		{
+			line = line.substr(0, hashpos);
+			break;
+		}
+		else if (quotepos < hashpos && sec_quotepos < hashpos)
+		{
+			quotepos = line.substr(sec_quotepos + 1).find('\"');
+			sq = line.substr(sec_quotepos + 1).find('\'');
+			quotepos = sq < quotepos ? sq : quotepos;
+			if (quotepos != std::string::npos) 
+				quotepos += sec_quotepos + 1;
+		}
+		else
+		{
+			sq = hashpos;
+			hashpos = line.substr(hashpos + 1).find('#');
+			if (hashpos != std::string::npos)
+				hashpos += sq + 1;
+		}
 	}
+	return (line);
+}
+
+int main()
+{
+	std::string str =	"here \'\" is \"#stuff\' good #\"right ?\n"
+						"somestuff #\"yeah\"\n"
+						"plus#morestufff\n"
+						"##ok\n"
+						"it works";
+	std::string line;
+	std::istringstream ss = std::istringstream(str);
+	while (std::getline(ss, line))
+		std::cout << "original line: " << line << std::endl << "parsed comments: " << parse_comments(line) << std::endl;
 	return (0);
 }
