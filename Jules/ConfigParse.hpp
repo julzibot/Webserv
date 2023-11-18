@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <map>
 #include <forward_list>
+#include <vector>
 
 class ConfigServer
 {
