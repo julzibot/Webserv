@@ -99,6 +99,45 @@ void    expandInclude(std::string &line, T &s)
 	std::getline(s, line);
 }
 
+void	parseDirective(std::string& line, std::string directive,
+			ConfigParse& config) {
+
+	std::cout << "\e[31mline: " << line << "\e[0m" << std::endl;
+	std::cout << "\e[32mdirective: " << directive << "\e[0m" << std::endl;
+	std::cout << "\e[33mdir_index: " << line << "\e[0m" << std::endl << std::endl;
+	
+	std::string	dirs[7] = {"events", "http", "server", "location",
+							"types", "none", "unknown"};
+
+	int	i;
+	for (i = 0; dirs[i] != directive && i < 7; i++)
+		;
+	switch (i)
+	{
+		case (0):
+			dirParseEvents();
+			break;
+		case (1):
+			dirParseHttp();
+			break;
+		case (2):
+			dirParseServer();
+			break;
+		case (3):
+			dirParseLocation();
+			break;
+		case (4):
+			dirParseTypes();
+			break;
+		case (5):
+			dirParseMain();
+			break;
+		default:
+			throw (std::invalid_argument("Invalid directive."));
+			break;
+	}
+}
+
 void parse_config_file(std::string path)
 {
 	int	i = 0;
@@ -130,7 +169,7 @@ void parse_config_file(std::string path)
 			get_braces_content<std::ifstream>(line.substr(0, bracepos), conf_file, directives, dir_index);
 		else if (bracepos != std::string::npos && conf_file.eof())
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
-		// parse_config_line(line, directive, config);
+		parseDirective(line, directive, config);
     }
 	conf_file.close();
 
