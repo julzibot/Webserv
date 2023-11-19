@@ -48,13 +48,13 @@ std::string parse_comments(std::string original_line)
 }
 
 template <typename T>
-void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, std::string> &directives)
+void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
 {
 	int open_braces = 1;
 	std::string line;
 
-	// std::cout << "BRACE" << std::endl;
-	while (std::getline(stream, line) && open_braces)
+	dir_index.push_back(dir_key);
+	while (std::getline(stream, line))
 	{
 		line = parse_comments(line);
 		if (line.find('{') != std::string::npos)
@@ -63,64 +63,94 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 			open_braces--;
 		if (open_braces)
 			directives[dir_key] += line + "\n";
+		else
+			break;
 	}
 	if (open_braces)
 		throw std::exception();
 }
 
+template <typename T>
+void    expandInclude(std::string &line, T &s) 
+{
+    std::istringstream    toParse(line);
+	std::string		str = "";
+    std::string		command;
+	std::string		filename;
+    std::string		fileLine;
+    std::string		fileContent;
+
+	toParse >> command >> filename;
+	filename = filename.substr(0, filename.find(';'));
+	if (command != "include")
+		return;
+    std::ifstream    fs(filename);
+    if (fs.fail())
+        throw (std::invalid_argument("Bad file/path."));
+    while (std::getline(fs, fileLine)) {
+        fileContent += fileLine;
+        fileContent += "\n";
+    }
+    fs.close();
+	while (std::getline(s, line))
+		str += line + "\n";
+	s.clear();
+	s.str(fileContent + str);
+	std::getline(s, line);
+}
+
 void parse_config_file(std::string path)
 {
-	bool dir = 0;
-	int	loop = 0;
+	int	i = 0;
+	// int	loop = 0;
     std::ifstream conf_file(path);
     std::string line;
     std::string directive = "none";
     std::istringstream ls;
     size_t bracepos;
-	std::map<std::string, std::string> directives;
-	std::map<std::string, std::string>::iterator dir_it = directives.begin();
+	std::unordered_map<std::string, std::string> directives;
+	std::vector<std::string> dir_index;
     ConfigParse config;
 
-    while (std::getline(conf_file, line) || std::getline(ls, line) || (dir && dir_it != directives.end()))
+    while (std::getline(conf_file, line) || std::getline(ls, line) || i < dir_index.size())
     {
-		loop++;
-		if (!dir && directives.begin() != directives.end())
-		{
-			dir_it = directives.begin();
-			dir = 1;
-		}
 		if (conf_file.eof() && ls.eof())
 		{
-			directive = dir_it->first;
-			ls.str(dir_it->second);
-			// std::cout << ls.str() << "loop: " << loop << std::endl;
+			directive = dir_index.at(i);
+			ls.clear();
+			ls.str(directives[dir_index.at(i)]);
 			std::getline(ls, line);
-			// std::cout << line << "loop: " << loop << std::endl;
-			dir_it++;
+			i++;
 		}
 		line = parse_comments(line);
-		//Milan's function
+		if (line.find("include") != line.npos)
+            expandInclude(line, ls);
 		bracepos = line.find('{');
 		if (bracepos != std::string::npos && !conf_file.eof())
-			get_braces_content<std::ifstream>(line.substr(0, bracepos), conf_file, directives);
+			get_braces_content<std::ifstream>(line.substr(0, bracepos), conf_file, directives, dir_index);
 		else if (bracepos != std::string::npos && conf_file.eof())
-			get_braces_content(line.substr(0, bracepos), ls, directives);
+			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
 		// parse_config_line(line, directive, config);
     }
-	// std::cout << "end" << std::endl;
-	// for (dir_it = directives.begin(); dir_it != directives.end(); dir_it++)
-	// 	std::cout << "key: " << dir_it->first << "  value: " << dir_it->second << std::endl;
+	conf_file.close();
+
+	// TESTING PARSING OUTPUT
+	for (i = 0; i < dir_index.size(); i++)
+		std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 }
 
 int main()
 {
 	std::string path = "./webserv.conf";
 	std::string line;
-	std::istringstream ls("Hello Milan\n"
-						"how are you ?");
+	// std::ifstream ifs(path);
+	std::istringstream ls;
+	// std::string s = ("Hello Milan\nhow are you ?");
 
 	parse_config_file(path);
+	// ls.str(s);
+	// std::cout << ls.str() << std::endl;
 	// while (std::getline(ls, line))
-	// 	std::cout << line << std::endl;
+	// std::cout << line << std::endl;
 	return (0);
 }
