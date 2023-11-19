@@ -70,9 +70,39 @@ void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::
 		throw std::exception();
 }
 
+template <typename T>
+void    expandInclude(std::string &line, T &s) 
+{
+    std::istringstream    toParse(line);
+	std::string		str = "";
+    std::string		command;
+	std::string		filename;
+    std::string		fileLine;
+    std::string		fileContent;
+
+	toParse >> command >> filename;
+	filename = filename.substr(0, filename.find(';'));
+	if (command != "include")
+		return;
+    std::ifstream    fs(filename);
+    if (fs.fail())
+        throw (std::invalid_argument("Bad file/path."));
+    while (std::getline(fs, fileLine)) {
+        fileContent += fileLine;
+        fileContent += "\n";
+    }
+    fs.close();
+	while (std::getline(s, line))
+		str += line + "\n";
+	s.clear();
+	s.str(fileContent + str);
+	std::getline(s, line);
+}
+
 void parse_config_file(std::string path)
 {
 	int	i = 0;
+	// int	loop = 0;
     std::ifstream conf_file(path);
     std::string line;
     std::string directive = "none";
@@ -93,7 +123,8 @@ void parse_config_file(std::string path)
 			i++;
 		}
 		line = parse_comments(line);
-		//Milan's function
+		if (line.find("include") != line.npos)
+            expandInclude(line, ls);
 		bracepos = line.find('{');
 		if (bracepos != std::string::npos && !conf_file.eof())
 			get_braces_content<std::ifstream>(line.substr(0, bracepos), conf_file, directives, dir_index);
