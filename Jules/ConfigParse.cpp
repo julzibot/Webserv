@@ -139,18 +139,16 @@ void parse_config_file(std::string path)
 		std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 }
 
-int main()
+std::string ConfigParse::get_file_path(HttpRequest request) const
 {
-	std::string path = "./webserv.conf";
-	std::string line;
-	// std::ifstream ifs(path);
-	std::istringstream ls;
-	// std::string s = ("Hello Milan\nhow are you ?");
-
-	parse_config_file(path);
-	// ls.str(s);
-	// std::cout << ls.str() << std::endl;
-	// while (std::getline(ls, line))
-	// std::cout << line << std::endl;
-	return (0);
+	/**
+	 * 1. Check the request path.
+	 * 1.5: Check if the METHOD matches for this path
+	 * 2. Check the location.
+	 * 3. Test for file mentioned in index or 
+	 * 		one obtained by appending the path name.
+	 * 4. Use the try files directive to find the file.
+	 * 5. If file is found, return the path.
+	 * 6. Check if directory listing is ON
+	*/
 }

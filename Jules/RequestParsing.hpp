@@ -5,8 +5,7 @@
 #include <string>
 #include <unordered_map>
 
-
-// parsing OUTPUT
+// parsing input on the server side
 class HttpRequest
 {
     public:
@@ -20,6 +19,7 @@ class HttpRequest
 class HttpRequestParse
 {
     public:
+        char *  process_request(char *buff, int recvsize);
         static HttpRequest parse(std::string const &req_str);
         static void parse_headers(std::istringstream &requestStream, HttpRequest &request);
 };
