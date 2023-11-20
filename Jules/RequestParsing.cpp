@@ -1,4 +1,5 @@
 #include "RequestParsing.hpp"
+#include "ConfigParse.hpp"
 
 void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &request)
 {
@@ -17,6 +18,24 @@ void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &req
     }
 }
 
+char *  HttpRequestParse::process_request(char * buffer, int recvsize)
+{
+    HttpRequestParse request;
+    HttpRequest requestConfig;
+    std::string file_path;
+    char        *output;
+
+    requestConfig = HttpRequestParse::parse(std::string(buffer, 0, recvsize));
+    // file_path = config.get_file_path(requestConfig);
+    /**
+     * 1. check if file exists
+     * 2. check if file is readable
+     * 3. Read file.
+     * 4. Convert into necessary format and respond.
+    */
+    return (output);
+}
+
 HttpRequest HttpRequestParse::parse(std::string const &req_str)
 {
     HttpRequest request;
@@ -28,6 +47,7 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str)
     // PARSING START LINE
     std::istringstream linestream(line);
     linestream >> request.method >> request.path >> request.http_version;
+    std::cout << request.method << request.path << request.http_version;
     // PARSING HEADERS
     HttpRequestParse::parse_headers(requestStream, request);
     // PARSING BODY IF NECESSARY
@@ -35,23 +55,10 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str)
         request.body = line;
 
     // UNCOMMENT BELOW TO TEST PARSING RESULT
-    std::cout << "method: " << request.method << " path: " << request.path << " version: " << request.http_version << std::endl;
-    for (const auto& header : request.headers)
-        std::cout << "Header: " << header.first << " = " << header.second << std::endl;
-    std::cout << "body: " << request.body << std::endl;
+    // std::cout << "method: " << request.method << " path: " << request.path << " version: " << request.http_version << std::endl;
+    // for (const auto& header : request.headers)
+    //     std::cout << "Header: " << header.first << " = " << header.second << std::endl;
+    // std::cout << "body: " << request.body << std::endl;
 
-    return (request);
-}
-
-int main(void)
-{
-    std::string req_str = "GET /path HTTP/1.1\n"
-                             "Host: localhost:8080\n"
-                             "Content-Type: application/json\n"
-                             "\n"
-                             "\n";
-
-    HttpRequest request = HttpRequestParse::parse(req_str);
-
-    return (0);
+    return (&request);
 }

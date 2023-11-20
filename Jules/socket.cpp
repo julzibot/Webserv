@@ -1,8 +1,9 @@
 #include "socket.hpp"
+#include "RequestParsing.hpp"
 
 int main (void)
 {
-
+    HttpRequestParse    parser;
     // SERVER
     struct sockaddr_in saddr = {
         .sin_family = AF_INET,
@@ -30,10 +31,11 @@ int main (void)
 
     //LISTENING
     listen(servsock, SOMAXCONN);
-    std::cout << "[Server] listening on port" << PORT << std::endl;
+    std::cout << "[Server] listening on port " << PORT << std::endl;
 
     //WAITING TO ACCEPT
-    char buff[4096];
+    char    buff[4096];
+    char    *output;
     int recvsize;
     while (true)
     {
@@ -45,13 +47,12 @@ int main (void)
             memset(buff, 0, 4096);
             recvsize = recv(clientsock, buff, 4096, 0);
             if (recvsize == -1)
-            {std::cerr << "Error encountered receiving message"; break;}
+                {std::cerr << "Error encountered receiving message"; break;}
             else if (!recvsize)
-            {std::cout << "Client disconnected" << std::endl; break;}
+                {std::cout << "Client disconnected" << std::endl; break;}
 
-            send(clientsock, buff, recvsize + 1, 0);
-
-            std::cout << std::string(buff, 0, recvsize) << std::endl;
+            output = parser.process_request(buff,recvsize);
+            send(clientsock, output, recvsize + 1, 0);
         }
         close(clientsock);
         close(servsock);
