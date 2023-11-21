@@ -48,29 +48,6 @@ std::string parse_comments(std::string original_line)
 }
 
 template <typename T>
-void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
-{
-	int open_braces = 1;
-	std::string line;
-
-	dir_index.push_back(dir_key);
-	while (std::getline(stream, line))
-	{
-		line = parse_comments(line);
-		if (line.find('{') != std::string::npos)
-			open_braces++;
-		else if (line.find('}') != std::string::npos)
-			open_braces--;
-		if (open_braces)
-			directives[dir_key] += line + "\n";
-		else
-			break;
-	}
-	if (open_braces)
-		throw std::exception();
-}
-
-template <typename T>
 void    expandInclude(std::string &line, T &s) 
 {
     std::istringstream    toParse(line);
@@ -99,6 +76,48 @@ void    expandInclude(std::string &line, T &s)
 	std::getline(s, line);
 }
 
+template <typename T>
+void	get_braces_content(std::string dir_key, std::string upper_dir, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
+{
+	int open_braces = 1;
+	bool add_portnum = dir_key.find("server") != std::string::npos ? 1 : 0;
+	if (!add_portnum && dir_key.find("location") != std::string::npos)
+		add_portnum = 1;
+	std::string portnum;
+	size_t charpos;
+	std::string line;
+
+	while (std::getline(stream, line))
+	{
+		line = parse_comments(line);
+		if (add_portnum && line.find("listen") != std::string::npos)
+		{
+			charpos = line.find("listen") + 6;
+			portnum = " " + line.substr(charpos, line.find(';') - charpos);
+			dir_key += portnum;
+			add_portnum = 0;
+		}
+		else if (add_portnum && upper_dir.find("server") != std::string::npos)
+		{
+			charpos = upper_dir.find("server") + 6;
+			std::istringstream(upper_dir) >> portnum >> portnum;
+			dir_key += " " + portnum;
+			add_portnum = 0;
+		}
+		if (line.find('{') != std::string::npos)
+			open_braces++;
+		else if (line.find('}') != std::string::npos)
+			open_braces--;
+		if (open_braces)
+			directives[dir_key] += line + "\n";
+		else
+			break;
+	}
+	if (open_braces)
+		throw std::exception();
+	dir_index.push_back(dir_key);
+}
+
 void parse_config_file(std::string path)
 {
 	int	i = 0;
@@ -116,7 +135,7 @@ void parse_config_file(std::string path)
     {
 		if (!endf && conf_file.eof())
 			endf = 1;
-		if (endf && ls.eof())
+		if (ls.eof() && i < dir_index.size())
 		{
 			directive = dir_index.at(i);
 			ls.clear();
@@ -125,13 +144,14 @@ void parse_config_file(std::string path)
 			i++;
 		}
 		line = parse_comments(line);
+		// std::cout << directive << std::endl;
 		if (line.find("include") != line.npos)
             expandInclude(line, ls);
 		bracepos = line.find('{');
 		if (bracepos != std::string::npos && !endf)
-			get_braces_content<std::ifstream>(line.substr(0, bracepos), conf_file, directives, dir_index);
+			get_braces_content<std::ifstream>(line.substr(0, bracepos), directive, conf_file, directives, dir_index);
 		else if (bracepos != std::string::npos && endf)
-			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
+			get_braces_content<std::istringstream>(line.substr(0, bracepos), directive, ls, directives, dir_index);
 		// parse_config_line(line, directive, config);
     }
 	conf_file.close();
