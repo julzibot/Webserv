@@ -102,19 +102,21 @@ void    expandInclude(std::string &line, T &s)
 void parse_config_file(std::string path)
 {
 	int	i = 0;
-	// int	loop = 0;
+	bool	endf = 0;
     std::ifstream conf_file(path);
     std::string line;
-    std::string directive = "none";
+    std::string directive = "main";
     std::istringstream ls;
     size_t bracepos;
 	std::unordered_map<std::string, std::string> directives;
 	std::vector<std::string> dir_index;
     ConfigParse config;
 
-    while (std::getline(conf_file, line) || std::getline(ls, line) || i < dir_index.size())
+    while ((!endf && std::getline(conf_file, line)) || std::getline(ls, line) || i < dir_index.size())
     {
-		if (conf_file.eof() && ls.eof())
+		if (!endf && conf_file.eof())
+			endf = 1;
+		if (endf && ls.eof())
 		{
 			directive = dir_index.at(i);
 			ls.clear();
@@ -126,9 +128,9 @@ void parse_config_file(std::string path)
 		if (line.find("include") != line.npos)
             expandInclude(line, ls);
 		bracepos = line.find('{');
-		if (bracepos != std::string::npos && !conf_file.eof())
+		if (bracepos != std::string::npos && !endf)
 			get_braces_content<std::ifstream>(line.substr(0, bracepos), conf_file, directives, dir_index);
-		else if (bracepos != std::string::npos && conf_file.eof())
+		else if (bracepos != std::string::npos && endf)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
 		// parse_config_line(line, directive, config);
     }
@@ -139,16 +141,25 @@ void parse_config_file(std::string path)
 		std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 }
 
-std::string ConfigParse::get_file_path(HttpRequest request) const
+// std::string ConfigParse::get_file_path(HttpRequest request) const
+// {
+// 	/**
+// 	 * 1. Check the request path.
+// 	 * 1.5: Check if the METHOD matches for this path
+// 	 * 2. Check the location.
+// 	 * 3. Test for file mentioned in index or 
+// 	 * 		one obtained by appending the path name.
+// 	 * 4. Use the try files directive to find the file.
+// 	 * 5. If file is found, return the path.
+// 	 * 6. Check if directory listing is ON
+// 	*/
+// }
+
+int main()
 {
-	/**
-	 * 1. Check the request path.
-	 * 1.5: Check if the METHOD matches for this path
-	 * 2. Check the location.
-	 * 3. Test for file mentioned in index or 
-	 * 		one obtained by appending the path name.
-	 * 4. Use the try files directive to find the file.
-	 * 5. If file is found, return the path.
-	 * 6. Check if directory listing is ON
-	*/
+	std::string path = "webserv.conf";
+	// std::ifstream file(path);
+
+	parse_config_file(path);
+	return (0);
 }
