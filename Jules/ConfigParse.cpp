@@ -77,45 +77,45 @@ void    expandInclude(std::string &line, T &s)
 }
 
 template <typename T>
-void	get_braces_content(std::string dir_key, std::string upper_dir, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
+void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
 {
+	bool add_portnum = 0;
 	int open_braces = 1;
-	bool add_portnum = dir_key.find("server") != std::string::npos ? 1 : 0;
-	if (!add_portnum && dir_key.find("location") != std::string::npos)
-		add_portnum = 1;
-	std::string portnum;
-	size_t charpos;
+	int	i = dir_index.size() - 1;
+	int charpos;
 	std::string line;
+	std::string portnum = "";
 
-	while (std::getline(stream, line))
+	dir_index.push_back(dir_key);
+	while (open_braces && std::getline(stream, line))
 	{
 		line = parse_comments(line);
 		if (add_portnum && line.find("listen") != std::string::npos)
 		{
 			charpos = line.find("listen") + 6;
 			portnum = " " + line.substr(charpos, line.find(';') - charpos);
-			dir_key += portnum;
-			add_portnum = 0;
-		}
-		else if (add_portnum && upper_dir.find("server") != std::string::npos)
-		{
-			charpos = upper_dir.find("server") + 6;
-			std::istringstream(upper_dir) >> portnum >> portnum;
-			dir_key += " " + portnum;
+			dir_index.push_back(dir_key + portnum);
 			add_portnum = 0;
 		}
 		if (line.find('{') != std::string::npos)
+		{
 			open_braces++;
+			dir_key = line.substr(0, line.find('{'));
+			if (dir_key.find("server") != std::string::npos)
+				add_portnum = 1;
+			else
+				dir_index.push_back(dir_key + portnum);
+		}
 		else if (line.find('}') != std::string::npos)
-			open_braces--;
-		if (open_braces)
-			directives[dir_key] += line + "\n";
-		else
-			break;
+		{
+			if (--open_braces > 0)
+				dir_key = dir_index.at(i + open_braces);
+		}
+		else if (open_braces)
+			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
 		throw std::exception();
-	dir_index.push_back(dir_key);
 }
 
 void parse_config_file(std::string path)
@@ -144,14 +144,11 @@ void parse_config_file(std::string path)
 			i++;
 		}
 		line = parse_comments(line);
-		// std::cout << directive << std::endl;
-		if (line.find("include") != line.npos)
-            expandInclude(line, ls);
+		// if (line.find("include") != line.npos)
+        //     expandInclude(line, conf_file);
 		bracepos = line.find('{');
 		if (bracepos != std::string::npos && !endf)
-			get_braces_content<std::ifstream>(line.substr(0, bracepos), directive, conf_file, directives, dir_index);
-		else if (bracepos != std::string::npos && endf)
-			get_braces_content<std::istringstream>(line.substr(0, bracepos), directive, ls, directives, dir_index);
+			get_braces_content<std::ifstream>(line.substr(0, bracepos), conf_file, directives, dir_index);
 		// parse_config_line(line, directive, config);
     }
 	conf_file.close();
