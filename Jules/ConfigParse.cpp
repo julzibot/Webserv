@@ -48,29 +48,6 @@ std::string parse_comments(std::string original_line)
 }
 
 template <typename T>
-void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
-{
-	int open_braces = 1;
-	std::string line;
-
-	dir_index.push_back(dir_key);
-	while (std::getline(stream, line))
-	{
-		line = parse_comments(line);
-		if (line.find('{') != std::string::npos)
-			open_braces++;
-		else if (line.find('}') != std::string::npos)
-			open_braces--;
-		if (open_braces)
-			directives[dir_key] += line + "\n";
-		else
-			break;
-	}
-	if (open_braces)
-		throw std::exception();
-}
-
-template <typename T>
 void    expandInclude(std::string &line, T &s) 
 {
     std::istringstream    toParse(line);
@@ -99,154 +76,66 @@ void    expandInclude(std::string &line, T &s)
 	std::getline(s, line);
 }
 
-std::string    removeSpaces( std::string line ) {
+template <typename T>
+void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
+{
+	bool add_portnum = 0;
+	int open_braces = 1;
+	int	i = dir_index.size() - 1;
+	int charpos;
+	std::string line;
+	std::string portnum = "";
 
-    std::string    spaceless;
-    bool        charEnc = false;
-
-    for (unsigned int i = 0; i < line.length(); ++i) {
-        if (charEnc == true && isspace(line[i]) &&
-			(i != line.length() - 1 && !isspace(line[i + 1])))
-            spaceless += " ";
-        if (!isspace(line[i]))
-        {
-            charEnc = true;
-            spaceless += line[i];
-        }
-    }
-    return (spaceless);
-}
-
-void	dirParseEvents(ConfigParse& config, std::string line) {
-
-	if (line.empty())
-		return;
-	line = removeSpaces(line);
-	if (line.find(';') != line.npos)
-		line.erase(line.find(';'));
-
-
-	std::istringstream	stream(line);
-	std::string	var;
-	std::string	value;
-
-	stream >> var >> value;
-	if (var == "worker_connections")
-		config.setWorkerCnts(std::atoi(value.c_str()));
-	else
-		throw (std::invalid_argument("Bad 'events' parameter found."));
-}
-
-// void	dirParseHttp(ConfigParse& config, std::string line) {
-
-// 	line = removeSpaces(line);
-// 	line.erase(line.find(';'));
-
-// 	std::istringstream	stream(line);
-// 	std::string	var;
-// 	std::string	value;
-
-// 	stream >> var >> value;
-// 	// if (var == "worker_connections")
-// 	// 	config.setWorkerCnts(std::atoi(value.c_str()));
-// 	// else
-// 	// 	throw (std::invalid_argument("Bad 'events' parameter found."));
-// }
-
-void	dirParseTypes(ConfigParse& config, std::string line) {
-
-	if (line.empty())
-		return;
-	line = removeSpaces(line);
-	if (line.find(';') != line.npos)
-		line.erase(line.find(';'));
-
-	std::istringstream	stream(line);
-	while (!stream.eof()) {
-
-		std::string	typeLine;
-		std::getline(stream, typeLine);
-		std::vector<std::string>	vectorTypeLine;
-		std::string					segmented;
-		std::istringstream			vectorStream(typeLine);
-
-		while (std::getline(vectorStream, segmented, ' '))
-			vectorTypeLine.push_back(segmented);
-
-		std::vector<std::string>::iterator it;
-		std::string		value = *vectorTypeLine.begin();
-
-		for (it = vectorTypeLine.begin(); it != vectorTypeLine.end(); ++it) {
-	
-			if (it != vectorTypeLine.begin())
-				config.addToTypes(*it, value);
+	dir_index.push_back(dir_key);
+	while (open_braces && std::getline(stream, line))
+	{
+		line = parse_comments(line);
+		if (add_portnum && line.find("listen") != std::string::npos)
+		{
+			charpos = line.find("listen") + 6;
+			portnum = " " + line.substr(charpos, line.find(';') - charpos);
+			dir_index.push_back(dir_key + portnum);
+			add_portnum = 0;
 		}
+		if (line.find('{') != std::string::npos)
+		{
+			open_braces++;
+			dir_key = line.substr(0, line.find('{'));
+			if (dir_key.find("server") != std::string::npos)
+				add_portnum = 1;
+			else
+				dir_index.push_back(dir_key + portnum);
+		}
+		else if (line.find('}') != std::string::npos)
+		{
+			if (--open_braces > 0)
+				dir_key = dir_index.at(i + open_braces);
+		}
+		else if (open_braces)
+			directives[dir_key + portnum] += line + "\n";
 	}
-}
-
-void	dirParseMain(ConfigParse& config, std::string line) {
-
-	if (line.empty())
-		return;
-	line = removeSpaces(line);
-	if (line.find(';') != line.npos)
-		line.erase(line.find(';'));
-
-	std::istringstream	stream(line);
-	std::string	var;
-	std::string	value;
-
-	stream >> var >> value;
-	if (var == "worker_processes")
-		config.setWorkerPrcs(std::atoi(value.c_str()));
-	// elsede .
-	
-	// 	throw (std::invalid_argument("Bad parameter found."));
-}
-
-typedef	void	(*funcPtr)(ConfigParse& config, std::string line);
-
-void	initDirMap(std::map<std::string, funcPtr>& dirCase) {
-
-	dirCase["events"] = &dirParseEvents;
-	// dirCase.insert(std::pair<std::string, funcPtr>("http", &dirParseHttp));
-	// dirCase.insert(std::pair<std::string, funcPtr>("server", &dirParseServer));
-	dirCase["types"] = &dirParseTypes;
-	// dirCase.insert(std::pair<std::string, funcPtr>("location", &dirParseLocation));
-	dirCase["none"] = &dirParseMain;
-}
-
-void	parseDirective(std::string& line, std::string& directive,
-			ConfigParse& config) {
-
-	std::map<std::string, funcPtr>	dirCase;
-
-	initDirMap(dirCase);
-	directive = removeSpaces(directive);
-	if (dirCase.find(directive) != dirCase.end())
-		dirCase[directive](config, line);
-	// else if (directive == "location")
-	// 	machin
-	// else
-	// 	throw ("Unknown directive found.");
+	if (open_braces)
+		throw std::exception();
 }
 
 void parse_config_file(std::string path)
 {
 	int	i = 0;
-	// int	loop = 0;
+	bool	endf = 0;
     std::ifstream conf_file(path);
     std::string line;
-    std::string directive = "none";
+    std::string directive = "main";
     std::istringstream ls;
     size_t bracepos;
 	std::unordered_map<std::string, std::string> directives;
 	std::vector<std::string> dir_index;
     ConfigParse config;
 
-    while (std::getline(conf_file, line) || std::getline(ls, line) || i < dir_index.size())
+    while ((!endf && std::getline(conf_file, line)) || std::getline(ls, line) || i < dir_index.size())
     {
-		if (conf_file.eof() && ls.eof())
+		if (!endf && conf_file.eof())
+			endf = 1;
+		if (ls.eof() && i < dir_index.size())
 		{
 			directive = dir_index.at(i);
 			ls.clear();
@@ -255,20 +144,12 @@ void parse_config_file(std::string path)
 			i++;
 		}
 		line = parse_comments(line);
-		if (line.find("include") != line.npos)
-            expandInclude(line, ls);
+		// if (line.find("include") != line.npos)
+        //     expandInclude(line, conf_file);
 		bracepos = line.find('{');
-		if (bracepos != std::string::npos && !conf_file.eof())
+		if (bracepos != std::string::npos && !endf)
 			get_braces_content<std::ifstream>(line.substr(0, bracepos), conf_file, directives, dir_index);
-		else if (bracepos != std::string::npos && conf_file.eof())
-			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
-		try {
-			parseDirective(line, directive, config);
-		}
-		catch (std::exception& e) {
-			std::cerr << "Error: " << e.what() << std::endl;
-			exit(1);
-		}
+		// parse_config_line(line, directive, config);
     }
 	conf_file.close();
 
@@ -284,18 +165,25 @@ void parse_config_file(std::string path)
 	// 	std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 }
 
+// std::string ConfigParse::get_file_path(HttpRequest request) const
+// {
+// 	/**
+// 	 * 1. Check the request path.
+// 	 * 1.5: Check if the METHOD matches for this path
+// 	 * 2. Check the location.
+// 	 * 3. Test for file mentioned in index or 
+// 	 * 		one obtained by appending the path name.
+// 	 * 4. Use the try files directive to find the file.
+// 	 * 5. If file is found, return the path.
+// 	 * 6. Check if directory listing is ON
+// 	*/
+// }
+
 int main()
 {
-	std::string path = "./webserv.conf";
-	std::string line;
-	// std::ifstream ifs(path);
-	std::istringstream ls;
-	// std::string s = ("Hello Milan\nhow are you ?");
+	std::string path = "webserv.conf";
+	// std::ifstream file(path);
 
 	parse_config_file(path);
-	// ls.str(s);
-	// std::cout << ls.str() << std::endl;
-	// while (std::getline(ls, line))
-	// std::cout << line << std::endl;
 	return (0);
 }
