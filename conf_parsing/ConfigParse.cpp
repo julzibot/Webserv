@@ -163,6 +163,7 @@ void parse_config_file(std::string path)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
 		// parse_config_line(line, directive, config);
     }
+
 	// TESTING PARSING OUTPUT
 	// for (i = 0; i < dir_index.size(); i++)
 	// 	std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
