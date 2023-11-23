@@ -9,6 +9,7 @@
 
 #include "RequestParsing.hpp"
 #include "LocationDirective.hpp"
+# define NPOS std::string::npos
 
 class ConfigParse
 {
