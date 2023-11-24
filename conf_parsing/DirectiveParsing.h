@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:39:48 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 15:41:45 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 22:11:30 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 typedef	void	(*funcPtr)(ConfigParse& config, std::string line);
 
-void		parseDirective(std::string& line, std::string& directive,
+void		parseDirective(std::string line, std::string directive,
 			ConfigParse& config);
 void		initDirMap(std::map<std::string, funcPtr>& dirCase);
 void		dirParseMain(ConfigParse& config, std::string line);

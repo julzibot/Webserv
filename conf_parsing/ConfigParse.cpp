@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 16:03:35 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 22:09:57 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,13 +14,15 @@
 #include "LocationDir.hpp"
 #include "DirectiveParsing.h"
 
+typedef std::unordered_map<std::string, std::string> strstrMap;
+
 std::string parse_comments(std::string original_line)
 {
 	std::string line(original_line);
-	size_t hashpos;
-	size_t quotepos;
-	size_t sq;
-	size_t sec_quotepos;
+	size_t 		hashpos;
+	size_t 		quotepos;
+	size_t 		sq;
+	size_t 		sec_quotepos;
 
 	hashpos = line.find('#');
 	quotepos = line.find('\"');
@@ -95,12 +97,12 @@ void    expandInclude(std::string &line, T &s)
 template <typename T>
 void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
 {
-	bool add_portnum = 0;
-	int open_braces = 1;
-	int	i = dir_index.size() - 1;
-	std::string line;
-	std::string portnum = "";
-	std::string route = "";
+	bool		add_portnum = 0;
+	int			open_braces = 1;
+	int			i = dir_index.size() - 1;
+	std::string	line;
+	std::string	portnum = "";
+	std::string	route = "";
 
 	dir_index.push_back(dir_key);
 	while (open_braces && std::getline(stream, line))
@@ -143,16 +145,16 @@ void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::
 
 void parse_config_file(std::string path)
 {
-	int	i = 0;
-    std::ifstream conf_file(path);
-    std::istringstream ls;
-    std::string line;
-	std::string buffer;
-    std::string directive = "main";
-    size_t bracepos;
-	std::unordered_map<std::string, std::string> directives;
-	std::vector<std::string> dir_index;
-    ConfigParse config;
+	int							i = 0;
+    size_t						bracepos;
+    ConfigParse					config;
+    std::string					line;
+	std::string					buffer;
+    std::string					directive = "main";
+	strstrMap					directives;
+    std::ifstream				conf_file(path);
+    std::istringstream			ls;
+	std::vector<std::string>	dir_index;
 
 	while (std::getline(conf_file, buffer))
 		line += buffer + '\n';
@@ -174,13 +176,15 @@ void parse_config_file(std::string path)
             expandInclude(line, ls);
 		bracepos = line.find('{');
 		if (bracepos != NPOS)
-			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
+			get_braces_content<std::istringstream>(line.substr(0, bracepos),
+				ls, directives, dir_index);
+		std::cout << directive << std::endl;
 		parseDirective(line, directive, config);
     }
 
 	// TESTING PARSING OUTPUT
 	// for (i = 0; i < dir_index.size(); i++)
-	// 	std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	// 	std::cout << "\e[31mkey: \e[0m" << dir_index.at(i) << "  \e[32mvalue: \e[0m" << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 }
 
 // std::string ConfigParse::get_file_path(HttpRequest request) const

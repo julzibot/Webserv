@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 18:06:26 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 22:22:12 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -159,19 +159,23 @@ void	initDirMap(std::map<std::string, funcPtr>& dirCase) {
 	dirCase["none"] = &dirParseMain;
 }
 
-void	parseDirective(std::string& line, std::string& directive,
+void	parseDirective(std::string line, std::string directive,
 			ConfigParse& config) {
 
 	std::map<std::string, funcPtr>	dirCase;
 
+	// std::cout << directive << std::endl;
 	initDirMap(dirCase);
 	directive = removeSpaces(directive);
-	if (directive.find("location") != NPOS)
+	if (dirCase.find(directive) != dirCase.end())
+		dirCase[directive](config, line);
+	else if (directive.find("location") != NPOS)
 	{
 		std::istringstream	directiveStream(directive);
 		std::string			route;
 		std::string			port;
 
+		// std::cout << "\e[31m" << directive << "\e[0m" << std::endl;
 		// std::cout << directive << " | " << line << std::endl;
 		directiveStream >> directive >> route >> port;
 		if (!port.empty() || !route.empty())
@@ -179,8 +183,6 @@ void	parseDirective(std::string& line, std::string& directive,
 			dirParseLocation(std::atoi(port.c_str()), route, line, config);
 		}
 	}
-	else if (dirCase.find(directive) != dirCase.end())
-		dirCase[directive](config, line);
 	// else
 	// 	throw ("Unknown directive found.");
 }

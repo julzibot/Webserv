@@ -6,12 +6,11 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 21:01:53 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 15:50:21 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 18:09:22 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef LOCATIONDIR_HPP
-# define LOCATIONDIR_HPP
+#pragma once
 
 #include <iostream>
 #include <fstream>
@@ -52,5 +51,3 @@ class LocationDir
 		void	setRoot(std::string root);
 		void	setindex(std::string indexFiles);
 };
-
-#endif
