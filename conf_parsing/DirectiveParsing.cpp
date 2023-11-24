@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 22:22:12 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 22:41:46 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #include <map>
 #include <sstream>
 #include "DirectiveParsing.h"
-#include "ConfigParse.hpp"
+#include "Config.hpp"
 #include "LocationDir.hpp"
 
 std::string    removeSpaces( std::string line ) {
@@ -36,7 +36,7 @@ std::string    removeSpaces( std::string line ) {
 }
 
 void dirParseLocation(int port, std::string route, std::string line,
-	ConfigParse &config)
+	Config &config)
 {
     LocationDir &ld = config.getLocRef(port, route);
     std::istringstream linestream(line);
@@ -64,7 +64,7 @@ void dirParseLocation(int port, std::string route, std::string line,
     //     std::cout << ind.at(i) << std::endl;
 }
 
-void	dirParseEvents(ConfigParse& config, std::string line) {
+void	dirParseEvents(Config& config, std::string line) {
 
 	if (line.empty())
 		return;
@@ -100,7 +100,7 @@ void	dirParseEvents(ConfigParse& config, std::string line) {
 // 	// 	throw (std::invalid_argument("Bad 'events' parameter found."));
 // }
 
-void	dirParseTypes(ConfigParse& config, std::string line) {
+void	dirParseTypes(Config& config, std::string line) {
 
 	if (line.empty())
 		return;
@@ -131,7 +131,7 @@ void	dirParseTypes(ConfigParse& config, std::string line) {
 	}
 }
 
-void	dirParseMain(ConfigParse& config, std::string line) {
+void	dirParseMain(Config& config, std::string line) {
 
 	if (line.empty())
 		return;
@@ -156,40 +156,41 @@ void	initDirMap(std::map<std::string, funcPtr>& dirCase) {
 	// dirCase.insert(std::pair<std::string, funcPtr>("http", &dirParseHttp));
 	// dirCase.insert(std::pair<std::string, funcPtr>("server", &dirParseServer));
 	dirCase["types"] = &dirParseTypes;
-	dirCase["none"] = &dirParseMain;
+	// dirCase.insert(std::pair<std::string, funcPtr>("location", &dirParseLocation));
+	dirCase["main"] = &dirParseMain;
 }
 
-void	parseDirective(std::string line, std::string directive,
-			ConfigParse& config) {
-
-	std::map<std::string, funcPtr>	dirCase;
+void	parseDirective(std::string& line, std::string& directive,
+	Config& config) 
+{
+	std::string	portnum;
+	std::string route;
+	std::map<std::string, funcPtr> dirCase;
+	std::string dirKey;
 
 	// std::cout << directive << std::endl;
 	initDirMap(dirCase);
 	directive = removeSpaces(directive);
-	if (dirCase.find(directive) != dirCase.end())
-		dirCase[directive](config, line);
-	else if (directive.find("location") != NPOS)
+	std::istringstream(directive) >> dirKey;
+	if (dirCase.find(dirKey) != dirCase.end())
+		dirCase[dirKey](config, line);
+	else if (dirKey == "location")
 	{
-		std::istringstream	directiveStream(directive);
-		std::string			route;
-		std::string			port;
-
-		// std::cout << "\e[31m" << directive << "\e[0m" << std::endl;
-		// std::cout << directive << " | " << line << std::endl;
-		directiveStream >> directive >> route >> port;
-		if (!port.empty() || !route.empty())
-		{
-			dirParseLocation(std::atoi(port.c_str()), route, line, config);
-		}
+		std::istringstream(directive) >> dirKey >> route >> portnum;
+		std::cout << dirKey << route << portnum << std::endl;
+		dirParseLocation(stoi(portnum), route, line, config);
 	}
-	// else
-	// 	throw ("Unknown directive found.");
+	else
+		throw ("Unknown directive found.");
 }
 
 // int main()
 // {
-//     dirParseLocation(1, "/","index file1 file2 file3");
+//     // dirParseLocation(1, "/","index file1 file2 file3");
+// 	// std::string line;
+// 	// 	std::cout << line << std::endl;
+// 	// 	line = removeSpaces(line);
+
 
 //     return (0);
 // }

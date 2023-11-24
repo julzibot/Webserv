@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ConfigParse.hpp                                    :+:      :+:    :+:   */
+/*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 18:09:11 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 22:41:22 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,12 +22,13 @@
 #include <vector>
 #include "../RequestParsing.hpp"
 #include "LocationDir.hpp"
+
 # define NPOS std::string::npos
 
 typedef std::unordered_map<int, std::unordered_map<std::string, LocationDir> > servLocMap;
 typedef std::unordered_map<std::string, std::string> strstrMap;
 
-class ConfigParse
+class Config
 {
     private:
 
@@ -48,9 +49,12 @@ class ConfigParse
         std::string		get_type(std::string file_ext);
         std::string		get_file_path(HttpRequest request) const;
         LocationDir		&getLocRef(int	port, std::string route) { return (this->server[port][route]); };
-		std::unordered_map<std::string, LocationDir>	&getLocMap(int port);
+		std::unordered_map<std::string, LocationDir>	&getLocMap(int port) { return (this->server[port]); };
 
-        void	set_workproc(int value);
-        void	set_workco(int value);
-        void	add_type(std::string extension, std::string path);
+        void	set_workproc(int value) { this->worker_processes = value; };
+        void	set_workco(int value) { this->worker_connections = value; };
+        void	add_type(std::string extension, std::string path) { this->types[extension] += path; };
 };
+
+
+// void	parseDirective(std::string& line, std::string& directive, ConfigParse& config);
