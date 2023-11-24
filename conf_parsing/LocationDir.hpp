@@ -1,14 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   LocationDirective.hpp                              :+:      :+:    :+:   */
+/*   LocationDir.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 21:01:53 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/23 21:01:54 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 15:50:21 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#ifndef LOCATIONDIR_HPP
+# define LOCATIONDIR_HPP
 
 #include <iostream>
 #include <fstream>
@@ -50,21 +53,4 @@ class LocationDir
 		void	setindex(std::string indexFiles);
 };
 
-void	LocationDir::setRoute(std::string route)
-{
-	this->route = route;
-}
-
-void	LocationDir::setRoot(std::string root)
-{
-	this->root = root;
-}
-
-void	LocationDir::setindex(std::string indexFiles)
-{
-	std::istringstream line(indexFiles);
-	std::string	buffer;
-
-	while (line >> buffer)
-		this->index.push_back(buffer);
-}
+#endif

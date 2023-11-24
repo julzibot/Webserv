@@ -1,5 +1,5 @@
 #include "RequestParsing.hpp"
-#include "ConfigParse.hpp"
+#include "conf_parsing/ConfigParse.hpp"
 
 void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &request)
 {

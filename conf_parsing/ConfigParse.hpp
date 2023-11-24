@@ -6,10 +6,11 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/23 21:02:09 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 15:49:00 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#pragma once
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -19,7 +20,7 @@
 #include <forward_list>
 #include <vector>
 #include "../RequestParsing.hpp"
-#include "LocationDirective.hpp"
+#include "LocationDir.hpp"
 # define NPOS std::string::npos
 
 typedef std::unordered_map<int, std::unordered_map<std::string, LocationDir> > servLocMap;
@@ -52,8 +53,3 @@ class ConfigParse
         void	set_workco(int value);
         void	add_type(std::string extension, std::string path);
 };
-
-std::unordered_map<std::string, LocationDir>	&ConfigParse::getLocMap(int port)
-{
-	return (this->server[port]);
-}

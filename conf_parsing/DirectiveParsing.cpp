@@ -1,20 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   DirParsing.cpp                                     :+:      :+:    :+:   */
+/*   DirectiveParsing.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/23 18:58:29 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 15:49:11 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <iostream>
+#include <map>
+#include <sstream>
+#include "DirectiveParsing.h"
 #include "ConfigParse.hpp"
-
-// Needed functions:
-// std::unordered_map<std::string, std::string>::iterator	getBeginTypesMap( void ) { return (this->types.begin()); };
-// std::unordered_map<std::string, std::string>::iterator	getEndTypesMap( void ) { return (this->types.end()); };
+#include "LocationDir.hpp"
 
 void dirParseLocation(int port, std::string route, std::string line, ConfigParse &config)
 {
@@ -38,36 +39,6 @@ void dirParseLocation(int port, std::string route, std::string line, ConfigParse
     // std::vector<std::string> ind = ld.get_index();
     // for (int i = 0; i < ind.size(); i++)
     //     std::cout << ind.at(i) << std::endl;
-}
-
-
-template <typename T>
-void    expandInclude(std::string &line, T &s) 
-{
-    std::istringstream    toParse(line);
-	std::string		str = "";
-    std::string		command;
-	std::string		filename;
-    std::string		fileLine;
-    std::string		fileContent;
-
-	toParse >> command >> filename;
-	filename = filename.substr(0, filename.find(';'));
-	if (command != "include")
-		return;
-    std::ifstream    fs(filename);
-    if (fs.fail())
-        throw (std::invalid_argument("Bad file/path."));
-    while (std::getline(fs, fileLine)) {
-        fileContent += fileLine;
-        fileContent += "\n";
-    }
-    fs.close();
-	while (std::getline(s, line))
-		str += line + "\n";
-	s.clear();
-	s.str(fileContent + str);
-	std::getline(s, line);
 }
 
 std::string    removeSpaces( std::string line ) {
@@ -173,8 +144,6 @@ void	dirParseMain(ConfigParse& config, std::string line) {
 	// else
 	// 	throw (std::invalid_argument("Bad parameter found."));
 }
-
-typedef	void	(*funcPtr)(ConfigParse& config, std::string line);
 
 void	initDirMap(std::map<std::string, funcPtr>& dirCase) {
 

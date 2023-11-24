@@ -1,4 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ConfigParse.cpp                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
+/*   Updated: 2023/11/24 15:49:20 by mstojilj         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "ConfigParse.hpp"
+#include "LocationDir.hpp"
+#include "DirectiveParsing.h"
 
 std::string parse_comments(std::string original_line)
 {
@@ -161,7 +175,7 @@ void parse_config_file(std::string path)
 		bracepos = line.find('{');
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
-		// parse_config_line(line, directive, config);
+		parseDirective(line, directive, config);
     }
 
 	// TESTING PARSING OUTPUT
@@ -182,6 +196,26 @@ void parse_config_file(std::string path)
 // 	 * 6. Check if directory listing is ON
 // 	*/
 // }
+
+std::unordered_map<std::string, LocationDir>	&ConfigParse::getLocMap(int port)
+{
+	return (this->server[port]);
+}
+
+void	ConfigParse::set_workproc(int value) {
+
+	this->worker_processes = value;
+}
+
+void	ConfigParse::set_workco(int value) {
+
+	this->worker_connections = value;
+}
+
+void	ConfigParse::add_type(std::string extension, std::string path) {
+
+	this->types[extension] = path;
+}
 
 int main()
 {
