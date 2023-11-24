@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 15:49:11 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 18:06:26 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,30 +16,6 @@
 #include "DirectiveParsing.h"
 #include "ConfigParse.hpp"
 #include "LocationDir.hpp"
-
-void dirParseLocation(int port, std::string route, std::string line, ConfigParse &config)
-{
-    LocationDir &ld = config.getLocRef(port, route);
-    std::istringstream linestream(line);
-    std::string keyword;
-    std::string value;
-
-    linestream >> keyword;
-    if (keyword == "index") {
-        value = line.substr(line.find(keyword) + 6);
-        std::cout << "|" << value << "|" << std::endl;
-        ld.setindex(value);
-    }
-    if (keyword == "root") {
-        value = line.substr(line.find(keyword) + 5);
-        ld.setRoot(value);
-    }
-
-    // std::unordered_map<int, std::unordered_map<std::string, LocationDir> > server = config.getServ();
-    // std::vector<std::string> ind = ld.get_index();
-    // for (int i = 0; i < ind.size(); i++)
-    //     std::cout << ind.at(i) << std::endl;
-}
 
 std::string    removeSpaces( std::string line ) {
 
@@ -57,6 +33,35 @@ std::string    removeSpaces( std::string line ) {
         }
     }
     return (spaceless);
+}
+
+void dirParseLocation(int port, std::string route, std::string line,
+	ConfigParse &config)
+{
+    LocationDir &ld = config.getLocRef(port, route);
+    std::istringstream linestream(line);
+    std::string keyword;
+    std::string value;
+
+	// std::cout << line << std::endl;
+	line.erase(line.find(";"));
+    linestream >> keyword;
+    if (keyword == "index") {
+        value = line.substr(line.find(keyword) + 6);
+        ld.setindex(value);
+    }
+    if (keyword == "root") {
+        value = line.substr(line.find(keyword) + 5);
+        ld.setRoot(value);
+    }
+	// if (!ld.get_index().empty())
+	// 	std::cout << "Index: " << ld.get_index().at(0) << std::endl;
+	// std::cout << "Root: " << ld.get_root() << std::endl;
+
+    // std::unordered_map<int, std::unordered_map<std::string, LocationDir> > server = config.getServ();
+    // std::vector<std::string> ind = ld.get_index();
+    // for (int i = 0; i < ind.size(); i++)
+    //     std::cout << ind.at(i) << std::endl;
 }
 
 void	dirParseEvents(ConfigParse& config, std::string line) {
@@ -151,7 +156,6 @@ void	initDirMap(std::map<std::string, funcPtr>& dirCase) {
 	// dirCase.insert(std::pair<std::string, funcPtr>("http", &dirParseHttp));
 	// dirCase.insert(std::pair<std::string, funcPtr>("server", &dirParseServer));
 	dirCase["types"] = &dirParseTypes;
-	// dirCase.insert(std::pair<std::string, funcPtr>("location", &dirParseLocation));
 	dirCase["none"] = &dirParseMain;
 }
 
@@ -162,10 +166,21 @@ void	parseDirective(std::string& line, std::string& directive,
 
 	initDirMap(dirCase);
 	directive = removeSpaces(directive);
-	if (dirCase.find(directive) != dirCase.end())
+	if (directive.find("location") != NPOS)
+	{
+		std::istringstream	directiveStream(directive);
+		std::string			route;
+		std::string			port;
+
+		// std::cout << directive << " | " << line << std::endl;
+		directiveStream >> directive >> route >> port;
+		if (!port.empty() || !route.empty())
+		{
+			dirParseLocation(std::atoi(port.c_str()), route, line, config);
+		}
+	}
+	else if (dirCase.find(directive) != dirCase.end())
 		dirCase[directive](config, line);
-	// else if (directive == "location")
-	// 	machin
 	// else
 	// 	throw ("Unknown directive found.");
 }

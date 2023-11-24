@@ -6,11 +6,13 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 15:49:00 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/24 18:05:40 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
+#ifndef CONFIGPARSE_HPP
+# define CONFIGPARSE_HPP
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -53,3 +55,5 @@ class ConfigParse
         void	set_workco(int value);
         void	add_type(std::string extension, std::string path);
 };
+
+#endif
