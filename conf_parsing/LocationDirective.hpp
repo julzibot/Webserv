@@ -19,8 +19,6 @@
 #include <forward_list>
 #include <vector>
 
-enum METHODS { GET, POST, DELETE, PUT };
-
 class LocationDir
 {
     private:
@@ -30,7 +28,7 @@ class LocationDir
 		std::string 				root;
 		std::string					redirect_url;
 		std::vector<std::string>	index;
-		std::vector<METHODS>		methods_allowed;
+		std::vector<std::string>	methods_allowed;
 		// std::string				alias;
 		// std::vector<std::string>	try_files;
 
@@ -43,7 +41,7 @@ class LocationDir
         std::string					get_root() const { return (this->root); };
 		std::string					get_redirect_url() const { return (this->redirect_url); };
 		std::vector<std::string>	get_index() const { return (this->index); };
-		std::vector<METHODS>		get_methods_allowed() const { return (this->methods_allowed); };
+		std::vector<std::string>		get_methods_allowed() const { return (this->methods_allowed); };
 
 		void	setRoute(std::string route);
 		void	setRoot(std::string root);

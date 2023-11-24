@@ -86,7 +86,6 @@ void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::
 	int	i = dir_index.size() - 1;
 	std::string line;
 	std::string portnum = "";
-	std::string route = "";
 
 	dir_index.push_back(dir_key);
 	while (open_braces && std::getline(stream, line))
@@ -105,23 +104,13 @@ void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::
 			dir_key = line.substr(0, line.find('{'));
 			if (dir_key.find("server") != NPOS)
 				add_portnum = 1;
-			else if (dir_key.find("location") != NPOS)
-			{
-				std::istringstream(dir_key) >> route >> route;
-				route = " " + route;
-			}
 			if (!add_portnum)
-				dir_index.push_back(dir_key + portnum + route);
+				dir_index.push_back(dir_key + portnum);
 		}
-		else if (line.find('}') != NPOS)
-		{
-			if (--open_braces > 0)
-				dir_key = dir_index.at(i + open_braces);
-			if (open_braces < 3)
-				route = "";
-		}
+		else if (line.find('}') != NPOS && --open_braces > 0)
+			dir_key = dir_index.at(i + open_braces);
 		else if (open_braces)
-			directives[dir_key + portnum + route] += line + "\n";
+			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
 		throw std::exception();
@@ -156,17 +145,17 @@ void parse_config_file(std::string path)
 			i++;
 		}
 		line = parse_comments(line);
-		if (line.find("include") != line.npos)
+		if (line.find("include") != NPOS)
             expandInclude(line, ls);
 		bracepos = line.find('{');
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
-		// parse_config_line(line, directive, config);
+		// parseDirective(line, directive, config);
     }
 
 	// TESTING PARSING OUTPUT
-	// for (i = 0; i < dir_index.size(); i++)
-	// 	std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	for (i = 0; i < dir_index.size(); i++)
+		std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 }
 
 // std::string ConfigParse::get_file_path(HttpRequest request) const

@@ -183,27 +183,39 @@ void	initDirMap(std::map<std::string, funcPtr>& dirCase) {
 	// dirCase.insert(std::pair<std::string, funcPtr>("server", &dirParseServer));
 	dirCase["types"] = &dirParseTypes;
 	// dirCase.insert(std::pair<std::string, funcPtr>("location", &dirParseLocation));
-	dirCase["none"] = &dirParseMain;
+	dirCase["main"] = &dirParseMain;
 }
 
 void	parseDirective(std::string& line, std::string& directive,
-			ConfigParse& config) {
-
-	std::map<std::string, funcPtr>	dirCase;
+			ConfigParse& config) 
+{
+	std::string	portnum;
+	std::string route;
+	std::map<std::string, funcPtr> dirCase;
+	std::string dirKey;
 
 	initDirMap(dirCase);
 	directive = removeSpaces(directive);
-	if (dirCase.find(directive) != dirCase.end())
-		dirCase[directive](config, line);
-	// else if (directive == "location")
-	// 	machin
-	// else
-	// 	throw ("Unknown directive found.");
+	std::istringstream(directive) >> dirKey;
+	if (dirCase.find(dirKey) != dirCase.end())
+		dirCase[dirKey](config, line);
+	else if (dirKey == "location")
+	{
+		std::istringstream(directive) >> dirKey >> route >> portnum;
+		std::cout << dirKey << route << portnum << std::endl;
+		dirParseLocation(stoi(portnum), route, line, config);
+	}
+	else
+		throw ("Unknown directive found.");
 }
 
-// int main()
-// {
-//     dirParseLocation(1, "/","index file1 file2 file3");
+int main()
+{
+    // dirParseLocation(1, "/","index file1 file2 file3");
+	// std::string line;
+	// 	std::cout << line << std::endl;
+	// 	line = removeSpaces(line);
 
-//     return (0);
-// }
+
+    return (0);
+}

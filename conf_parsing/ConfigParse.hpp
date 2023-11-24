@@ -10,6 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#pragma once
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -48,12 +50,15 @@ class ConfigParse
         LocationDir		&getLocRef(int	port, std::string route) { return (this->server[port][route]); };
 		std::unordered_map<std::string, LocationDir>	&getLocMap(int port);
 
-        void	set_workproc(int value);
-        void	set_workco(int value);
-        void	add_type(std::string extension, std::string path);
+        void	set_workproc(int value) { this->worker_processes = value; };
+        void	set_workco(int value) { this->worker_connections = value; };
+        void	add_type(std::string extension, std::string path) { this->types[extension] += path; };
 };
 
 std::unordered_map<std::string, LocationDir>	&ConfigParse::getLocMap(int port)
 {
 	return (this->server[port]);
 }
+
+
+// void	parseDirective(std::string& line, std::string& directive, ConfigParse& config);
