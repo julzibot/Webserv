@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 21:01:53 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 22:39:20 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/26 19:29:14 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,11 @@
 #include <map>
 #include <forward_list>
 #include <vector>
+
+// Milan 26/11
+// 'auth_except' added
+// Constructor defined
+// removeMethod added
 
 class LocationDir
 {
@@ -36,6 +41,10 @@ class LocationDir
 
     public:
 
+		LocationDir( void );
+
+		void	removeMethod( std::string toRemove );
+
 		/* Accessors */
 		bool						get_autoindex() const { return (this->autoindex); };
 		std::string					get_server_name() const { return (this->server_name); };
@@ -45,7 +54,7 @@ class LocationDir
 		std::vector<std::string>	get_index() const { return (this->index); };
 		std::vector<std::string>	get_methods_allowed() const { return (this->methods_allowed); };
 
-		void	setRoute(std::string route);
-		void	setRoot(std::string root);
+		void	setRoute(std::string route) { this->route = route; };
+		void	setRoot(std::string root) { this->root = root; };
 		void	setindex(std::string indexFiles);
 };

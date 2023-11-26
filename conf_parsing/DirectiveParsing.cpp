@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 22:41:46 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/26 19:34:58 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,25 +35,45 @@ std::string    removeSpaces( std::string line ) {
     return (spaceless);
 }
 
+void	auth_except(LocationDir& ld, std::string line) {
+
+	std::istringstream	toSegment(line);
+	std::string	value = "value";
+
+	while (!toSegment.eof()) {
+		
+		std::getline(toSegment, value, ' ');
+		ld.removeMethod(value);
+	}
+}
+
 void dirParseLocation(int port, std::string route, std::string line,
 	Config &config)
 {
-    LocationDir &ld = config.getLocRef(port, route);
-    std::istringstream linestream(line);
-    std::string keyword;
-    std::string value;
+    std::istringstream	linestream(line);
+    std::string			keyword;
+    std::string			value;
+    LocationDir			&ld = config.getLocRef(port, route);
 
-	// std::cout << line << std::endl;
-	line.erase(line.find(";"));
+	if (line.find(";") != NPOS)
+		line.erase(line.find(";"));
     linestream >> keyword;
     if (keyword == "index") {
         value = line.substr(line.find(keyword) + 6);
         ld.setindex(value);
     }
-    if (keyword == "root") {
-        value = line.substr(line.find(keyword) + 5);
-        ld.setRoot(value);
+    else if (keyword == "root") {
+    	value = line.substr(line.find(keyword) + 5);
+    	ld.setRoot(value);
     }
+	else if (keyword == "auth_except")
+	{
+		value = line.substr(line.find(keyword) + 12);
+		auth_except(ld, value);
+	}
+	else
+		throw (std::invalid_argument("Unkown 'location' parameter found."));
+
 	// if (!ld.get_index().empty())
 	// 	std::cout << "Index: " << ld.get_index().at(0) << std::endl;
 	// std::cout << "Root: " << ld.get_root() << std::endl;
@@ -72,7 +92,6 @@ void	dirParseEvents(Config& config, std::string line) {
 	if (line.find(';') != line.npos)
 		line.erase(line.find(';'));
 
-
 	std::istringstream	stream(line);
 	std::string	var;
 	std::string	value;
@@ -83,22 +102,6 @@ void	dirParseEvents(Config& config, std::string line) {
 	else
 		throw (std::invalid_argument("Bad 'events' parameter found."));
 }
-
-// void	dirParseHttp(ConfigParse& config, std::string line) {
-
-// 	line = removeSpaces(line);
-// 	line.erase(line.find(';'));
-
-// 	std::istringstream	stream(line);
-// 	std::string	var;
-// 	std::string	value;
-
-// 	stream >> var >> value;
-// 	// if (var == "worker_connections")
-// 	// 	config.setWorkerCnts(std::atoi(value.c_str()));
-// 	// else
-// 	// 	throw (std::invalid_argument("Bad 'events' parameter found."));
-// }
 
 void	dirParseTypes(Config& config, std::string line) {
 
@@ -140,35 +143,29 @@ void	dirParseMain(Config& config, std::string line) {
 		line.erase(line.find(';'));
 
 	std::istringstream	stream(line);
-	std::string	var;
-	std::string	value;
+	std::string			var;
+	std::string			value;
 
 	stream >> var >> value;
 	if (var == "worker_processes")
 		config.set_workproc(std::atoi(value.c_str()));
-	// else
-	// 	throw (std::invalid_argument("Bad parameter found."));
 }
 
 void	initDirMap(std::map<std::string, funcPtr>& dirCase) {
 
 	dirCase["events"] = &dirParseEvents;
-	// dirCase.insert(std::pair<std::string, funcPtr>("http", &dirParseHttp));
-	// dirCase.insert(std::pair<std::string, funcPtr>("server", &dirParseServer));
 	dirCase["types"] = &dirParseTypes;
-	// dirCase.insert(std::pair<std::string, funcPtr>("location", &dirParseLocation));
 	dirCase["main"] = &dirParseMain;
 }
 
-void	parseDirective(std::string& line, std::string& directive,
+void	parseDirective(std::string line, std::string directive,
 	Config& config) 
 {
-	std::string	portnum;
-	std::string route;
-	std::map<std::string, funcPtr> dirCase;
-	std::string dirKey;
+	std::map<std::string, funcPtr>	dirCase;
+	std::string						portnum;
+	std::string 					route;
+	std::string 					dirKey;
 
-	// std::cout << directive << std::endl;
 	initDirMap(dirCase);
 	directive = removeSpaces(directive);
 	std::istringstream(directive) >> dirKey;
@@ -177,11 +174,11 @@ void	parseDirective(std::string& line, std::string& directive,
 	else if (dirKey == "location")
 	{
 		std::istringstream(directive) >> dirKey >> route >> portnum;
-		std::cout << dirKey << route << portnum << std::endl;
+		// std::cout << dirKey << " " << route << " " << portnum << " " << "LINE: " << line << std::endl;
 		dirParseLocation(stoi(portnum), route, line, config);
 	}
-	else
-		throw ("Unknown directive found.");
+	// else
+	// 	throw ("Unknown directive found.");
 }
 
 // int main()

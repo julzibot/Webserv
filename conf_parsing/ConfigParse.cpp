@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Config.cpp                                         :+:      :+:    :+:   */
+/*   ConfigParse.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 22:46:02 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/26 18:23:51 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,13 +167,13 @@ void parse_config_file(std::string path)
 		bracepos = line.find('{');
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
-		// parseDirective(line, directive, config);
+		parseDirective(line, directive, config);
     }
 
 	// TESTING PARSING OUTPUT
-	for (i = 0; i < dir_index.size(); i++)
-		std::cout << "\e[31mkey: \e[0m" << dir_index.at(i) << "  \e[33mvalue: \e[0m"
-			<< directives[dir_index.at(i)] << std::endl << "\e[34m----------\e[0m" << std::endl;
+	// for (i = 0; i < dir_index.size(); i++)
+	// 	std::cout << "\e[31mkey: \e[0m" << dir_index.at(i) << "  \e[33mvalue: \e[0m"
+	// 		<< directives[dir_index.at(i)] << std::endl << "\e[34m----------\e[0m" << std::endl;
 }
 
 // std::string ConfigParse::get_file_path(HttpRequest request) const

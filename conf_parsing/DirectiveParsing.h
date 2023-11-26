@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:39:48 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 22:39:10 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/26 18:40:29 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,5 +23,6 @@ void		dirParseTypes(Config& config, std::string line);
 // void	dirParseHttp(ConfigParse& config, std::string line);
 void		dirParseEvents(Config& config, std::string line);
 std::string	removeSpaces( std::string line );
+void		auth_except(LocationDir& ld, std::string line);
 void		dirParseLocation(int port, std::string route,
 	std::string line, Config &config);
