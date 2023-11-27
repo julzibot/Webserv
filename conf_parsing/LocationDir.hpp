@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 21:01:53 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/26 19:29:14 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/27 15:48:17 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,8 @@
 #include <forward_list>
 #include <vector>
 
-// Milan 26/11
-// 'auth_except' added
+// Milan 27/11
+// 'methods_except' added
 // Constructor defined
 // removeMethod added
 

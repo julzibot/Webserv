@@ -6,14 +6,14 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:43:37 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/26 19:29:06 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/27 15:48:01 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "LocationDir.hpp"
 
-// Milan 26/11
-// 'auth_except' added
+// Milan 27/11
+// 'methods_except' added
 // Constructor defined
 // removeMethod added
 
@@ -29,7 +29,7 @@ void	LocationDir::removeMethod( std::string toRemove ) {
 	std::vector<std::string>::iterator it;
 
 	if (toRemove != "GET" && toRemove != "POST" && toRemove != "DELETE")
-		throw (std::invalid_argument("Unknown method in 'auth_except'."));
+		throw (std::invalid_argument("Unknown method in 'methods_except'."));
 	for (it = methods_allowed.begin(); it != methods_allowed.end(); ++it) {
 		
 		if (*it == toRemove)
@@ -37,7 +37,6 @@ void	LocationDir::removeMethod( std::string toRemove ) {
 			methods_allowed.erase(it);
 			return;
 		}
-		std::cout << "removeMethod loop" << std::endl;
 	}
 }
 

@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/26 19:34:58 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/27 15:47:48 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,7 @@ void dirParseLocation(int port, std::string route, std::string line,
     	value = line.substr(line.find(keyword) + 5);
     	ld.setRoot(value);
     }
-	else if (keyword == "auth_except")
+	else if (keyword == "methods_except")
 	{
 		value = line.substr(line.find(keyword) + 12);
 		auth_except(ld, value);

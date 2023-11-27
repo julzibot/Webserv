@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/26 18:23:51 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/27 15:48:42 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,7 +96,7 @@ void    expandInclude(std::string &line, T &s)
 
 template <typename T>
 void	get_braces_content(std::string dir_key, T &stream,
-	std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
+	strstrMap &directives, std::vector<std::string> &dir_index)
 {
 	bool		add_portnum = 0;
 	int			open_braces = 1;
