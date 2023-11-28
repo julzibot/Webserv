@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 21:01:53 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 12:39:33 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 15:10:58 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,5 +55,6 @@ class LocationDir
 
 		void	setRoute(std::string route) { this->route = route; };
 		void	setRoot(std::string root) { this->root = root; };
+		void	setAutoindex(bool boolean) { this->autoindex = boolean; };
 		void	setindex(std::string indexFiles);
 };

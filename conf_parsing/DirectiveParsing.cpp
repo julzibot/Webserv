@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 12:58:16 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 15:21:58 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,16 @@ void	auth_except(LocationDir& ld, std::string line) {
 	}
 }
 
+void	assign_autoindex(LocationDir& ld, std::string value) {
+
+	if (value == "on")
+		ld.setAutoindex(true);
+	else if (value == "off")
+		ld.setAutoindex(false);
+	else
+		throw (std::invalid_argument("Unknown parameter in 'autoindex'."));
+}
+
 void	dirParseLocation(int port, std::string route, std::string line,
 	Config &config)
 {
@@ -70,8 +80,12 @@ void	dirParseLocation(int port, std::string route, std::string line,
 		value = line.substr(line.find(keyword) + 15);
 		auth_except(ld, value);
 	}
+	else if (keyword == "autoindex") {
+		value = line.substr(line.find(keyword) + 10);
+		assign_autoindex(ld, value);
+	}
 	else
-		throw (std::invalid_argument("Unkown 'location' parameter found."));
+		throw (std::invalid_argument("Unkown parameter 'location'."));
 
 	// if (!ld.get_index().empty())
 	// 	std::cout << "Index: " << ld.get_index().at(0) << std::endl;
@@ -92,14 +106,14 @@ void	dirParseEvents(Config& config, std::string line) {
 		line.erase(line.find(';'));
 
 	std::istringstream	stream(line);
-	std::string	var;
-	std::string	value;
+	std::string			var;
+	std::string			value;
 
 	stream >> var >> value;
 	if (var == "worker_connections")
 		config.set_workco(std::atoi(value.c_str()));
 	else
-		throw (std::invalid_argument("Bad 'events' parameter found."));
+		throw (std::invalid_argument("Unknown parameter in 'events'."));
 }
 
 void	dirParseTypes(Config& config, std::string line) {

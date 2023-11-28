@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 12:38:37 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 15:16:55 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,7 +130,7 @@ void	get_braces_content(std::string dir_key, T &stream,
 			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
-		throw std::exception();
+		throw std::invalid_argument("Braces not closed.");
 }
 
 void parse_config_file(std::string path)
