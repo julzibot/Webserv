@@ -62,5 +62,5 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str)
 	//     std::cout << "Header: " << header.first << " = " << header.second << std::endl;
 	// std::cout << "body: " << request.body << std::endl;
 
-	return (request);
+    return (request);
 }
