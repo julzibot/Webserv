@@ -13,8 +13,8 @@
 #include "ConfigParse.hpp"
 
 // Needed functions:
-// std::unordered_map<std::string, std::string>::iterator	getBeginTypesMap( void ) { return (this->types.begin()); };
-// std::unordered_map<std::string, std::string>::iterator	getEndTypesMap( void ) { return (this->types.end()); };
+// std::map<std::string, std::string>::iterator	getBeginTypesMap( void ) { return (this->types.begin()); };
+// std::map<std::string, std::string>::iterator	getEndTypesMap( void ) { return (this->types.end()); };
 
 void dirParseLocation(int port, std::string route, std::string line, ConfigParse &config)
 {
@@ -34,7 +34,7 @@ void dirParseLocation(int port, std::string route, std::string line, ConfigParse
         ld.setRoot(value);
     }
 
-    // std::unordered_map<int, std::unordered_map<std::string, LocationDir> > server = config.getServ();
+    // std::map<int, std::map<std::string, LocationDir> > server = config.getServ();
     // std::vector<std::string> ind = ld.get_index();
     // for (int i = 0; i < ind.size(); i++)
     //     std::cout << ind.at(i) << std::endl;

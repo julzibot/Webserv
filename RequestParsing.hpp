@@ -3,7 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <unordered_map>
+#include <map>
 
 // parsing input on the server side
 class HttpRequest
@@ -12,7 +12,7 @@ class HttpRequest
         std::string method;
         std::string path;
         std::string http_version;
-        std::unordered_map<std::string, std::string> headers;
+        std::map<std::string, std::string> headers;
         std::string body;
         int         port_number;
 };

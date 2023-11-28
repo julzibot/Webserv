@@ -79,7 +79,7 @@ void    expandInclude(std::string &line, T &s)
 }
 
 template <typename T>
-void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
+void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
 {
 	bool add_portnum = 0;
 	int open_braces = 1;
@@ -125,7 +125,7 @@ void parse_config_file(std::string path)
 	std::string buffer;
     std::string directive = "main";
     size_t bracepos;
-	std::unordered_map<std::string, std::string> directives;
+	std::map<std::string, std::string> directives;
 	std::vector<std::string> dir_index;
     ConfigParse config;
 
@@ -150,7 +150,7 @@ void parse_config_file(std::string path)
 		bracepos = line.find('{');
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
-		// parseDirective(line, directive, config);
+		parseDirective(line, directive, config);
     }
 
 	// TESTING PARSING OUTPUT
@@ -158,19 +158,7 @@ void parse_config_file(std::string path)
 		std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 }
 
-// {
-// 	/**
-// 	 * 1. Check the request path.
-// 	 * 1.5: Check if the METHOD matches for this path
-// 	 * 2. Check the location.
-// 	 * 3. Test for file mentioned in index or 
-// 	 * 		one obtained by appending the path name.
-// 	 * 4. Use the try files directive to find the file.
-// 	 * 5. If file is found, return the path.
-// 	 * 6. Check if directory listing is ON
-// 	*/
-// }
-std::string ConfigParse::get_file_path(HttpRequest request) const
+std::string get_file_path(HttpRequest request, ConfigParse &config)
 {
 	/**
 	 * 0. Check the port_number to get the required locations vector.
@@ -185,12 +173,12 @@ std::string ConfigParse::get_file_path(HttpRequest request) const
 	*/
 	std::vector<LocationDir> locations;
 	std::string file_path;
+	unsigned int	i = 0;
 
-	locations = this->server[request.port_number];
-	unsigned int vecSize = locations.size();
-	for (unsigned int i = 0; i < vecSize; i++)
+	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
+	while (i++ < locations.size() && locations[i].get_route() != request.path)
 	{
-		if (locations[i].get_route().compare(request.path) == 0)
+		if (locations[i].get_route() == request.path)
 		{
 			std::vector<std::string>::iterator method_iterator;
 
@@ -200,16 +188,18 @@ std::string ConfigParse::get_file_path(HttpRequest request) const
 			{
 				// Test the presence of the file for different
 				// indexes and return the one that exists;
-				for (int j = 0; j < locations[i].get_index().size(); j++)
+				std::vector<std::string> ind = locations[i].get_index();
+				for (int j = 0; j < ind.size(); j++)
 				{
-					file_path = locations[i].get_root() + request.path
-									+ locations[i].get_index()[j];
-					try {
-						std::ifstream file(file_path);
-						if (file.good())
-							return (file_path);
-					} catch(std::exception & e) {
-						// handle error.
+					file_path = locations[i].get_root() + request.path + ind[j];
+					try 
+					{
+						std::ifstream file_content(file_path);
+						return (file_path);
+					} 
+					catch (std::exception & e) 
+					{
+						std::cerr << "error encountered while opening file" << std::endl;// handle error
 					}
 				}
 				// Directory listing should be done if code reaches this point.
