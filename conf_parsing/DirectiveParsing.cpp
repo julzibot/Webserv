@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/27 15:47:48 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 12:40:44 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void	auth_except(LocationDir& ld, std::string line) {
 	}
 }
 
-void dirParseLocation(int port, std::string route, std::string line,
+void	dirParseLocation(int port, std::string route, std::string line,
 	Config &config)
 {
     std::istringstream	linestream(line);
@@ -66,19 +66,18 @@ void dirParseLocation(int port, std::string route, std::string line,
     	value = line.substr(line.find(keyword) + 5);
     	ld.setRoot(value);
     }
-	else if (keyword == "methods_except")
-	{
+	else if (keyword == "methods_except") {
 		value = line.substr(line.find(keyword) + 12);
 		auth_except(ld, value);
 	}
-	else
-		throw (std::invalid_argument("Unkown 'location' parameter found."));
+	// else
+	// 	throw (std::invalid_argument("Unkown 'location' parameter found."));
 
 	// if (!ld.get_index().empty())
 	// 	std::cout << "Index: " << ld.get_index().at(0) << std::endl;
 	// std::cout << "Root: " << ld.get_root() << std::endl;
 
-    // std::unordered_map<int, std::unordered_map<std::string, LocationDir> > server = config.getServ();
+    // std::map<int, std::map<std::string, LocationDir> > server = config.getServ();
     // std::vector<std::string> ind = ld.get_index();
     // for (int i = 0; i < ind.size(); i++)
     //     std::cout << ind.at(i) << std::endl;

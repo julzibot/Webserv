@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/27 15:48:42 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 12:38:37 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #include "LocationDir.hpp"
 #include "DirectiveParsing.h"
 
-typedef std::unordered_map<std::string, std::string> strstrMap;
+typedef std::map<std::string, std::string> strstrMap;
 
 std::string parse_comments(std::string original_line)
 {
