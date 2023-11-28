@@ -6,16 +6,11 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 15:21:58 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 16:00:39 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <iostream>
-#include <map>
-#include <sstream>
 #include "DirectiveParsing.h"
-#include "Config.hpp"
-#include "LocationDir.hpp"
 
 std::string    removeSpaces( std::string line ) {
 
