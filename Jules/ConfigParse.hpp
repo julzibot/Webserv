@@ -6,6 +6,7 @@
 #include <map>
 #include <forward_list>
 #include <vector>
+#include <algorithm>
 
 #include "RequestParsing.hpp"
 #include "LocationDirective.hpp"
@@ -18,7 +19,7 @@ class ConfigParse
         std::unordered_map<std::string, std::string> types;
         std::map<int, std::vector<LocationDir>> server;
         std::vector<int> error_codes;
-        std::map<int, std::string> error_pages;
+        std::map<int, std::vector<std::string>> error_pages;
     public:
         int get_workproc() const;
         int get_workco() const;

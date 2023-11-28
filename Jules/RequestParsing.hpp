@@ -14,12 +14,13 @@ class HttpRequest
         std::string http_version;
         std::unordered_map<std::string, std::string> headers;
         std::string body;
+        int         port_number;
 };
 
 class HttpRequestParse
 {
     public:
-        char *  process_request(char *buff, int recvsize);
+        char *  process_request(char *buff, int recvsize, int port_number);
         static HttpRequest parse(std::string const &req_str);
         static void parse_headers(std::istringstream &requestStream, HttpRequest &request);
 };
