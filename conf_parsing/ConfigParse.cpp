@@ -158,7 +158,6 @@ void parse_config_file(std::string path)
 		std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 }
 
-// std::string ConfigParse::get_file_path(HttpRequest request) const
 // {
 // 	/**
 // 	 * 1. Check the request path.
@@ -171,6 +170,60 @@ void parse_config_file(std::string path)
 // 	 * 6. Check if directory listing is ON
 // 	*/
 // }
+std::string ConfigParse::get_file_path(HttpRequest request) const
+{
+	/**
+	 * 0. Check the port_number to get the required locations vector.
+	 * 1. Check the request path.
+	 * 1.5: Check if the METHOD matches for this path
+	 * 2. Check the location.
+	 * 3. Test for file mentioned in index or 
+	 * 		one obtained by appending the path name.
+	 * 4. Use the try files directive to find the file.
+	 * 5. If file is found, return the path.
+	 * 6. Check if directory listing is ON
+	*/
+	std::vector<LocationDir> locations;
+	std::string file_path;
+
+	locations = this->server[request.port_number];
+	unsigned int vecSize = locations.size();
+	for (unsigned int i = 0; i < vecSize; i++)
+	{
+		if (locations[i].get_route().compare(request.path) == 0)
+		{
+			std::vector<std::string>::iterator method_iterator;
+
+			method_iterator = std::find(locations[i].get_methods_allowed().begin(),
+				locations[i].get_methods_allowed().end(), request.method);
+			if (method_iterator != locations[i].get_methods_allowed().end())
+			{
+				// Test the presence of the file for different
+				// indexes and return the one that exists;
+				for (int j = 0; j < locations[i].get_index().size(); j++)
+				{
+					file_path = locations[i].get_root() + request.path
+									+ locations[i].get_index()[j];
+					try {
+						std::ifstream file(file_path);
+						if (file.good())
+							return (file_path);
+					} catch(std::exception & e) {
+						// handle error.
+					}
+				}
+				// Directory listing should be done if code reaches this point.
+				// TODO: Implement directory listing.
+			}
+			else
+			{
+				// TODO: Throw an error that the method we want does not exist.
+			}
+		}
+	}
+	// If code reaches this section, the route and method do not exist.
+	// TODO: Throw an error for route/path not existing.
+}
 
 int main()
 {
