@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 22:37:45 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 12:39:16 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,17 +15,17 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <unordered_map>
+#include <map>
 
 // parsing input on the server side
 class HttpRequest
 {
     public:
-        std::string method;
-        std::string path;
-        std::string http_version;
-        std::unordered_map<std::string, std::string> headers;
-        std::string body;
+        std::map<std::string, std::string>	headers;
+        std::string							method;
+        std::string							path;
+        std::string							http_version;
+        std::string							body;
 };
 
 class HttpRequestParse
