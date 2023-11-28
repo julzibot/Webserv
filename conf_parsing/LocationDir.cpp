@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:43:37 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 12:40:26 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 12:59:07 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,8 @@ void	LocationDir::removeMethod( std::string toRemove ) {
 
 	std::vector<std::string>::iterator it;
 
-	// if (toRemove != "GET" && toRemove != "POST" && toRemove != "DELETE")
-	// 	throw (std::invalid_argument("Unknown method in 'methods_except'."));
+	if (toRemove != "GET" && toRemove != "POST" && toRemove != "DELETE")
+		throw (std::invalid_argument("Unknown method in 'methods_except'."));
 	for (it = methods_allowed.begin(); it != methods_allowed.end(); ++it) {
 
 		if (*it == toRemove)

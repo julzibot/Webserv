@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 12:40:44 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 12:58:16 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ std::string    removeSpaces( std::string line ) {
 void	auth_except(LocationDir& ld, std::string line) {
 
 	std::istringstream	toSegment(line);
-	std::string	value = "value";
+	std::string			value;
 
 	while (!toSegment.eof()) {
 		
@@ -67,11 +67,11 @@ void	dirParseLocation(int port, std::string route, std::string line,
     	ld.setRoot(value);
     }
 	else if (keyword == "methods_except") {
-		value = line.substr(line.find(keyword) + 12);
+		value = line.substr(line.find(keyword) + 15);
 		auth_except(ld, value);
 	}
-	// else
-	// 	throw (std::invalid_argument("Unkown 'location' parameter found."));
+	else
+		throw (std::invalid_argument("Unkown 'location' parameter found."));
 
 	// if (!ld.get_index().empty())
 	// 	std::cout << "Index: " << ld.get_index().at(0) << std::endl;
@@ -176,8 +176,8 @@ void	parseDirective(std::string line, std::string directive,
 		// std::cout << dirKey << " " << route << " " << portnum << " " << "LINE: " << line << std::endl;
 		dirParseLocation(stoi(portnum), route, line, config);
 	}
-	// else
-	// 	throw ("Unknown directive found.");
+	else if (dirKey != "http" && dirKey != "server")
+		throw ("Unknown directive found.");
 }
 
 // int main()
