@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 22:39:28 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 15:37:31 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ int main (void)
             else if (!recvsize)
                 {std::cout << "Client disconnected" << std::endl; break;}
 
-            output = parser.process_request(buff,recvsize, PORT);
+            // output = parser.process_request(buff,recvsize, PORT);
             send(clientsock, output, recvsize + 1, 0);
         }
         close(clientsock);

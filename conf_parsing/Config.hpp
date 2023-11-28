@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 12:49:23 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 15:34:43 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,3 @@ class Config
         void	set_workco(int value) { this->worker_connections = value; };
         void	add_type(std::string extension, std::string path) { this->types[extension] += path; };
 };
-
-
-// void	parseDirective(std::string& line, std::string& directive, ConfigParse& config);

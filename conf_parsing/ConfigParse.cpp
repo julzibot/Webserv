@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 15:16:55 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 15:41:19 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,9 +188,9 @@ void parse_config_file(std::string path)
 // 	 * 6. Check if directory listing is ON
 // 	*/
 // }
-std::string ConfigParse::get_file_path(HttpRequest request) const
+std::string	Config::get_file_path(HttpRequest request) const
 {
-	/**
+	/*
 	 * 0. Check the port_number to get the required locations vector.
 	 * 1. Check the request path.
 	 * 1.5: Check if the METHOD matches for this path
