@@ -1,5 +1,17 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   RequestParsing.cpp                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
+/*   Updated: 2023/11/24 22:38:01 by mstojilj         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "RequestParsing.hpp"
-#include "ConfigParse.hpp"
+#include "conf_parsing/Config.hpp"
 
 void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &request)
 {

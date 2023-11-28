@@ -1,31 +1,33 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ConfigParse.hpp                                    :+:      :+:    :+:   */
+/*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/23 21:02:09 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/28 15:34:43 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#pragma once
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 #include <map>
 #include <forward_list>
 #include <vector>
 #include "../RequestParsing.hpp"
-#include "LocationDirective.hpp"
+#include "LocationDir.hpp"
+
 # define NPOS std::string::npos
 
-typedef std::unordered_map<int, std::unordered_map<std::string, LocationDir> > servLocMap;
-typedef std::unordered_map<std::string, std::string> strstrMap;
+typedef std::map<int, std::map<std::string, LocationDir> > servLocMap;
+typedef std::map<std::string, std::string> strstrMap;
 
-class ConfigParse
+class Config
 {
     private:
 
@@ -36,7 +38,7 @@ class ConfigParse
 		std::vector<int>							servPortNums;
         std::vector<int>							error_codes;
         std::map<int, std::vector<std::string> >	error_pages;
-		// std::unordered_map<int, std::vector<std::string> > loc_index;
+		// std::map<int, std::vector<std::string> > loc_index;
 
     public:
 		/* Accessors */
@@ -46,14 +48,9 @@ class ConfigParse
         std::string		get_type(std::string file_ext);
         std::string		get_file_path(HttpRequest request) const;
         LocationDir		&getLocRef(int	port, std::string route) { return (this->server[port][route]); };
-		std::unordered_map<std::string, LocationDir>	&getLocMap(int port);
+		std::map<std::string, LocationDir>	&getLocMap(int port) { return (this->server[port]); };
 
-        void	set_workproc(int value);
-        void	set_workco(int value);
-        void	add_type(std::string extension, std::string path);
+        void	set_workproc(int value) { this->worker_processes = value; };
+        void	set_workco(int value) { this->worker_connections = value; };
+        void	add_type(std::string extension, std::string path) { this->types[extension] += path; };
 };
-
-std::unordered_map<std::string, LocationDir>	&ConfigParse::getLocMap(int port)
-{
-	return (this->server[port]);
-}

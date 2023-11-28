@@ -1,12 +1,28 @@
-#include "ConfigParse.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ConfigParse.cpp                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
+/*   Updated: 2023/11/28 15:41:19 by mstojilj         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "Config.hpp"
+#include "LocationDir.hpp"
+#include "DirectiveParsing.h"
+
+typedef std::map<std::string, std::string> strstrMap;
 
 std::string parse_comments(std::string original_line)
 {
 	std::string line(original_line);
-	size_t hashpos;
-	size_t quotepos;
-	size_t sq;
-	size_t sec_quotepos;
+	size_t 		hashpos;
+	size_t 		quotepos;
+	size_t 		sq;
+	size_t 		sec_quotepos;
 
 	hashpos = line.find('#');
 	quotepos = line.find('\"');
@@ -50,12 +66,12 @@ std::string parse_comments(std::string original_line)
 template <typename T>
 void    expandInclude(std::string &line, T &s) 
 {
-    std::istringstream    toParse(line);
-	std::string		str = "";
-    std::string		command;
-	std::string		filename;
-    std::string		fileLine;
-    std::string		fileContent;
+    std::istringstream	toParse(line);
+	std::string			str = "";
+    std::string			command;
+	std::string			filename;
+    std::string			fileLine;
+    std::string			fileContent;
 
 	toParse >> command >> filename;
 	filename = filename.substr(0, filename.find(';'));
@@ -79,14 +95,14 @@ void    expandInclude(std::string &line, T &s)
 }
 
 template <typename T>
-void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
+void	get_braces_content(std::string dir_key, T &stream,
+	strstrMap &directives, std::vector<std::string> &dir_index)
 {
-	bool add_portnum = 0;
-	int open_braces = 1;
-	int	i = dir_index.size() - 1;
-	std::string line;
-	std::string portnum = "";
-	std::string route = "";
+	bool		add_portnum = 0;
+	int			open_braces = 1;
+	int			i = dir_index.size() - 1;
+	std::string	line;
+	std::string	portnum = "";
 
 	dir_index.push_back(dir_key);
 	while (open_braces && std::getline(stream, line))
@@ -105,40 +121,30 @@ void	get_braces_content(std::string dir_key, T &stream, std::unordered_map<std::
 			dir_key = line.substr(0, line.find('{'));
 			if (dir_key.find("server") != NPOS)
 				add_portnum = 1;
-			else if (dir_key.find("location") != NPOS)
-			{
-				std::istringstream(dir_key) >> route >> route;
-				route = " " + route;
-			}
 			if (!add_portnum)
-				dir_index.push_back(dir_key + portnum + route);
+				dir_index.push_back(dir_key + portnum);
 		}
-		else if (line.find('}') != NPOS)
-		{
-			if (--open_braces > 0)
-				dir_key = dir_index.at(i + open_braces);
-			if (open_braces < 3)
-				route = "";
-		}
+		else if (line.find('}') != NPOS && --open_braces > 0)
+			dir_key = dir_index.at(i + open_braces);
 		else if (open_braces)
-			directives[dir_key + portnum + route] += line + "\n";
+			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
-		throw std::exception();
+		throw std::invalid_argument("Braces not closed.");
 }
 
 void parse_config_file(std::string path)
 {
-	int	i = 0;
-    std::ifstream conf_file(path);
-    std::istringstream ls;
-    std::string line;
-	std::string buffer;
-    std::string directive = "main";
-    size_t bracepos;
-	std::unordered_map<std::string, std::string> directives;
-	std::vector<std::string> dir_index;
-    ConfigParse config;
+	int							i = 0;
+    size_t						bracepos;
+    Config						config;
+    std::string					line;
+	std::string					buffer;
+    std::string					directive = "main";
+	strstrMap					directives;
+    std::ifstream				conf_file(path);
+    std::istringstream			ls;
+	std::vector<std::string>	dir_index;
 
 	while (std::getline(conf_file, buffer))
 		line += buffer + '\n';
@@ -156,17 +162,18 @@ void parse_config_file(std::string path)
 			i++;
 		}
 		line = parse_comments(line);
-		if (line.find("include") != line.npos)
+		if (line.find("include") != NPOS)
             expandInclude(line, ls);
 		bracepos = line.find('{');
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
-		// parse_config_line(line, directive, config);
+		parseDirective(line, directive, config);
     }
 
 	// TESTING PARSING OUTPUT
 	// for (i = 0; i < dir_index.size(); i++)
-	// 	std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	// 	std::cout << "\e[31mkey: \e[0m" << dir_index.at(i) << "  \e[33mvalue: \e[0m"
+	// 		<< directives[dir_index.at(i)] << std::endl << "\e[34m----------\e[0m" << std::endl;
 }
 
 // {
@@ -181,9 +188,9 @@ void parse_config_file(std::string path)
 // 	 * 6. Check if directory listing is ON
 // 	*/
 // }
-std::string ConfigParse::get_file_path(HttpRequest request) const
+std::string	Config::get_file_path(HttpRequest request) const
 {
-	/**
+	/*
 	 * 0. Check the port_number to get the required locations vector.
 	 * 1. Check the request path.
 	 * 1.5: Check if the METHOD matches for this path
