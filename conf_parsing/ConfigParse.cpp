@@ -195,11 +195,7 @@ std::string get_file_path(HttpRequest request, Config &config)
 	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
 	std::map<std::string, LocationDir>::iterator	it = locations.begin();
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
-	std::vector<std::string>	methods;
-	methods.push_back("GET");
-	// std::vector<int, std::string>	servnums = config.ge
-	// std::cout << "1 " << it->first << " | " << request.path << std::endl;
-	// std::cout << request.path << " " << request.method << " " << request.http_version << std::endl;
+
 	while (it != locEnd && it->second.get_route() != request.path)
 	{
 		std::cout << "| " << it->second.get_route() << " | " << std::endl;
@@ -210,21 +206,17 @@ std::string get_file_path(HttpRequest request, Config &config)
 		std::cout << "problem encountered" << std::endl;//error handling
 	else
 	{
-		std::vector<std::string>::iterator method_iterator;
-		std::cout << 1 << std::endl;
-		while (i < methods.size() && methods[i] != request.method)
+		std::vector<std::string> methods = it->second.get_methods_allowed();
+		while (i < methods.size() && methods.at(i) != request.method)
 			i++;
-		std::cout << 2 << std::endl;
 		if (i < methods.size())
 		{
 			// Test the presence of the file for different
 			// indexes and return the one that exists;
 			std::vector<std::string> ind = it->second.get_index();
-			std::cout << 3 << std::endl;
 			for (int j = 0; j < ind.size(); j++)
 			{
-				file_path = removeSpaces(it->second.get_root()) + request.path + ind[j];
-				// std::cout << file_path << std::endl;
+				file_path = it->second.get_root() + request.path + ind[j];
 				if (!access(file_path.c_str(), R_OK))
 					return (file_path);
 			}

@@ -66,19 +66,19 @@ void	dirParseLocation(int port, std::string route, std::string line,
     linestream >> keyword;
 	// std::cout << "| " << keyword << " |" << std::endl;
     if (keyword == "index") {
-        value = line.substr(line.find(keyword) + 6);
+        value = removeSpaces(line.substr(line.find(keyword) + 6));
         ld.setindex(value);
     }
     else if (keyword == "root") {
-    	value = line.substr(line.find(keyword) + 5);
+    	value = removeSpaces(line.substr(line.find(keyword) + 5));
     	ld.setRoot(value);
     }
 	else if (keyword == "methods_except") {
-		value = line.substr(line.find(keyword) + 15);
+		value = removeSpaces(line.substr(line.find(keyword) + 15));
 		auth_except(ld, value);
 	}
 	else if (keyword == "autoindex") {
-		value = line.substr(line.find(keyword) + 10);
+		value = removeSpaces(line.substr(line.find(keyword) + 10));
 		assign_autoindex(ld, value);
 	}
 	else
