@@ -1,12 +1,27 @@
-#include "ConfigParse.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ConfigParse.cpp                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
+/*   Updated: 2023/11/28 15:41:19 by mstojilj         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "Config.hpp"
+#include "DirectiveParsing.h"
+
+typedef std::map<std::string, std::string> strstrMap;
 
 std::string parse_comments(std::string original_line)
 {
 	std::string line(original_line);
-	size_t hashpos;
-	size_t quotepos;
-	size_t sq;
-	size_t sec_quotepos;
+	size_t 		hashpos;
+	size_t 		quotepos;
+	size_t 		sq;
+	size_t 		sec_quotepos;
 
 	hashpos = line.find('#');
 	quotepos = line.find('\"');
@@ -50,12 +65,12 @@ std::string parse_comments(std::string original_line)
 template <typename T>
 void    expandInclude(std::string &line, T &s) 
 {
-    std::istringstream    toParse(line);
-	std::string		str = "";
-    std::string		command;
-	std::string		filename;
-    std::string		fileLine;
-    std::string		fileContent;
+    std::istringstream	toParse(line);
+	std::string			str = "";
+    std::string			command;
+	std::string			filename;
+    std::string			fileLine;
+    std::string			fileContent;
 
 	toParse >> command >> filename;
 	filename = filename.substr(0, filename.find(';'));
@@ -81,11 +96,11 @@ void    expandInclude(std::string &line, T &s)
 template <typename T>
 void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
 {
-	bool add_portnum = 0;
-	int open_braces = 1;
-	int	i = dir_index.size() - 1;
-	std::string line;
-	std::string portnum = "";
+	bool		add_portnum = 0;
+	int			open_braces = 1;
+	int			i = dir_index.size() - 1;
+	std::string	line;
+	std::string	portnum = "";
 
 	dir_index.push_back(dir_key);
 	while (open_braces && std::getline(stream, line))
@@ -113,21 +128,21 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
-		throw std::exception();
+		throw std::invalid_argument("Braces not closed.");
 }
 
-void parse_config_file(std::string path)
+Config	parse_config_file(std::string path)
 {
-	int	i = 0;
-    std::ifstream conf_file(path);
-    std::istringstream ls;
-    std::string line;
-	std::string buffer;
-    std::string directive = "main";
-    size_t bracepos;
-	std::map<std::string, std::string> directives;
-	std::vector<std::string> dir_index;
-    ConfigParse config;
+	int							i = 0;
+    size_t						bracepos;
+    Config						config;
+    std::string					line;
+	std::string					buffer;
+    std::string					directive = "main";
+	strstrMap					directives;
+    std::ifstream				conf_file(path);
+    std::istringstream			ls;
+	std::vector<std::string>	dir_index;
 
 	while (std::getline(conf_file, buffer))
 		line += buffer + '\n';
@@ -154,13 +169,16 @@ void parse_config_file(std::string path)
     }
 
 	// TESTING PARSING OUTPUT
-	for (i = 0; i < dir_index.size(); i++)
-		std::cout << "key: " << dir_index.at(i) << "  value: " << directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	// for (i = 0; i < dir_index.size(); i++)
+	// 	std::cout << "\e[31mkey: \e[0m" << dir_index.at(i) << "  \e[33mvalue: \e[0m"
+	// 		<< directives[dir_index.at(i)] << std::endl << "\e[34m----------\e[0m" << std::endl;
+	return (config);
 }
 
-std::string get_file_path(HttpRequest request, ConfigParse &config)
+std::string get_file_path(HttpRequest request, Config &config)
 {
-	/**
+	// std::cout << "| " << config.getLocRef(request.port_number, "/").get_root() << " |" << std::endl;
+	/*
 	 * 0. Check the port_number to get the required locations vector.
 	 * 1. Check the request path.
 	 * 1.5: Check if the METHOD matches for this path
@@ -171,55 +189,63 @@ std::string get_file_path(HttpRequest request, ConfigParse &config)
 	 * 5. If file is found, return the path.
 	 * 6. Check if directory listing is ON
 	*/
-	std::vector<LocationDir> locations;
 	std::string file_path;
 	unsigned int	i = 0;
 
 	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
-	while (i++ < locations.size() && locations[i].get_route() != request.path)
+	std::map<std::string, LocationDir>::iterator	it = locations.begin();
+	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+	std::vector<std::string>	methods;
+	methods.push_back("GET");
+	// std::vector<int, std::string>	servnums = config.ge
+	// std::cout << "1 " << it->first << " | " << request.path << std::endl;
+	// std::cout << request.path << " " << request.method << " " << request.http_version << std::endl;
+	while (it != locEnd && it->second.get_route() != request.path)
 	{
-		if (locations[i].get_route() == request.path)
-		{
-			std::vector<std::string>::iterator method_iterator;
-
-			method_iterator = std::find(locations[i].get_methods_allowed().begin(),
-				locations[i].get_methods_allowed().end(), request.method);
-			if (method_iterator != locations[i].get_methods_allowed().end())
-			{
-				// Test the presence of the file for different
-				// indexes and return the one that exists;
-				std::vector<std::string> ind = locations[i].get_index();
-				for (int j = 0; j < ind.size(); j++)
-				{
-					file_path = locations[i].get_root() + request.path + ind[j];
-					try 
-					{
-						std::ifstream file_content(file_path);
-						return (file_path);
-					} 
-					catch (std::exception & e) 
-					{
-						std::cerr << "error encountered while opening file" << std::endl;// handle error
-					}
-				}
-				// Directory listing should be done if code reaches this point.
-				// TODO: Implement directory listing.
-			}
-			else
-			{
-				// TODO: Throw an error that the method we want does not exist.
-			}
-		}
+		std::cout << "| " << it->second.get_route() << " | " << std::endl;
+		it++;
 	}
+	// std::cout << "here: " << it->second.get_route() << std::endl; 
+	if (it == locEnd && locations.begin() != locEnd)
+		std::cout << "problem encountered" << std::endl;//error handling
+	else
+	{
+		std::vector<std::string>::iterator method_iterator;
+		std::cout << 1 << std::endl;
+		while (i < methods.size() && methods[i] != request.method)
+			i++;
+		std::cout << 2 << std::endl;
+		if (i < methods.size())
+		{
+			// Test the presence of the file for different
+			// indexes and return the one that exists;
+			std::vector<std::string> ind = it->second.get_index();
+			std::cout << 3 << std::endl;
+			for (int j = 0; j < ind.size(); j++)
+			{
+				file_path = removeSpaces(it->second.get_root()) + request.path + ind[j];
+				// std::cout << file_path << std::endl;
+				if (!access(file_path.c_str(), R_OK))
+					return (file_path);
+			}
+			std::cout << "no valid file encountered" << std::endl;
+			return ("error_3");
+			// directory listing;
+		}
+		else
+			std::cout << "method not allowed" << std::endl;
+		return ("error_2");
+	}
+	return ("error_1");
 	// If code reaches this section, the route and method do not exist.
 	// TODO: Throw an error for route/path not existing.
 }
 
-int main()
-{
-	std::string path = "webserv.conf";
-	// std::ifstream file(path);
+// int main()
+// {
+// 	std::string path = "webserv.conf";
+// 	// std::ifstream file(path);
 
-	parse_config_file(path);
-	return (0);
-}
+// 	Config c = parse_config_file(path);
+// 	return (0);
+// }

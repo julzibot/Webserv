@@ -1,5 +1,17 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   RequestParsing.cpp                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
+/*   Updated: 2023/11/24 22:38:01 by mstojilj         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "RequestParsing.hpp"
-#include "ConfigParse.hpp"
+#include "conf_parsing/Config.hpp"
 
 void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &request)
 {
@@ -14,28 +26,8 @@ void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &req
 			request.headers[headername] = headervalue;
 		}
 		else
-			throw std::exception();
+			break;
 	}
-}
-
-char *  HttpRequestParse::process_request(char * buffer, int recvsize, int port_number)
-{
-	HttpRequestParse    request;
-	ConfigParse         config;
-	HttpRequest         requestConfig;
-	std::string         file_path;
-	char                *output;
-
-	requestConfig = HttpRequestParse::parse(std::string(buffer, 0, recvsize));
-	requestConfig.port_number = port_number;
-	file_path = config.get_file_path(requestConfig);
-	/**
-	 * 1. check if file exists
-	 * 2. check if file is readable
-	 * 3. Read file.
-	 * 4. Convert into necessary format and respond.
-	*/
-	return (output);
 }
 
 HttpRequest HttpRequestParse::parse(std::string const &req_str)
@@ -49,7 +41,7 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str)
 	// PARSING START LINE
 	std::istringstream linestream(line);
 	linestream >> request.method >> request.path >> request.http_version;
-	std::cout << request.method << request.path << request.http_version;
+	// std::cout << request.method << request.path << request.http_version << std::endl;
 	// PARSING HEADERS
 	HttpRequestParse::parse_headers(requestStream, request);
 	// PARSING BODY IF NECESSARY
@@ -63,4 +55,25 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str)
 	// std::cout << "body: " << request.body << std::endl;
 
     return (request);
+}
+
+char *  HttpRequestParse::process_request(char * buffer, int recvsize, int port_number)
+{
+	std::string			config_file_path = "webserv.conf";
+	Config				config;
+	HttpRequest         request;
+	std::string         file_path;
+	char                *output;
+
+	request = HttpRequestParse::parse(std::string(buffer, 0, recvsize));
+	request.port_number = port_number;
+	config = parse_config_file(config_file_path);
+	file_path = get_file_path(request, config);
+	/**
+	 * 1. check if file exists
+	 * 2. check if file is readable
+	 * 3. Read file.
+	 * 4. Convert into necessary format and respond.
+	*/
+	return (output);
 }

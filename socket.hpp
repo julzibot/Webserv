@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   socket.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/24 22:39:32 by mstojilj          #+#    #+#             */
+/*   Updated: 2023/11/24 22:39:32 by mstojilj         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #pragma once
 
 #include <sys/socket.h>
@@ -12,12 +24,3 @@
 #include <sstream>
 
 #define PORT 9999
-
-class TcpServer
-{
-    private:
-
-    public:
-        TcpServer(std::string ip, int port);
-        ~TcpServer();
-};
