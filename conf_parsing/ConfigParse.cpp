@@ -96,11 +96,14 @@ size_t	isBrace(char brace, std::string line) {
 
 	size_t	braceRes = line.find(brace);
 
-	if (braceRes != NPOS) {
-		for (size_t i = braceRes + 1; i < line.length(); ++i) {
-			if (!isspace(line[i]))
-				throw (std::invalid_argument("Characters found after brace."));
-		}
+	if (braceRes != NPOS) 
+	{
+		size_t	i = braceRes;
+		size_t	len = line.length();
+		while (++i < len && isspace(line[i]))
+			;
+		if (i < len)
+			throw (std::invalid_argument("Characters found after brace."));
 	}
 	return (braceRes);
 }

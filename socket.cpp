@@ -14,10 +14,16 @@
 #include "RequestParsing.hpp"
 #include "conf_parsing/Config.hpp"
 #include "conf_parsing/DirectiveParsing.h"
+#include <csignal>
+
+volatile sig_atomic_t    isTrue = 1;
+
+// Function to run when CTRL-C is pressed
+void    sigHandler( int param ) {isTrue = 0;}
 
 int main (void)
 {
-    // HttpRequestParse    parser;
+    HttpRequest request;
     // SERVER
     Config  config = parse_config_file("conf_parsing/webserv.conf");
     int arrsize = config.get_portnums().size();
@@ -59,36 +65,34 @@ int main (void)
     std::string line;
     int recvsize;
     int c = 0;
-    while (true)
+    signal(SIGINT, sigHandler);
+    while (isTrue)
     {
         clientsock = accept(servsock, (struct sockaddr*)&caddr, (socklen_t*)&caddrsize);
         std::cout << "[Server] Client connected with success" << std::endl;
-        while (strncmp(buff, strdup("end"), 3) != 0)
-        {
-            memset(buff, 0, 4096);
-            recvsize = recv(clientsock, buff, 4096, 0);
-            std::cout << std::string(buff) << std::endl;
-            if (recvsize == -1)
-                {std::cerr << "Error encountered receiving message"; break;} 
-            else if (!recvsize)
-                {std::cout << "Client disconnected" << std::endl; break;}
-            // PARSE THE REQUEST
-            HttpRequest request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
-            // PARSE THE CONFIG FILE
-            // BUILD THE RESPONSE,
-            // FIRST BY GETTING THE FILE PATH, FILLING A RESPONSE OBJECT, THEN SENDING IT ALL AS A SINGLE STRING
-            output += "HTTP/1.1 200 OK\n\n";
-            filepath = get_file_path(request, config);
-            std::cout << filepath << std::endl;
-            fs = std::ifstream(filepath);
-            while (std::getline(fs, line))
-                output += line + '\n';
-            std::cout << output << std::endl;
-            send(clientsock, output.c_str(), output.length(), 0);
-        }
+        memset(buff, 0, 4096);
+        recvsize = recv(clientsock, buff, 4096, 0);
+        std::cout << std::string(buff) << std::endl;
+        if (recvsize == -1)
+            {std::cerr << "Error encountered receiving message"; break;}
+        else if (!recvsize)
+            {std::cout << "Client disconnected" << std::endl; break;}
+        // PARSE THE REQUEST
+        request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
+        // BUILD THE RESPONSE,
+        // FIRST BY GETTING THE FILE PATH, FILLING A RESPONSE OBJECT, THEN SENDING IT ALL AS A SINGLE STRING
+        output += "HTTP/1.1 200 OK\n\n";
+        filepath = get_file_path(request, config);
+        fs = std::ifstream(filepath);
+        while (std::getline(fs, line))
+            output += line + '\n';
+        std::cout << output << std::endl;
+        send(clientsock, output.c_str(), output.length(), 0);
+        output.clear();
         close(clientsock);
-        close(servsock);
-        break;
+        std::cout<< isTrue << std::endl;
     }
+    // signal(SIGINT, SIG_DFL);
+    close(servsock);
     return(0);
 }
