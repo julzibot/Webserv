@@ -24,12 +24,3 @@
 #include <sstream>
 
 #define PORT 9999
-
-class TcpServer
-{
-    private:
-
-    public:
-        TcpServer(std::string ip, int port);
-        ~TcpServer();
-};

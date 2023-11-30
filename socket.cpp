@@ -12,19 +12,25 @@
 
 #include "socket.hpp"
 #include "RequestParsing.hpp"
+#include "conf_parsing/Config.hpp"
+#include "conf_parsing/DirectiveParsing.h"
 
 int main (void)
 {
-    HttpRequestParse    parser;
+    // HttpRequestParse    parser;
     // SERVER
-    struct sockaddr_in saddr = {
-        .sin_family = AF_INET,
-        .sin_addr.s_addr = INADDR_ANY,
-        .sin_port = htons(PORT)
-    };
+    Config  config = parse_config_file("conf_parsing/webserv.conf");
+    int arrsize = config.get_portnums().size();
+    struct sockaddr_in saddr[arrsize];
+    for (int i = 0; i < arrsize; i++)
+    {
+        saddr[i].sin_family = AF_INET,
+        saddr[i].sin_addr.s_addr = INADDR_ANY,
+        saddr[i].sin_port = htons(config.get_portnums().at(i));
+    }
 
-    // int option = 1;
-    int saddr_size = sizeof(saddr);
+    int option = 1;
+    // int saddr_size = sizeof(saddr);
     int servsock = socket(AF_INET, SOCK_STREAM, 0);
     // setsockopt(servsock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option));
     if (servsock == -1)
@@ -39,32 +45,46 @@ int main (void)
     int clientsock;
 
     // BINDING
-    bind(servsock, (struct sockaddr*)&saddr, sizeof(saddr));
+    bind(servsock, (struct sockaddr*)&saddr[0], sizeof(saddr[0]));
 
     //LISTENING
     listen(servsock, SOMAXCONN);
-    std::cout << "[Server] listening on port " << PORT << std::endl;
+    std::cout << "[Server] listening on port " << config.get_portnums()[0] << std::endl;
 
     //WAITING TO ACCEPT
     char    buff[4096];
-    char    *output;
+    std::string output;
+    std::string filepath;
+    std::ifstream fs;
+    std::string line;
     int recvsize;
+    int c = 0;
     while (true)
     {
         clientsock = accept(servsock, (struct sockaddr*)&caddr, (socklen_t*)&caddrsize);
         std::cout << "[Server] Client connected with success" << std::endl;
-
         while (strncmp(buff, strdup("end"), 3) != 0)
         {
             memset(buff, 0, 4096);
             recvsize = recv(clientsock, buff, 4096, 0);
+            std::cout << std::string(buff) << std::endl;
             if (recvsize == -1)
-                {std::cerr << "Error encountered receiving message"; break;}
+                {std::cerr << "Error encountered receiving message"; break;} 
             else if (!recvsize)
                 {std::cout << "Client disconnected" << std::endl; break;}
-
-            // output = parser.process_request(buff,recvsize, PORT);
-            send(clientsock, output, recvsize + 1, 0);
+            // PARSE THE REQUEST
+            HttpRequest request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
+            // PARSE THE CONFIG FILE
+            // BUILD THE RESPONSE,
+            // FIRST BY GETTING THE FILE PATH, FILLING A RESPONSE OBJECT, THEN SENDING IT ALL AS A SINGLE STRING
+            output += "HTTP/1.1 200 OK\n\n";
+            filepath = get_file_path(request, config);
+            std::cout << filepath << std::endl;
+            fs = std::ifstream(filepath);
+            while (std::getline(fs, line))
+                output += line + '\n';
+            std::cout << output << std::endl;
+            send(clientsock, output.c_str(), output.length(), 0);
         }
         close(clientsock);
         close(servsock);

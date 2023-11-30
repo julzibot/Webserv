@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "LocationDir.hpp"
+#include "Config.hpp"
 
 // Milan 27/11
 // 'methods_except' added
@@ -47,5 +47,5 @@ void	LocationDir::setindex(std::string indexFiles)
 	std::string	buffer;
 
 	while (line >> buffer)
-		this->index.push_back(buffer);
+		this->index.push_back(std::string(buffer));
 }

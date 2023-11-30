@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "Config.hpp"
-#include "LocationDir.hpp"
 #include "DirectiveParsing.h"
 
 typedef std::map<std::string, std::string> strstrMap;
@@ -74,7 +73,6 @@ void    expandInclude(std::string &line, T &s)
     std::string			fileContent;
 
 	toParse >> command >> filename;
-	filename = filename.substr(0, filename.find(';'));
 	if (command != "include")
 		return;
     std::ifstream    fs(filename);
@@ -94,9 +92,21 @@ void    expandInclude(std::string &line, T &s)
 		std::getline(s, line);
 }
 
+size_t	isBrace(char brace, std::string line) {
+
+	size_t	braceRes = line.find(brace);
+
+	if (braceRes != NPOS) {
+		for (size_t i = braceRes + 1; i < line.length(); ++i) {
+			if (!isspace(line[i]))
+				throw (std::invalid_argument("Characters found after brace."));
+		}
+	}
+	return (braceRes);
+}
+
 template <typename T>
-void	get_braces_content(std::string dir_key, T &stream,
-	strstrMap &directives, std::vector<std::string> &dir_index)
+void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
 {
 	bool		add_portnum = 0;
 	int			open_braces = 1;
@@ -111,11 +121,11 @@ void	get_braces_content(std::string dir_key, T &stream,
 		if (add_portnum && line.find("listen") != NPOS)
 		{
 			std::istringstream(line) >> portnum >> portnum;
-			portnum = " " + portnum.substr(0, portnum.find(';'));
+			portnum = " " + portnum;
 			dir_index.push_back(dir_key + portnum);
 			add_portnum = 0;
 		}
-		if (line.find('{') != NPOS)
+		if (isBrace('{', line) != NPOS)
 		{
 			open_braces++;
 			dir_key = line.substr(0, line.find('{'));
@@ -124,26 +134,26 @@ void	get_braces_content(std::string dir_key, T &stream,
 			if (!add_portnum)
 				dir_index.push_back(dir_key + portnum);
 		}
-		else if (line.find('}') != NPOS && --open_braces > 0)
+		else if (isBrace('}', line) != NPOS && --open_braces > 0)
 			dir_key = dir_index.at(i + open_braces);
 		else if (open_braces)
 			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
-		throw std::invalid_argument("Braces not closed.");
+		throw std::invalid_argument("Unclosed braces found.");
 }
 
-void parse_config_file(std::string path)
+Config	parse_config_file(std::string path)
 {
+    Config						config;
 	int							i = 0;
     size_t						bracepos;
-    Config						config;
+    std::ifstream				conf_file(path);
+    std::istringstream			ls;
+	strstrMap					directives;
     std::string					line;
 	std::string					buffer;
     std::string					directive = "main";
-	strstrMap					directives;
-    std::ifstream				conf_file(path);
-    std::istringstream			ls;
 	std::vector<std::string>	dir_index;
 
 	while (std::getline(conf_file, buffer))
@@ -164,32 +174,24 @@ void parse_config_file(std::string path)
 		line = parse_comments(line);
 		if (line.find("include") != NPOS)
             expandInclude(line, ls);
-		bracepos = line.find('{');
+		bracepos = isBrace('{', line);
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
 		parseDirective(line, directive, config);
     }
 
+	// config.printAll();
+	
 	// TESTING PARSING OUTPUT
 	// for (i = 0; i < dir_index.size(); i++)
 	// 	std::cout << "\e[31mkey: \e[0m" << dir_index.at(i) << "  \e[33mvalue: \e[0m"
 	// 		<< directives[dir_index.at(i)] << std::endl << "\e[34m----------\e[0m" << std::endl;
+	return (config);
 }
 
-// {
-// 	/**
-// 	 * 1. Check the request path.
-// 	 * 1.5: Check if the METHOD matches for this path
-// 	 * 2. Check the location.
-// 	 * 3. Test for file mentioned in index or 
-// 	 * 		one obtained by appending the path name.
-// 	 * 4. Use the try files directive to find the file.
-// 	 * 5. If file is found, return the path.
-// 	 * 6. Check if directory listing is ON
-// 	*/
-// }
-std::string	Config::get_file_path(HttpRequest request) const
+std::string get_file_path(HttpRequest request, Config &config)
 {
+	// std::cout << "| " << config.getLocRef(request.port_number, "/").get_root() << " |" << std::endl;
 	/*
 	 * 0. Check the port_number to get the required locations vector.
 	 * 1. Check the request path.
@@ -201,66 +203,122 @@ std::string	Config::get_file_path(HttpRequest request) const
 	 * 5. If file is found, return the path.
 	 * 6. Check if directory listing is ON
 	*/
-	std::vector<LocationDir> locations;
 	std::string file_path;
+	unsigned int	i = 0;
 
-	locations = this->server[request.port_number];
-	unsigned int vecSize = locations.size();
-	for (unsigned int i = 0; i < vecSize; i++)
+	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
+	std::map<std::string, LocationDir>::iterator	it = locations.begin();
+	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+
+	while (it != locEnd && it->second.get_route() != request.path)
 	{
-		if (locations[i].get_route().compare(request.path) == 0)
-		{
-			std::vector<std::string>::iterator method_iterator;
-
-			method_iterator = std::find(locations[i].get_methods_allowed().begin(),
-				locations[i].get_methods_allowed().end(), request.method);
-			if (method_iterator != locations[i].get_methods_allowed().end())
-			{
-				// Test the presence of the file for different
-				// indexes and return the one that exists;
-				for (int j = 0; j < locations[i].get_index().size(); j++)
-				{
-					file_path = locations[i].get_root() + request.path
-									+ locations[i].get_index()[j];
-					try {
-						std::ifstream file(file_path);
-						if (file.good())
-							return (file_path);
-					} catch(std::exception & e) {
-						// handle error.
-					}
-				}
-				// Directory listing should be done if code reaches this point.
-				// TODO: Implement directory listing.
-			}
-			else
-			{
-				// TODO: Throw an error that the method we want does not exist.
-			}
-		}
+		// std::cout << "| " << it->second.get_route() << " | " << std::endl;
+		it++;
 	}
+	if (it == locEnd && locations.begin() != locEnd)
+		std::cout << "problem encountered" << std::endl;//error handling
+	else
+	{
+		std::vector<std::string> methods = it->second.get_methods_allowed();
+		while (i < methods.size() && methods.at(i) != request.method)
+			i++;
+		if (i < methods.size())
+		{
+			// Test the presence of the file for different
+			// indexes and return the one that exists;
+			std::vector<std::string> ind = it->second.get_index();
+			for (int j = 0; j < ind.size(); j++)
+			{
+				file_path = it->second.get_root() + request.path + ind[j];
+				std::cout << file_path.c_str() << std::endl;
+				if (!access(file_path.c_str(), R_OK))
+					return (file_path);
+			}
+			std::cout << "no valid file encountered" << std::endl;
+			return ("error_3");
+			// directory listing;
+		}
+		else
+			std::cout << "method not allowed" << std::endl;
+		return ("error_2");
+	}
+	return ("error_1");
 	// If code reaches this section, the route and method do not exist.
 	// TODO: Throw an error for route/path not existing.
 }
 
-std::string	Config::get_error_page_file_path(int code, Config &config,
-		int port) const
-{
-	HttpRequest request;
-	std::string	file_path;
+// std::string	Config::get_error_page_file_path(int code, Config &config,
+// 		int port) const
+// {
+// 	HttpRequest request;
+// 	std::string	file_path;
 
-	request.port_number = port;
-	request.method = "GET";
-	request.path = config.get_route_for_error_code(code, port);
-	file_path = config.get_file_path(request);
-	return (file_path);
-}
+// 	request.port_number = port;
+// 	request.method = "GET";
+// 	request.path = config.get_route_for_error_code(code, port);
+// 	file_path = get_file_path(request, config);
+// 	return (file_path);
+// }
 
-int main()
-{
-	std::string path = "webserv.conf";
+// int main()
+// {
+// 	std::string path = "webserv.conf";
 	// std::ifstream file(path);
 
-	parse_config_file(path);
-	return (0);
+// 	Config c = parse_config_file(path);
+// 	return (0);
+// }
+
+void	Config::printAll( void ) {
+
+	std::cout << "worker_processes: " << this->worker_processes << std::endl;
+	std::cout << "worker_connections: " << this->worker_connections << std::endl;
+	
+	std::cout << "\e[31m************************\e[0m" << std::endl;
+	std::cout << "\e[31m*** SERVER LOCATIONS ***\e[0m" << std::endl;
+	for (servLocMap::iterator it = this->server.begin(); it != this->server.end(); ++it) {
+
+		std::cout << "\e[4;32mPORT: " << it->first << "\e[0m" << std::endl;
+		std::map<std::string, LocationDir>::iterator it1;
+		for (it1 = it->second.begin(); it1 != it->second.end(); ++it1) {
+			std::cout << "\e[35m* LocationDir: " << it1->first << " *\e[0m" << std::endl;
+			std::cout << "\e[33mAutoindex:    \e[0m" << it1->second.get_autoindex() << std::endl;
+			std::cout << "\e[33mServer_name:  \e[0m" << it1->second.get_server_name() << std::endl;
+			std::cout << "\e[33mRoute:        \e[0m" << it1->second.get_route() << std::endl;
+			std::cout << "\e[33mRoot:         \e[0m" << it1->second.get_root() << std::endl;
+			std::cout << "\e[33mRedirect_url: \e[0m" << it1->second.get_redirect_url() << std::endl;
+			std::vector<std::string>	indexVec = it1->second.get_index();
+			std::vector<std::string>::iterator	vecit;
+			std::cout << "INDEX: ";
+			for (vecit = indexVec.begin(); vecit != indexVec.end(); ++vecit)
+				std::cout << *vecit << " ";
+			std::cout << std::endl;
+			std::vector<std::string>	methVec = it1->second.get_methods_allowed();
+				std::cout << "METHODS: ";
+			for (vecit = methVec.begin(); vecit != methVec.end(); ++vecit)
+				std::cout << *vecit << " ";
+			std::cout << std::endl;
+		}
+	}
+	std::cout << "\e[31m************************\e[0m" << std::endl;
+		std::cout << "\e[35mServer Port Numbers\e[0m" << std::endl;
+		std::vector<int>::iterator itint;
+		for (itint = servPortNums.begin(); itint != servPortNums.end(); ++itint)
+			std::cout << *itint << " ";
+		std::cout << std::endl;
+		std::cout << "\e[36mError codes\e[0m" << std::endl;
+		for (itint = error_codes.begin(); itint != error_codes.end(); ++itint)
+			std::cout << *itint << " ";
+		std::cout << std::endl;
+
+		servErrorMap::iterator	errmapit;
+		for (errmapit = error_page_map.begin(); errmapit != error_page_map.end(); ++errmapit) {
+
+			std::cout << "\e[38mPORT: " << errmapit->first << "\e[0m" << std::endl;
+			std::map<int, std::string>::iterator	mapintit;
+			std::cout << "\e[37m* Error pages *\e[0m" << std::endl;
+			for (mapintit = errmapit->second.begin(); mapintit != errmapit->second.end(); ++mapintit)
+				std::cout << mapintit->first << " - " << mapintit->second << std::endl;
+			std::cout << std::endl;
+		}
 }

@@ -33,6 +33,6 @@ class HttpRequestParse
 {
     public:
         char *  process_request(char *buff, int recvsize, int port_number);
-        static HttpRequest parse(std::string const &req_str);
+        static HttpRequest parse(std::string const &req_str, int portnum);
         static void parse_headers(std::istringstream &requestStream, HttpRequest &request);
 };
