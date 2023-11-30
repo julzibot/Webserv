@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 16:00:39 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/29 19:36:32 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 
 std::string    removeSpaces( std::string line ) {
 
+	if (line.empty())
+		return (line);
     std::string    spaceless;
     bool        charEnc = false;
 
@@ -52,16 +54,18 @@ void	assign_autoindex(LocationDir& ld, std::string value) {
 		throw (std::invalid_argument("Unknown parameter in 'autoindex'."));
 }
 
-void	dirParseLocation(int port, std::string route, std::string line,
-	Config &config)
+void	dirParseLocation(Config &config, std::string line, std::string directive)
 {
+	std::string	portStr;
+	std::string	route;
+	std::istringstream(directive) >> route >> route >> portStr;
+	int	port = std::atoi(portStr.c_str());
+
     std::istringstream	linestream(line);
     std::string			keyword;
     std::string			value;
     LocationDir			&ld = config.getLocRef(port, route);
 
-	if (line.find(";") != NPOS)
-		line.erase(line.find(";"));
     linestream >> keyword;
     if (keyword == "index") {
         value = line.substr(line.find(keyword) + 6);
@@ -92,13 +96,12 @@ void	dirParseLocation(int port, std::string route, std::string line,
     //     std::cout << ind.at(i) << std::endl;
 }
 
-void	dirParseEvents(Config& config, std::string line) {
+void	dirParseEvents(Config& config, std::string line, std::string directive) {
 
+	(void)directive;
 	if (line.empty())
 		return;
 	line = removeSpaces(line);
-	if (line.find(';') != line.npos)
-		line.erase(line.find(';'));
 
 	std::istringstream	stream(line);
 	std::string			var;
@@ -111,13 +114,12 @@ void	dirParseEvents(Config& config, std::string line) {
 		throw (std::invalid_argument("Unknown parameter in 'events'."));
 }
 
-void	dirParseTypes(Config& config, std::string line) {
+void	dirParseTypes(Config& config, std::string line, std::string directive) {
 
+	(void)directive;
 	if (line.empty())
 		return;
 	line = removeSpaces(line);
-	if (line.find(';') != line.npos)
-		line.erase(line.find(';'));
 
 	std::istringstream	stream(line);
 	while (!stream.eof()) {
@@ -142,13 +144,12 @@ void	dirParseTypes(Config& config, std::string line) {
 	}
 }
 
-void	dirParseMain(Config& config, std::string line) {
+void	dirParseMain(Config& config, std::string line, std::string directive) {
 
+	(void)directive;
 	if (line.empty())
 		return;
 	line = removeSpaces(line);
-	if (line.find(';') != line.npos)
-		line.erase(line.find(';'));
 
 	std::istringstream	stream(line);
 	std::string			var;
@@ -159,8 +160,75 @@ void	dirParseMain(Config& config, std::string line) {
 		config.set_workproc(std::atoi(value.c_str()));
 }
 
+bool	validErrorHtmlFile( std::string filename ) {
+	
+	std::fstream	verifyFile(filename);
+
+	// if (!verifyFile.good())
+	// 	throw (std::invalid_argument("Problem with 'error_page' file."));
+	if (filename.find(".html") == NPOS)
+		throw (std::invalid_argument("Problem with 'error_page' file extension."));
+	return (true);
+}
+
+bool	isValidErrCode( const std::string& errCode ) {
+	
+	if (errCode.length() > 3 || errCode.empty())
+		return (false);
+	for (int i = 0; i < errCode.length(); ++i) {
+		if (errCode[i] < '0' || errCode[i] > '9')
+			return (false);
+	}
+	return (true);
+}
+
+void	dirParseServer(Config& config, std::string line, std::string directive) {
+
+	line = removeSpaces(line);
+	if (line.empty())
+		return;
+
+	std::string	portStr;
+	std::istringstream(directive) >> portStr >> portStr;
+	int	port = std::atoi(portStr.c_str());
+
+	std::istringstream	stream(line);
+	std::string			varName;
+
+	stream >> varName;
+	if (varName == "error_page") {
+		
+		std::vector<std::string>	arr;
+		std::string					tmp;
+
+		std::getline(stream, tmp, ' ');
+		while (std::getline(stream, tmp, ' '))
+			arr.push_back(tmp);
+
+		std::map<int, std::string>	codesMap;
+		std::string					htmlFilename;
+
+		if (validErrorHtmlFile(arr[arr.size() - 1]))
+			htmlFilename = arr[arr.size() - 1];
+
+		for (int i = 0; i < arr.size() - 1; ++i) {
+
+			if (isValidErrCode(arr[i]))
+				codesMap[std::atoi(arr[i].c_str())] = htmlFilename;
+			else
+				throw (std::invalid_argument("Bad error code value in 'server'."));
+		}
+
+		config.getErrorMap()[port] = codesMap;
+	}
+	else if (varName != "listen")
+		throw (std::invalid_argument("Unknown 'server' parameter."));
+}
+
 void	initDirMap(std::map<std::string, funcPtr>& dirCase) {
 
+	dirCase["location"] = &dirParseLocation;
+	dirCase["server"] = &dirParseServer;
 	dirCase["events"] = &dirParseEvents;
 	dirCase["types"] = &dirParseTypes;
 	dirCase["main"] = &dirParseMain;
@@ -177,15 +245,10 @@ void	parseDirective(std::string line, std::string directive,
 	initDirMap(dirCase);
 	directive = removeSpaces(directive);
 	std::istringstream(directive) >> dirKey;
+
 	if (dirCase.find(dirKey) != dirCase.end())
-		dirCase[dirKey](config, line);
-	else if (dirKey == "location")
-	{
-		std::istringstream(directive) >> dirKey >> route >> portnum;
-		// std::cout << dirKey << " " << route << " " << portnum << " " << "LINE: " << line << std::endl;
-		dirParseLocation(stoi(portnum), route, line, config);
-	}
-	else if (dirKey != "http" && dirKey != "server")
+		dirCase[dirKey](config, line, directive);
+	else if (dirKey != "http")
 		throw ("Unknown directive found.");
 }
 

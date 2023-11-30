@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 15:41:19 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/30 14:02:00 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,6 @@ void    expandInclude(std::string &line, T &s)
     std::string			fileContent;
 
 	toParse >> command >> filename;
-	filename = filename.substr(0, filename.find(';'));
 	if (command != "include")
 		return;
     std::ifstream    fs(filename);
@@ -94,6 +93,19 @@ void    expandInclude(std::string &line, T &s)
 		std::getline(s, line);
 }
 
+size_t	isBrace(char brace, std::string line) {
+
+	size_t	braceRes = line.find(brace);
+
+	if (braceRes != NPOS) {
+		for (size_t i = braceRes + 1; i < line.length(); ++i) {
+			if (!isspace(line[i]))
+				throw (std::invalid_argument("Characters found after brace."));
+		}
+	}
+	return (braceRes);
+}
+
 template <typename T>
 void	get_braces_content(std::string dir_key, T &stream,
 	strstrMap &directives, std::vector<std::string> &dir_index)
@@ -111,11 +123,11 @@ void	get_braces_content(std::string dir_key, T &stream,
 		if (add_portnum && line.find("listen") != NPOS)
 		{
 			std::istringstream(line) >> portnum >> portnum;
-			portnum = " " + portnum.substr(0, portnum.find(';'));
+			portnum = " " + portnum;
 			dir_index.push_back(dir_key + portnum);
 			add_portnum = 0;
 		}
-		if (line.find('{') != NPOS)
+		if (isBrace('{', line) != NPOS)
 		{
 			open_braces++;
 			dir_key = line.substr(0, line.find('{'));
@@ -124,26 +136,80 @@ void	get_braces_content(std::string dir_key, T &stream,
 			if (!add_portnum)
 				dir_index.push_back(dir_key + portnum);
 		}
-		else if (line.find('}') != NPOS && --open_braces > 0)
+		else if (isBrace('}', line) != NPOS && --open_braces > 0)
 			dir_key = dir_index.at(i + open_braces);
 		else if (open_braces)
 			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
-		throw std::invalid_argument("Braces not closed.");
+		throw std::invalid_argument("Unclosed braces found.");
+}
+
+void	Config::printAll( void ) {
+
+	std::cout << "worker_processes: " << this->worker_processes << std::endl;
+	std::cout << "worker_connections: " << this->worker_connections << std::endl;
+	
+	std::cout << "\e[31m************************\e[0m" << std::endl;
+	std::cout << "\e[31m*** SERVER LOCATIONS ***\e[0m" << std::endl;
+	for (servLocMap::iterator it = this->server.begin(); it != this->server.end(); ++it) {
+
+		std::cout << "\e[4;32mPORT: " << it->first << "\e[0m" << std::endl;
+		std::map<std::string, LocationDir>::iterator it1;
+		for (it1 = it->second.begin(); it1 != it->second.end(); ++it1) {
+			std::cout << "\e[35m* LocationDir: " << it1->first << " *\e[0m" << std::endl;
+			std::cout << "\e[33mAutoindex:    \e[0m" << it1->second.get_autoindex() << std::endl;
+			std::cout << "\e[33mServer_name:  \e[0m" << it1->second.get_server_name() << std::endl;
+			std::cout << "\e[33mRoute:        \e[0m" << it1->second.get_route() << std::endl;
+			std::cout << "\e[33mRoot:         \e[0m" << it1->second.get_root() << std::endl;
+			std::cout << "\e[33mRedirect_url: \e[0m" << it1->second.get_redirect_url() << std::endl;
+			std::vector<std::string>	indexVec = it1->second.get_index();
+			std::vector<std::string>::iterator	vecit;
+			std::cout << "INDEX: ";
+			for (vecit = indexVec.begin(); vecit != indexVec.end(); ++vecit)
+				std::cout << *vecit << " ";
+			std::cout << std::endl;
+			std::vector<std::string>	methVec = it1->second.get_methods_allowed();
+				std::cout << "METHODS: ";
+			for (vecit = methVec.begin(); vecit != methVec.end(); ++vecit)
+				std::cout << *vecit << " ";
+			std::cout << std::endl;
+		}
+	}
+	std::cout << "\e[31m************************\e[0m" << std::endl;
+		std::cout << "\e[35mServer Port Numbers\e[0m" << std::endl;
+		std::vector<int>::iterator itint;
+		for (itint = servPortNums.begin(); itint != servPortNums.end(); ++itint)
+			std::cout << *itint << " ";
+		std::cout << std::endl;
+		std::cout << "\e[36mError codes\e[0m" << std::endl;
+		for (itint = error_codes.begin(); itint != error_codes.end(); ++itint)
+			std::cout << *itint << " ";
+		std::cout << std::endl;
+
+		servErrorMap::iterator	errmapit;
+		for (errmapit = error_page_map.begin(); errmapit != error_page_map.end(); ++errmapit) {
+
+			std::cout << "\e[38mPORT: " << errmapit->first << "\e[0m" << std::endl;
+			std::map<int, std::string>::iterator	mapintit;
+			std::cout << "\e[37m* Error pages *\e[0m" << std::endl;
+			for (mapintit = errmapit->second.begin(); mapintit != errmapit->second.end(); ++mapintit)
+				std::cout << mapintit->first << " - " << mapintit->second << std::endl;
+			std::cout << std::endl;
+		}
 }
 
 void parse_config_file(std::string path)
 {
+    Config						config;
 	int							i = 0;
     size_t						bracepos;
-    Config						config;
+    std::ifstream				conf_file(path);
+    std::istringstream			ls;
+	strstrMap					directives;
     std::string					line;
 	std::string					buffer;
     std::string					directive = "main";
-	strstrMap					directives;
-    std::ifstream				conf_file(path);
-    std::istringstream			ls;
 	std::vector<std::string>	dir_index;
 
 	while (std::getline(conf_file, buffer))
@@ -164,12 +230,14 @@ void parse_config_file(std::string path)
 		line = parse_comments(line);
 		if (line.find("include") != NPOS)
             expandInclude(line, ls);
-		bracepos = line.find('{');
+		bracepos = isBrace('{', line);
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
 		parseDirective(line, directive, config);
     }
 
+	// config.printAll();
+	
 	// TESTING PARSING OUTPUT
 	// for (i = 0; i < dir_index.size(); i++)
 	// 	std::cout << "\e[31mkey: \e[0m" << dir_index.at(i) << "  \e[33mvalue: \e[0m"
@@ -187,61 +255,61 @@ void parse_config_file(std::string path)
 // 	 * 5. If file is found, return the path.
 // 	 * 6. Check if directory listing is ON
 // 	*/
+// // }
+// std::string	Config::get_file_path(HttpRequest request) const
+// {
+// 	/*
+// 	 * 0. Check the port_number to get the required locations vector.
+// 	 * 1. Check the request path.
+// 	 * 1.5: Check if the METHOD matches for this path
+// 	 * 2. Check the location.
+// 	 * 3. Test for file mentioned in index or 
+// 	 * 		one obtained by appending the path name.
+// 	 * 4. Use the try files directive to find the file.
+// 	 * 5. If file is found, return the path.
+// 	 * 6. Check if directory listing is ON
+// 	*/
+// 	std::vector<LocationDir> locations;
+// 	std::string file_path;
+
+// 	locations = this->server[request.port_number];
+// 	unsigned int vecSize = locations.size();
+// 	for (unsigned int i = 0; i < vecSize; i++)
+// 	{
+// 		if (locations[i].get_route().compare(request.path) == 0)
+// 		{
+// 			std::vector<std::string>::iterator method_iterator;
+
+// 			method_iterator = std::find(locations[i].get_methods_allowed().begin(),
+// 				locations[i].get_methods_allowed().end(), request.method);
+// 			if (method_iterator != locations[i].get_methods_allowed().end())
+// 			{
+// 				// Test the presence of the file for different
+// 				// indexes and return the one that exists;
+// 				for (int j = 0; j < locations[i].get_index().size(); j++)
+// 				{
+// 					file_path = locations[i].get_root() + request.path
+// 									+ locations[i].get_index()[j];
+// 					try {
+// 						std::ifstream file(file_path);
+// 						if (file.good())
+// 							return (file_path);
+// 					} catch(std::exception & e) {
+// 						// handle error.
+// 					}
+// 				}
+// 				// Directory listing should be done if code reaches this point.
+// 				// TODO: Implement directory listing.
+// 			}
+// 			else
+// 			{
+// 				// TODO: Throw an error that the method we want does not exist.
+// 			}
+// 		}
+// 	}
+// 	// If code reaches this section, the route and method do not exist.
+// 	// TODO: Throw an error for route/path not existing.
 // }
-std::string	Config::get_file_path(HttpRequest request) const
-{
-	/*
-	 * 0. Check the port_number to get the required locations vector.
-	 * 1. Check the request path.
-	 * 1.5: Check if the METHOD matches for this path
-	 * 2. Check the location.
-	 * 3. Test for file mentioned in index or 
-	 * 		one obtained by appending the path name.
-	 * 4. Use the try files directive to find the file.
-	 * 5. If file is found, return the path.
-	 * 6. Check if directory listing is ON
-	*/
-	std::vector<LocationDir> locations;
-	std::string file_path;
-
-	locations = this->server[request.port_number];
-	unsigned int vecSize = locations.size();
-	for (unsigned int i = 0; i < vecSize; i++)
-	{
-		if (locations[i].get_route().compare(request.path) == 0)
-		{
-			std::vector<std::string>::iterator method_iterator;
-
-			method_iterator = std::find(locations[i].get_methods_allowed().begin(),
-				locations[i].get_methods_allowed().end(), request.method);
-			if (method_iterator != locations[i].get_methods_allowed().end())
-			{
-				// Test the presence of the file for different
-				// indexes and return the one that exists;
-				for (int j = 0; j < locations[i].get_index().size(); j++)
-				{
-					file_path = locations[i].get_root() + request.path
-									+ locations[i].get_index()[j];
-					try {
-						std::ifstream file(file_path);
-						if (file.good())
-							return (file_path);
-					} catch(std::exception & e) {
-						// handle error.
-					}
-				}
-				// Directory listing should be done if code reaches this point.
-				// TODO: Implement directory listing.
-			}
-			else
-			{
-				// TODO: Throw an error that the method we want does not exist.
-			}
-		}
-	}
-	// If code reaches this section, the route and method do not exist.
-	// TODO: Throw an error for route/path not existing.
-}
 
 int main()
 {
@@ -249,5 +317,6 @@ int main()
 	// std::ifstream file(path);
 
 	parse_config_file(path);
+
 	return (0);
 }
