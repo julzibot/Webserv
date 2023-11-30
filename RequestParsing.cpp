@@ -30,10 +30,11 @@ void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &req
 	}
 }
 
-HttpRequest HttpRequestParse::parse(std::string const &req_str)
+HttpRequest HttpRequestParse::parse(std::string const &req_str, int portnum)
 {
 	HttpRequest request;
 
+	request.port_number = portnum;
 	std::istringstream requestStream(req_str);
 	std::string line;
 	std::getline(requestStream, line);
@@ -65,8 +66,7 @@ char *  HttpRequestParse::process_request(char * buffer, int recvsize, int port_
 	std::string         file_path;
 	char                *output;
 
-	request = HttpRequestParse::parse(std::string(buffer, 0, recvsize));
-	request.port_number = port_number;
+	request = HttpRequestParse::parse(std::string(buffer, 0, recvsize), port_number);
 	config = parse_config_file(config_file_path);
 	file_path = get_file_path(request, config);
 	/**
