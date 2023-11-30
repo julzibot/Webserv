@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParse.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 15:41:19 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/30 15:23:32 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -241,6 +241,19 @@ std::string	Config::get_file_path(HttpRequest request) const
 	}
 	// If code reaches this section, the route and method do not exist.
 	// TODO: Throw an error for route/path not existing.
+}
+
+std::string	Config::get_error_page_file_path(int code, Config &config,
+		int port) const
+{
+	HttpRequest request;
+	std::string	file_path;
+
+	request.port_number = port;
+	request.method = "GET";
+	request.path = config.get_route_for_error_code(code, port);
+	file_path = config.get_file_path(request);
+	return (file_path);
 }
 
 int main()
