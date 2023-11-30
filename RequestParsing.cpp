@@ -58,22 +58,22 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str, int portnum)
     return (request);
 }
 
-char *  HttpRequestParse::process_request(char * buffer, int recvsize, int port_number)
-{
-	std::string			config_file_path = "webserv.conf";
-	Config				config;
-	HttpRequest         request;
-	std::string         file_path;
-	char                *output;
+// char *  HttpRequestParse::process_request(char * buffer, int recvsize, int port_number)
+// {
+// 	std::string			config_file_path = "webserv.conf";
+// 	Config				config;
+// 	HttpRequest         request;
+// 	std::string         file_path;
+// 	char                *output;
 
-	request = HttpRequestParse::parse(std::string(buffer, 0, recvsize), port_number);
-	config = parse_config_file(config_file_path);
-	file_path = get_file_path(request, config);
-	/**
-	 * 1. check if file exists
-	 * 2. check if file is readable
-	 * 3. Read file.
-	 * 4. Convert into necessary format and respond.
-	*/
-	return (output);
-}
+// 	request = HttpRequestParse::parse(std::string(buffer, 0, recvsize), port_number);
+// 	config = parse_config_file(config_file_path);
+// 	file_path = get_file_path(request, config);
+// 	/**
+// 	 * 1. check if file exists
+// 	 * 2. check if file is readable
+// 	 * 3. Read file.
+// 	 * 4. Convert into necessary format and respond.
+// 	*/
+// 	return (output);
+// }
