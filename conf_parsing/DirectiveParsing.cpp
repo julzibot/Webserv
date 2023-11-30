@@ -6,13 +6,13 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/29 19:36:32 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/11/30 14:11:03 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "DirectiveParsing.h"
 
-std::string    removeSpaces( std::string line ) {
+std::string	removeSpaces( std::string line ) {
 
 	if (line.empty())
 		return (line);
