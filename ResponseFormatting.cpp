@@ -54,14 +54,8 @@ std::string	ResponseFormatting::parse_body(std::string file_path)
 	std::string		line;
 
 	output = "";
-	if (!inputFile.is_open()) {
-		std::cout << "Error opening the file!" << std::endl;
-		// TODO: Throw an exception in reading file here
-		// Can also respond with a "File Does Not Exist" or "Not Found" or "Not implemented" response.
-		// Or should we respond with an empty string and Content-Length zero?
-		// Q. How should we handle this?
+	if (!inputFile.is_open())
 		return output;
-	}
 	while (std::getline(inputFile, line)) {
 		output += line + '\n';
 	}
