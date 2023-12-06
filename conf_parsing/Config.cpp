@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   LocationDir.cpp                                    :+:      :+:    :+:   */
+/*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:43:37 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 12:59:07 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/12/06 15:17:17 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,4 +48,9 @@ void	LocationDir::setindex(std::string indexFiles)
 
 	while (line >> buffer)
 		this->index.push_back(std::string(buffer));
+}
+
+std::string	Config::get_type(std::string file_ext)
+{
+	return (this->types[file_ext]);
 }
