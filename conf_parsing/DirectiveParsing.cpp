@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   DirectiveParsing.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/30 14:11:03 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/12/06 17:58:45 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

@@ -56,9 +56,8 @@ std::string	ResponseFormatting::parse_body(std::string file_path)
 	output = "";
 	if (!inputFile.is_open())
 		return output;
-	while (std::getline(inputFile, line)) {
+	while (std::getline(inputFile, line))
 		output += line + '\n';
-	}
 	inputFile.close();
 	return output;
 }
@@ -73,7 +72,7 @@ std::string	ResponseFormatting::format_response(
 
 	body = parse_body(file_path);
 	headers = parse_headers(file_path, http_version, status_code,
-					config, body.length());
+			config, body.length());
 	output = headers + "\n" + body;
 	return (output);
 }
