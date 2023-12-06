@@ -1,4 +1,6 @@
 .vscode
-*/a.out
+a.out
 *.json
 */.DS_Store
+*/*.gch
+*.gch

@@ -3,15 +3,21 @@
 /*                                                        :::      ::::::::   */
 /*   RequestParsing.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/24 22:38:01 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/12/06 19:07:21 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestParsing.hpp"
 #include "conf_parsing/Config.hpp"
+
+HttpRequest::HttpRequest() {}
+
+HttpRequest::HttpRequest(HttpRequest const &req) : headers(req.headers), method(req.method), path(req.path), \
+												http_version(req.http_version), body(req.body), port_number(req.port_number)
+{}
 
 void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &request)
 {

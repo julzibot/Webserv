@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestParsing.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 15:29:00 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/12/06 19:13:36 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,11 @@ class HttpRequest
         std::string							path;
         std::string							http_version;
         std::string							body;
+        std::string                         prio_file;
 		int									port_number;
+
+        HttpRequest();
+        HttpRequest(HttpRequest const &req);
 };
 
 class HttpRequestParse

@@ -3,15 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/28 15:37:31 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/12/06 19:20:02 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "socket.hpp"
 #include "RequestParsing.hpp"
+#include "ResponseFormatting.hpp"
 #include "conf_parsing/Config.hpp"
 #include "conf_parsing/DirectiveParsing.h"
 #include <csignal>
@@ -63,6 +64,8 @@ int main (void)
     std::string filepath;
     std::ifstream fs;
     std::string line;
+    std::string prevReqPath = "";
+    ResponseFormatting  formatter;
     int recvsize;
     int c = 0;
     signal(SIGINT, sigHandler);
@@ -72,27 +75,18 @@ int main (void)
         std::cout << "[Server] Client connected with success" << std::endl;
         memset(buff, 0, 4096);
         recvsize = recv(clientsock, buff, 4096, 0);
-        std::cout << std::string(buff) << std::endl;
         if (recvsize == -1)
-            {std::cerr << "Error encountered receiving message"; break;}
+            {std::cerr << "Error encountered receiving message"; break;} 
         else if (!recvsize)
             {std::cout << "Client disconnected" << std::endl; break;}
-        // PARSE THE REQUEST
+        std::cout << std::string(buff) << std::endl;
         request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
-        // BUILD THE RESPONSE,
-        // FIRST BY GETTING THE FILE PATH, FILLING A RESPONSE OBJECT, THEN SENDING IT ALL AS A SINGLE STRING
-        output += "HTTP/1.1 200 OK\n\n";
-        filepath = get_file_path(request, config);
-        fs = std::ifstream(filepath);
-        while (std::getline(fs, line))
-            output += line + '\n';
-        std::cout << output << std::endl;
+        filepath = get_file_path(request, config, prevReqPath);
+        output = formatter.format_response("HTTP/1.1", 200, filepath, config);
+        std::cout << "output: " << output.c_str() << std::endl;
         send(clientsock, output.c_str(), output.length(), 0);
-        output.clear();
         close(clientsock);
-        std::cout<< isTrue << std::endl;
     }
-    // signal(SIGINT, SIG_DFL);
     close(servsock);
     return(0);
 }

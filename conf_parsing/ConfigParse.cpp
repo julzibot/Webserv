@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParse.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/30 15:23:32 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/06 20:14:14 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,8 +192,6 @@ Config	parse_config_file(std::string path)
 	return (config);
 }
 
-std::string get_file_path(HttpRequest request, Config &config)
-{
 	// std::cout << "| " << config.getLocRef(request.port_number, "/").get_root() << " |" << std::endl;
 	/*
 	 * 0. Check the port_number to get the required locations vector.
@@ -206,16 +204,34 @@ std::string get_file_path(HttpRequest request, Config &config)
 	 * 5. If file is found, return the path.
 	 * 6. Check if directory listing is ON
 	*/
+std::string get_file_path(HttpRequest &request, Config &config, std::string &prevPath)
+{
 	std::string file_path;
 	unsigned int	i = 0;
-
 	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
 	std::map<std::string, LocationDir>::iterator	it = locations.begin();
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+	std::vector<std::string> ind;
+	std::string	locRoute;
+	int	slashPos = 1;
 
-	while (it != locEnd && it->second.get_route() != request.path)
+	if (request.path.find('.') != NPOS)
 	{
-		// std::cout << "| " << it->second.get_route() << " | " << std::endl;
+		HttpRequest	newReq = HttpRequest(request);
+		newReq.prio_file = newReq.path;
+		newReq.path = prevPath;
+		return (get_file_path(newReq, config, prevPath));
+	}
+	while (it != locEnd)
+	{
+		locRoute = it->first;
+		if (request.path.length() > 1)
+			slashPos = request.path.find('/', 1);
+		if (locRoute == request.path.substr(0, slashPos))
+		{
+			prevPath = locRoute;
+			break;
+		}
 		it++;
 	}
 	if (it == locEnd && locations.begin() != locEnd)
@@ -227,13 +243,14 @@ std::string get_file_path(HttpRequest request, Config &config)
 			i++;
 		if (i < methods.size())
 		{
-			// Test the presence of the file for different
-			// indexes and return the one that exists;
-			std::vector<std::string> ind = it->second.get_index();
+			ind = it->second.get_index();
+			if (!request.prio_file.empty())
+				ind.insert(ind.begin(), request.prio_file);
 			for (int j = 0; j < ind.size(); j++)
 			{
-				file_path = it->second.get_root() + request.path + ind[j];
-				std::cout << file_path.c_str() << std::endl;
+				file_path = it->second.get_root() + request.path;
+				if (request.path.length() > 1) file_path += '/';
+				file_path += ind[j];
 				if (!access(file_path.c_str(), R_OK))
 					return (file_path);
 			}
