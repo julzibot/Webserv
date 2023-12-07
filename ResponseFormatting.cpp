@@ -46,6 +46,7 @@ std::string	ResponseFormatting::parse_headers(std::string file_path,
 		+ get_status_message(status_code) + "\n";
 	headers += "Content-Type: " + get_content_type(file_path, config) + "\n";
 	headers += "Content-Length: " + std::to_string(content_length) + "\n";
+	// headers += "Connection: close\n";
 
 	return (headers);
 }

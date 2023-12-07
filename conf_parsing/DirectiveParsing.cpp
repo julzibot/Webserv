@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/07 11:04:49 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/07 11:18:45 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,10 +123,10 @@ void	dirParseTypes(Config& config, std::string line, std::string directive)
 		return;
 	std::istringstream	stream(line);
 	std::string	value;
-	std::string	typeLine;
+	std::string	extension;
 	stream >> value;
-	while (stream >> typeLine)
-		config.add_type(typeLine.substr(0, typeLine.find(';')), value);
+	while (stream >> extension)
+		config.add_type(extension.substr(0, extension.find(';')), value);
 }
 
 void	dirParseMain(Config& config, std::string line, std::string directive)
@@ -239,14 +239,3 @@ void	parseDirective(std::string line, std::string directive, Config& config)
 	else if (dirKey != "http")
 		throw ("Unknown directive found.");
 }
-
-// int main()
-// {
-//     // dirParseLocation(1, "/","index file1 file2 file3");
-// 	// std::string line;
-// 	// 	std::cout << line << std::endl;
-// 	// 	line = removeSpaces(line);
-
-
-//     return (0);
-// }
