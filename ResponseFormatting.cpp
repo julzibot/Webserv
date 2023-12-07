@@ -28,8 +28,11 @@ std::string	get_content_type(std::string file_path, Config &config)
 	std::string	content_type;
 	std::string	file_ext;
 
+	std::cout << "FILEPATH: " << file_path << std::endl;
 	file_ext = file_path.substr(file_path.find_last_of(".") + 1);
 	content_type = config.get_type(file_ext);
+
+	std::cout << "FILE EXT: " << file_ext << " CONT TYPE: "<< content_type << std::endl;
 	return (content_type);
 }
 
@@ -43,6 +46,7 @@ std::string	ResponseFormatting::parse_headers(std::string file_path,
 		+ get_status_message(status_code) + "\n";
 	headers += "Content-Type: " + get_content_type(file_path, config) + "\n";
 	headers += "Content-Length: " + std::to_string(content_length) + "\n";
+	// headers += "Connection: close\n";
 
 	return (headers);
 }

@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/06 20:14:14 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/07 16:08:43 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -218,7 +218,7 @@ std::string get_file_path(HttpRequest &request, Config &config, std::string &pre
 	if (request.path.find('.') != NPOS)
 	{
 		HttpRequest	newReq = HttpRequest(request);
-		newReq.prio_file = newReq.path;
+		newReq.prio_file = newReq.path.substr(1);
 		newReq.path = prevPath;
 		return (get_file_path(newReq, config, prevPath));
 	}

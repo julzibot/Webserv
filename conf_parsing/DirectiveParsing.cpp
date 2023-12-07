@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/06 17:58:45 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/07 11:18:45 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,29 +121,12 @@ void	dirParseTypes(Config& config, std::string line, std::string directive)
 	(void)directive;
 	if (line.empty())
 		return;
-	line = removeSpaces(line);
-
 	std::istringstream	stream(line);
-	while (!stream.eof()) {
-
-		std::string	typeLine;
-		std::getline(stream, typeLine);
-		std::vector<std::string>	vectorTypeLine;
-		std::string					segmented;
-		std::istringstream			vectorStream(typeLine);
-
-		while (std::getline(vectorStream, segmented, ' '))
-			vectorTypeLine.push_back(segmented);
-
-		std::vector<std::string>::iterator it;
-		std::string		value = *vectorTypeLine.begin();
-
-		for (it = vectorTypeLine.begin(); it != vectorTypeLine.end(); ++it) {
-	
-			if (it != vectorTypeLine.begin())
-				config.add_type(*it, value);
-		}
-	}
+	std::string	value;
+	std::string	extension;
+	stream >> value;
+	while (stream >> extension)
+		config.add_type(extension.substr(0, extension.find(';')), value);
 }
 
 void	dirParseMain(Config& config, std::string line, std::string directive)
@@ -256,14 +239,3 @@ void	parseDirective(std::string line, std::string directive, Config& config)
 	else if (dirKey != "http")
 		throw ("Unknown directive found.");
 }
-
-// int main()
-// {
-//     // dirParseLocation(1, "/","index file1 file2 file3");
-// 	// std::string line;
-// 	// 	std::cout << line << std::endl;
-// 	// 	line = removeSpaces(line);
-
-
-//     return (0);
-// }
