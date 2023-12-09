@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/07 11:18:45 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/09 10:42:32 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 	std::string	portStr;
 	std::string	route;
 	std::istringstream(directive) >> route >> route >> portStr;
-	int	port = std::atoi(portStr.c_str());
+	int	port = stoi(portStr);
 
     std::istringstream	linestream(line);
     std::string			keyword;
@@ -84,6 +84,10 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 	else if (keyword == "autoindex") {
 		value = removeSpaces(line.substr(line.find(keyword) + 10));
 		assign_autoindex(ld, value);
+	}
+	else if (keyword == "redirect") {
+		value = removeSpaces(line.substr(line.find(keyword) + 9));
+		ld.setRedir(value);
 	}
 	else
 		throw (std::invalid_argument("Unknown parameter in 'location' directive"));

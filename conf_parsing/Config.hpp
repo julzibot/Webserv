@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/07 11:20:14 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/09 10:43:00 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ class LocationDir
 		bool						autoindex;
 		std::string					server_name;
 		std::string 				route;
+		std::string					redir;
 		std::string 				root;
 		std::string					redirect_url;
 		std::vector<std::string>	index;
@@ -57,12 +58,14 @@ class LocationDir
 		bool						get_autoindex() const { return (this->autoindex); };
 		std::string					get_server_name() const { return (this->server_name); };
 		std::string					get_route() const { return (this->route); };
+		std::string					get_redir() const { return (this->redir); };
         std::string					get_root() const { return (this->root); };
 		std::string					get_redirect_url() const { return (this->redirect_url); };
 		std::vector<std::string>	get_index() const { return (this->index); };
 		std::vector<std::string>	get_methods_allowed() const { return (this->methods_allowed); };
 
 		void	setRoute(std::string route) { this->route = route; };
+		void	setRedir(std::string redir) { this->redir = redir; };
 		void	setRoot(std::string root) { this->root = root; };
 		void	setAutoindex(bool boolean) { this->autoindex = boolean; };
 		void	setindex(std::string indexFiles);
