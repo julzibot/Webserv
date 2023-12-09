@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/09 10:43:00 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/09 15:17:12 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,4 +105,4 @@ class Config
 };
 
 Config	parse_config_file(std::string path);
-std::string get_file_path(HttpRequest &request, Config &config, std::string &prevPath);
+std::string get_file_path(HttpRequest &request, Config &config, std::string &prevPath, int &status);

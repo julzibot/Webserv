@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/09 11:24:38 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/09 16:29:03 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -204,7 +204,8 @@ Config	parse_config_file(std::string path)
 	 * 5. If file is found, return the path.
 	 * 6. Check if directory listing is ON
 	*/
-std::string get_file_path(HttpRequest &request, Config &config, std::string &prevPath)
+
+std::string get_file_path(HttpRequest &request, Config &config, std::string &prevPath, int &status_code)
 {
 	std::string file_path;
 	unsigned int	i = 0;
@@ -220,7 +221,7 @@ std::string get_file_path(HttpRequest &request, Config &config, std::string &pre
 		HttpRequest	newReq = HttpRequest(request);
 		newReq.prio_file = newReq.path.substr(1);
 		newReq.path = prevPath;
-		return (get_file_path(newReq, config, prevPath));
+		return (get_file_path(newReq, config, prevPath, status_code));
 	}
 	while (it != locEnd)
 	{
@@ -231,11 +232,8 @@ std::string get_file_path(HttpRequest &request, Config &config, std::string &pre
 		{
 			if (!(it->second.get_redir().empty()))
 			{
-				HttpRequest	newReq = HttpRequest(request);
-				newReq.path = it->second.get_redir();
-				if (slashPos != NPOS)
-					newReq.path += request.path.substr(slashPos);
-				return (get_file_path(newReq, config, prevPath));
+				status_code = 301;
+				return (it->second.get_redir());
 			}
 			prevPath = locRoute;
 			break;
@@ -262,15 +260,15 @@ std::string get_file_path(HttpRequest &request, Config &config, std::string &pre
 				if (!access(file_path.c_str(), R_OK))
 					return (file_path);
 			}
-			std::cout << "no valid file encountered" << std::endl;
-			return ("error_3");
+			status_code = 404;
+			return ("");
 			// directory listing;
 		}
-		else
-			std::cout << "method not allowed" << std::endl;
-		return ("error_2");
+		status_code = 404;
+		return ("");
 	}
-	return ("error_1");
+	status_code = 404;
+	return ("");
 	// If code reaches this section, the route and method do not exist.
 	// TODO: Throw an error for route/path not existing.
 }

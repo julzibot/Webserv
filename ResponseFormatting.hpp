@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseFormatting.hpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/01 19:01:48 by toshsharma        #+#    #+#             */
-/*   Updated: 2023/12/06 16:56:21 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/09 15:58:06 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,9 +33,9 @@ class HttpResponse
 class ResponseFormatting
 {
 	public:
-		std::string	parse_headers(std::string file_path, std::string http_version,
-						int status_code, Config &config, int content_length);
-		std::string	parse_body(std::string file_path);
-		std::string	format_response(std::string http_version, int status_code,
-						std::string file_path, Config &config);
+		std::string	parse_headers(std::vector<std::string> &status_infos, std::string http_version,
+						int const &status_code, Config &config, int content_length);
+		std::string	parse_body(std::string file_path, int const &status_code);
+		std::string	format_response(std::string http_version, int &status_code,
+						std::string &file_path, Config &config);
 };
