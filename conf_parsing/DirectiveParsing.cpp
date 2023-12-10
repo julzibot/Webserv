@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/09 10:42:32 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/10 21:13:12 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,15 +91,6 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 	}
 	else
 		throw (std::invalid_argument("Unknown parameter in 'location' directive"));
-
-	// if (!ld.get_index().empty())
-	// 	std::cout << "Index: " << ld.get_index().at(0) << std::endl;
-	// std::cout << "Root: " << ld.get_root() << std::endl;
-
-    // std::map<int, std::map<std::string, LocationDir> > server = config.getServ();
-    // std::vector<std::string> ind = ld.get_index();
-    // for (int i = 0; i < ind.size(); i++)
-    //     std::cout << ind.at(i) << std::endl;
 }
 
 void	dirParseEvents(Config& config, std::string line, std::string directive)
@@ -179,36 +170,16 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 
 	std::string	portStr;
 	std::istringstream(directive) >> portStr >> portStr;
-	int	port = std::atoi(portStr.c_str());
+	int	port = stoi(portStr);
 
 	std::istringstream	stream(line);
 	std::string			varName;
 
 	stream >> varName;
-	if (varName == "error_page") {
-		
-		std::vector<std::string>	arr;
-		std::string					tmp;
-
-		std::getline(stream, tmp, ' ');
-		while (std::getline(stream, tmp, ' '))
-			arr.push_back(tmp);
-
-		std::map<int, std::string>	codesMap;
-		std::string					htmlFilename;
-
-		if (validErrorHtmlFile(arr[arr.size() - 1]))
-			htmlFilename = arr[arr.size() - 1];
-
-		for (int i = 0; i < arr.size() - 1; ++i) {
-
-			if (isValidErrCode(arr[i]))
-				codesMap[std::atoi(arr[i].c_str())] = htmlFilename;
-			else
-				throw (std::invalid_argument("Bad error code value in 'server'."));
-		}
-
-		config.getErrorMap()[port] = codesMap;
+	if (varName == "error_pages")
+	{
+		std::string &err = config.getErrorPath(port);
+		stream >> err;
 	}
 	else if (varName == "listen")
 		config.add_portnum(port);

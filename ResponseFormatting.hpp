@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/01 19:01:48 by toshsharma        #+#    #+#             */
-/*   Updated: 2023/12/09 15:58:06 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/09 16:47:02 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,9 +33,9 @@ class HttpResponse
 class ResponseFormatting
 {
 	public:
-		std::string	parse_headers(std::vector<std::string> &status_infos, std::string http_version,
+		std::string	parse_headers(std::deque<std::string> &status_infos, std::string http_version,
 						int const &status_code, Config &config, int content_length);
 		std::string	parse_body(std::string file_path, int const &status_code);
-		std::string	format_response(std::string http_version, int &status_code,
+		std::string	format_response(std::string const &http_version, int &status_code,
 						std::string &file_path, Config &config);
 };

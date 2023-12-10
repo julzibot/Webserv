@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/09 15:17:12 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/10 21:14:03 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class LocationDir;
 
 
 typedef std::map<int, std::map<std::string, LocationDir> > servLocMap;
-typedef std::map<int, std::map<int, std::string> > servErrorMap;
+typedef std::map<int, std::string> servErrorPath;
 typedef std::map<std::string, std::string> strstrMap;
 
 class LocationDir
@@ -45,8 +45,6 @@ class LocationDir
 		std::string					redirect_url;
 		std::vector<std::string>	index;
 		std::vector<std::string>	methods_allowed;
-		// std::string				alias;
-		// std::vector<std::string>	try_files;
 
     public:
 
@@ -81,7 +79,7 @@ class Config
         servLocMap			server;
 		std::vector<int>	servPortNums;
         std::vector<int>	error_codes;
-        servErrorMap		error_page_map;
+        servErrorPath		error_paths;
 		// std::map<int, std::vector<std::string> > loc_index;
 
     public:
@@ -91,9 +89,9 @@ class Config
         std::vector<int>    get_portnums() const { return (this->servPortNums); };
 		servLocMap		getServ() const { return (this->server); };
         std::string		get_type(std::string file_ext);
-        LocationDir&	getLocRef(int	port, std::string route) { return (this->server[port][route]); };
-		std::map<int, std::string>	getErrorMapByPort( int port ) { return (this->error_page_map[port]); };
-		servErrorMap&	getErrorMap( void ) { return (this->error_page_map); };
+        LocationDir		&getLocRef(int port, std::string route) { return (this->server[port][route]); };
+		std::string		&getErrorPath(int port) { return (this->error_paths[port]); };
+		// servErrorPath&	getErrorMap( void ) { return (this->error_page_map); };
 		std::map<std::string, LocationDir>&	getLocMap(int port) { return (this->server[port]); };
 
         void	set_workproc(int value) { this->worker_processes = value; };
@@ -105,4 +103,4 @@ class Config
 };
 
 Config	parse_config_file(std::string path);
-std::string get_file_path(HttpRequest &request, Config &config, std::string &prevPath, int &status);
+std::string get_file_path(HttpRequest &request, Config &config, int &status);
