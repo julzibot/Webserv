@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 21:13:12 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/10 22:24:22 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,7 +155,7 @@ bool	isValidErrCode( const std::string& errCode )
 {	
 	if (errCode.length() > 3 || errCode.empty())
 		return (false);
-	for (int i = 0; i < errCode.length(); ++i) {
+	for (unsigned int i = 0; i < errCode.length(); ++i) {
 		if (errCode[i] < '0' || errCode[i] > '9')
 			return (false);
 	}

@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 21:31:23 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/10 22:22:50 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,7 +149,7 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 Config	parse_config_file(std::string path)
 {
     Config						config;
-	int							i = 0;
+	unsigned int							i = 0;
     size_t						bracepos;
     std::ifstream				conf_file(path);
     std::istringstream			ls;
@@ -214,7 +214,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
 	std::vector<std::string> ind;
 	std::string	locRoute;
-	int	slashPos = 1;
+	unsigned int	slashPos = 1;
 
 	if (request.path.find('.') != NPOS)
 		return (locations["/"].get_root() + "/" + request.path);
@@ -254,7 +254,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 			if (request.path.length() > slashPos)
 				file_path += request.path.substr(slashPos + 1);
 			if (file_path[file_path.length() - 1] != '/') file_path += '/';
-			for (int j = 0; j < ind.size(); j++)
+			for (unsigned int j = 0; j < ind.size(); j++)
 			{
 				if (!access((file_path + ind[j]).c_str(), R_OK))
 					return (file_path + ind[j]);

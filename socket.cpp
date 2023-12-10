@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 21:31:46 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/10 22:17:17 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 volatile sig_atomic_t    isTrue = 1;
 
 // Function to run when CTRL-C is pressed
-void    sigHandler( int param ) { isTrue = 0;}
+void    sigHandler( int param ) { (void)param; isTrue = 0;}
 
 void    printErrno( void )
 {
@@ -48,7 +48,7 @@ int main (void)
     // SERVER
     Config  config = parse_config_file("conf_parsing/webserv.conf");
     int arrsize = config.get_portnums().size();
-    struct sockaddr_in saddr[arrsize];
+    std::vector<sockaddr_in> saddr(arrsize);
     for (int i = 0; i < arrsize; i++)
     {
         saddr[i].sin_family = AF_INET,
@@ -98,7 +98,6 @@ int main (void)
     std::string prevReqPath = "";
     ResponseFormatting  formatter;
     int recvsize;
-    int c = 0;
     signal(SIGINT, sigHandler);
     while (isTrue)
     {
