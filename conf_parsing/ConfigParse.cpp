@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 16:57:30 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/11 17:12:46 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -260,40 +260,25 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	}
 }
 
-// std::string	Config::get_error_page_file_path(int code, Config &config,
-// 		int port) const
-// {
-// 	HttpRequest request;
-// 	std::string	file_path;
-
-// 	request.port_number = port;
-// 	request.method = "GET";
-// 	request.path = config.get_route_for_error_code(code, port);
-// 	file_path = get_file_path(request, config);
-// 	return (file_path);
-// }
-
 std::string	get_directory_listing(std::string & file_path) {
 	DIR *dir;
 	struct dirent *en;
 	std::vector<std::string> list;
+	std::vector<std::string>::iterator it;
 	std::string	output;
 
-	std::cout << "This root is " << file_path << std::endl;
-
-	dir = opendir(file_path.c_str()); //open all or present directory
+	dir = opendir(file_path.c_str());
 	if (dir) {
-		std::cout << "Directory listing: " << std::endl;
 		while ((en = readdir(dir)) != NULL) {
 			list.push_back(en->d_name);
-			std::cout << en->d_name << std::endl; //print all files in directory
 		}
-		closedir(dir); //close directory
+		closedir(dir);
 		output = START_OF_LIST;
 		output += "<h1>Directory listing</h1>";
 		output += "<ul>";
-		for (std::vector<std::string>::iterator it = list.begin(); it != list.end(); ++it) {
-			output += "<li><a href=\"file://" + file_path + "/" + *it + "\">" + *it + "</a></li>";
+		for (it = list.begin(); it != list.end(); ++it) {
+			output += "<li><a href=\"file://" + file_path + "/"
+				+ *it + "\">" + *it + "</a></li>";
 		}
 		output += "</ul>";
 		output += END_OF_LIST;
