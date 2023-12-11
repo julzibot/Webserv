@@ -1,26 +1,28 @@
 #include "ResponseFormatting.hpp"
 
-std::string	get_status_message(int status_code)
+std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string const &error_path)
 {
-	std::string	status_message;
-
-	switch (status_code) {
-		case 200:	status_message = "OK";	break;
-		case 201:	status_message = "Created";	break;
-		case 301:	status_message = "Moved Permanently";	break;
-		case 302:	status_message = "Found";	break;
-		case 303:	status_message = "See Other";	break;
-		case 400:	status_message = "Bad Request";	break;
-		case 401:	status_message = "Unauthorized";	break;
-		case 403:	status_message = "Forbidden";	break;
-		case 404:	status_message = "Not Found";	break;
-		case 500:	status_message = "Internal Server Error";	break;
-		case 501:	status_message = "Not Implemented";	break;
-		case 502:	status_message = "Bad Gateway";	break;
-		case 503:	status_message = "Service Unavailable";	break;
-		case 504:	status_message = "Gateway Timeout";	break;
+	std::deque<std::string>	status_infos;
+	switch (status_code)
+	{
+		case 200:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
+		case 301:	status_infos.push_back(file_path); status_infos.push_back("Moved Permanently"); 	break;
+		case 400:	status_infos.push_back(error_path + "/400.html"); status_infos.push_back("Bad Request"); 	break;
+		case 403:	status_infos.push_back(error_path + "/403.html"); status_infos.push_back("Forbidden"); 	break;
+		case 404:	status_infos.push_back(error_path + "/404.html"); status_infos.push_back("Not Found"); 	break;
+		case 405:	status_infos.push_back(error_path + "/405.html"); status_infos.push_back("Method Not Allowed"); break;
+		case 413:	status_infos.push_back(error_path + "/413.html"); status_infos.push_back("Payload Too Large"); break;
+		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
+		case 501:	status_infos.push_back(error_path + "/501.html"); status_infos.push_back("Not Implemented"); 	break;
+		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
+		// case 201:	status_infos.push_back(error_path); status_infos.push_back("Created"); 	break;
+		// case 302:	status_infos.push_back(error_path); status_infos.push_back("Found"); 	break;
+		// case 303:	status_infos.push_back(error_path); status_infos.push_back("See Other"); 	break;
+		// case 401:	status_infos.push_back(error_path); status_infos.push_back("Unauthorized"); 	break;
+		// case 502:	status_infos.push_back(error_path); status_infos.push_back("Bad Gateway"); 	break;
+		// case 503:	status_infos.push_back(error_path); status_infos.push_back("Service Unavailable"); 	break;
 	}
-	return (status_message);
+	return (status_infos);
 }
 
 std::string	get_content_type(std::string file_path, Config &config)
@@ -28,36 +30,39 @@ std::string	get_content_type(std::string file_path, Config &config)
 	std::string	content_type;
 	std::string	file_ext;
 
-	std::cout << "FILEPATH: " << file_path << std::endl;
 	file_ext = file_path.substr(file_path.find_last_of(".") + 1);
 	content_type = config.get_type(file_ext);
 
-	std::cout << "FILE EXT: " << file_ext << " CONT TYPE: "<< content_type << std::endl;
 	return (content_type);
 }
 
-std::string	ResponseFormatting::parse_headers(std::string file_path,
-	std::string http_version, int status_code, Config &config,
+std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_infos,
+	std::string http_version, int const &status_code, Config &config,
 	int content_length)
 {
 	std::string	headers;
 
 	headers = http_version + " " + std::to_string(status_code) + " "
-		+ get_status_message(status_code) + "\n";
-	headers += "Content-Type: " + get_content_type(file_path, config) + "\n";
-	headers += "Content-Length: " + std::to_string(content_length) + "\n";
-	// headers += "Connection: close\n";
+		+ status_infos[1] + "\n";
+	if (status_code != 301)
+	{
+		headers += "Content-Type: " + get_content_type(status_infos[0], config) + "\n";
+		headers += "Content-Length: " + std::to_string(content_length) + "\n";
+	}
+	else
+		headers += "Location: " + status_infos[0];
 
 	return (headers);
 }
 
-std::string	ResponseFormatting::parse_body(std::string file_path)
+std::string	ResponseFormatting::parse_body(std::string file_path, int const &status_code)
 {
+	if (status_code == 301)
+		return ("");
 	std::ifstream	inputFile(file_path);
 	std::string		output;
 	std::string		line;
 
-	output = "";
 	if (!inputFile.is_open())
 		return output;
 	while (std::getline(inputFile, line))
@@ -67,16 +72,19 @@ std::string	ResponseFormatting::parse_body(std::string file_path)
 }
 
 std::string	ResponseFormatting::format_response(
-	std::string http_version, int status_code, std::string file_path,
+	std::string const &http_version, int &status_code, std::string &file_path,
 	Config &config)
 {
 	std::string	output;
 	std::string	body;
 	std::string	headers;
+	std::deque<std::string> status_infos = get_status_infos(status_code, file_path, config.getErrorPath(config.get_portnums()[0]));
 
-	body = parse_body(file_path);
-	headers = parse_headers(file_path, http_version, status_code,
+	body = parse_body(status_infos[0], status_code);
+	headers = parse_headers(status_infos, http_version, status_code,
 			config, body.length());
-	output = headers + "\n" + body;
+	output = headers;
+	if (body.length() > 0)
+		output += '\n' + body;
 	return (output);
 }
