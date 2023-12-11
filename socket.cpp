@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/07 16:03:32 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/10 22:17:17 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 volatile sig_atomic_t    isTrue = 1;
 
 // Function to run when CTRL-C is pressed
-void    sigHandler( int param ) { isTrue = 0;}
+void    sigHandler( int param ) { (void)param; isTrue = 0;}
 
 void    printErrno( void )
 {
@@ -44,10 +44,11 @@ void    printErrno( void )
 int main (void)
 {
     HttpRequest request;
+    int         status;
     // SERVER
     Config  config = parse_config_file("conf_parsing/webserv.conf");
     int arrsize = config.get_portnums().size();
-    struct sockaddr_in saddr[arrsize];
+    std::vector<sockaddr_in> saddr(arrsize);
     for (int i = 0; i < arrsize; i++)
     {
         saddr[i].sin_family = AF_INET,
@@ -97,7 +98,6 @@ int main (void)
     std::string prevReqPath = "";
     ResponseFormatting  formatter;
     int recvsize;
-    int c = 0;
     signal(SIGINT, sigHandler);
     while (isTrue)
     {
@@ -109,9 +109,10 @@ int main (void)
         }
         else if (clientsock >= 0)
         {
+            status = 200;
             std::cout << "[Server] Client connected with success" << std::endl;
             memset(buff, 0, 4096);
-            std::cout << "\e[31mRECV\e[0m" << std::endl;
+            // std::cout << "\e[31mRECV\e[0m" << std::endl;
             recvsize = recv(clientsock, buff, 4096, 0);
             if (recvsize < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
                 std::cout << "Recv(): ";
@@ -124,10 +125,12 @@ int main (void)
             else if (recvsize > 0)
             {
                 std::cout << std::string(buff) << std::endl;
-
+                
                 request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
-                filepath = get_file_path(request, config, prevReqPath);
-                output = formatter.format_response("HTTP/1.1", 200, filepath, config);
+                filepath = get_file_path(request, config, status);
+                std::cout << "FILEPATH: " << filepath << std::endl;
+                output = formatter.format_response("HTTP/1.1", status, filepath, config);
+                std::cout << output << std::endl;
                 send(clientsock, output.c_str(), output.length(), 0);
             }
             close(clientsock);
