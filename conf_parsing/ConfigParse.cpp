@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParse.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/07 16:08:43 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/11 12:20:50 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,28 +182,9 @@ Config	parse_config_file(std::string path)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
 		parseDirective(line, directive, config);
     }
-
-	// config.printAll();
-	
-	// TESTING PARSING OUTPUT
-	// for (i = 0; i < dir_index.size(); i++)
-	// 	std::cout << "\e[31mkey: \e[0m" << dir_index.at(i) << "  \e[33mvalue: \e[0m"
-	// 		<< directives[dir_index.at(i)] << std::endl << "\e[34m----------\e[0m" << std::endl;
 	return (config);
 }
 
-	// std::cout << "| " << config.getLocRef(request.port_number, "/").get_root() << " |" << std::endl;
-	/*
-	 * 0. Check the port_number to get the required locations vector.
-	 * 1. Check the request path.
-	 * 1.5: Check if the METHOD matches for this path
-	 * 2. Check the location.
-	 * 3. Test for file mentioned in index or 
-	 * 		one obtained by appending the path name.
-	 * 4. Use the try files directive to find the file.
-	 * 5. If file is found, return the path.
-	 * 6. Check if directory listing is ON
-	*/
 std::string get_file_path(HttpRequest &request, Config &config, std::string &prevPath)
 {
 	std::string file_path;
@@ -251,15 +232,20 @@ std::string get_file_path(HttpRequest &request, Config &config, std::string &pre
 				file_path = it->second.get_root() + request.path;
 				if (request.path.length() > 1) file_path += '/';
 				file_path += ind[j];
+				std::cout << "File_path is " << file_path << std::endl;
 				if (!access(file_path.c_str(), R_OK))
 					return (file_path);
 			}
-			std::cout << "no valid file encountered" << std::endl;
-			return ("error_3");
 			// directory listing;
+			if (it->second.get_autoindex())
+				return it->second.get_directory_listing(request, config);
+			else {
+				std::cout << "no valid file encountered" << std::endl;
+				return ("error_3");
+			}
 		}
 		else
-			std::cout << "method not allowed" << std::endl;
+			std::cout << "405: method not allowed" << std::endl;
 		return ("error_2");
 	}
 	return ("error_1");
@@ -278,15 +264,6 @@ std::string get_file_path(HttpRequest &request, Config &config, std::string &pre
 // 	request.path = config.get_route_for_error_code(code, port);
 // 	file_path = get_file_path(request, config);
 // 	return (file_path);
-// }
-
-// int main()
-// {
-// 	std::string path = "webserv.conf";
-	// std::ifstream file(path);
-
-// 	Config c = parse_config_file(path);
-// 	return (0);
 // }
 
 void	Config::printAll( void ) {

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/07 11:20:14 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/10 15:04:22 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,8 +44,6 @@ class LocationDir
 		std::string					redirect_url;
 		std::vector<std::string>	index;
 		std::vector<std::string>	methods_allowed;
-		// std::string				alias;
-		// std::vector<std::string>	try_files;
 
     public:
 
@@ -61,6 +59,7 @@ class LocationDir
 		std::string					get_redirect_url() const { return (this->redirect_url); };
 		std::vector<std::string>	get_index() const { return (this->index); };
 		std::vector<std::string>	get_methods_allowed() const { return (this->methods_allowed); };
+		std::string					get_directory_listing(HttpRequest &request, Config &config) const;
 
 		void	setRoute(std::string route) { this->route = route; };
 		void	setRoot(std::string root) { this->root = root; };

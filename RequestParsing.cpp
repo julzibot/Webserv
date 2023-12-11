@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestParsing.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/06 19:07:21 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/10 15:05:41 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,31 +55,5 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str, int portnum)
 	if (std::getline(requestStream, line) && !line.empty())
 		request.body = line;
 
-	// UNCOMMENT BELOW TO TEST PARSING RESULT
-	// std::cout << "method: " << request.method << " path: " << request.path << " version: " << request.http_version << std::endl;
-	// for (const auto& header : request.headers)
-	//     std::cout << "Header: " << header.first << " = " << header.second << std::endl;
-	// std::cout << "body: " << request.body << std::endl;
-
     return (request);
 }
-
-// char *  HttpRequestParse::process_request(char * buffer, int recvsize, int port_number)
-// {
-// 	std::string			config_file_path = "webserv.conf";
-// 	Config				config;
-// 	HttpRequest         request;
-// 	std::string         file_path;
-// 	char                *output;
-
-// 	request = HttpRequestParse::parse(std::string(buffer, 0, recvsize), port_number);
-// 	config = parse_config_file(config_file_path);
-// 	file_path = get_file_path(request, config);
-// 	/**
-// 	 * 1. check if file exists
-// 	 * 2. check if file is readable
-// 	 * 3. Read file.
-// 	 * 4. Convert into necessary format and respond.
-// 	*/
-// 	return (output);
-// }

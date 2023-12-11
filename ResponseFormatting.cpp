@@ -44,7 +44,8 @@ std::string	ResponseFormatting::parse_headers(std::string file_path,
 
 	headers = http_version + " " + std::to_string(status_code) + " "
 		+ get_status_message(status_code) + "\n";
-	headers += "Content-Type: " + get_content_type(file_path, config) + "\n";
+	// headers += "Content-Type: " + get_content_type(file_path, config) + "\n";
+	headers += "Content-Type: text/html\n";
 	headers += "Content-Length: " + std::to_string(content_length) + "\n";
 	// headers += "Connection: close\n";
 
@@ -74,7 +75,8 @@ std::string	ResponseFormatting::format_response(
 	std::string	body;
 	std::string	headers;
 
-	body = parse_body(file_path);
+	// body = parse_body(file_path);
+	body = file_path;
 	headers = parse_headers(file_path, http_version, status_code,
 			config, body.length());
 	output = headers + "\n" + body;

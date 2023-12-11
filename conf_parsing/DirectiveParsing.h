@@ -3,15 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   DirectiveParsing.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:39:48 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/11/30 14:10:54 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/12/10 15:40:22 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
-// #include "Config.hpp"
+#include "Config.hpp"
 
 typedef	void	(*funcPtr)(Config& config, std::string line, std::string directive);
 
