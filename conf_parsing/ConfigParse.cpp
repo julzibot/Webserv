@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 17:12:46 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/11 17:39:55 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -284,9 +284,6 @@ std::string	get_directory_listing(std::string & file_path) {
 		output += END_OF_LIST;
 		return (output);
 	} else {
-		// TODO: Handle error case in case directory does not open.
-		// Ideally, we should be responding with a 403 error.
-		std::cout << "Could not open directory" << std::endl;
-		return (output);
+		throw std::ios_base::failure("Error opening the directory!");
 	}
 }

@@ -84,8 +84,15 @@ std::string	ResponseFormatting::format_response(
 
 	if (status_code == 1001)
 	{
-		body = get_directory_listing(file_path);
-		status_code = 200;
+		try {
+			body = get_directory_listing(file_path);
+			status_code = 200;
+		} catch (const std::ios_base::failure& e) {
+			status_code = 403;
+			status_infos = get_status_infos(status_code,
+				file_path, config.getErrorPath(config.get_portnums()[0]));
+			body = parse_body(status_infos[0], status_code);
+		}
 	}
 	else
 		body = parse_body(status_infos[0], status_code);
