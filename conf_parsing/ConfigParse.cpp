@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 15:49:05 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/11 16:57:30 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -250,7 +250,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 			if (it->second.get_autoindex())
 			{
 				status_code = 1001;
-				return (file_path);
+				return (it->second.get_root());
 			}
 			status_code = 501;
 			return ("");
@@ -273,65 +273,35 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 // 	return (file_path);
 // }
 
-// int main()
-// {
-// 	std::string path = "webserv.conf";
-// 	std::ifstream file(path);
+std::string	get_directory_listing(std::string & file_path) {
+	DIR *dir;
+	struct dirent *en;
+	std::vector<std::string> list;
+	std::string	output;
 
-// 	Config c = parse_config_file(path);
-// 	return (0);
-// }
+	std::cout << "This root is " << file_path << std::endl;
 
-// void	Config::printAll( void ) {
-
-// 	std::cout << "worker_processes: " << this->worker_processes << std::endl;
-// 	std::cout << "worker_connections: " << this->worker_connections << std::endl;
-	
-// 	std::cout << "\e[31m************************\e[0m" << std::endl;
-// 	std::cout << "\e[31m*** SERVER LOCATIONS ***\e[0m" << std::endl;
-// 	for (servLocMap::iterator it = this->server.begin(); it != this->server.end(); ++it) {
-
-// 		std::cout << "\e[4;32mPORT: " << it->first << "\e[0m" << std::endl;
-// 		std::map<std::string, LocationDir>::iterator it1;
-// 		for (it1 = it->second.begin(); it1 != it->second.end(); ++it1) {
-// 			std::cout << "\e[35m* LocationDir: " << it1->first << " *\e[0m" << std::endl;
-// 			std::cout << "\e[33mAutoindex:    \e[0m" << it1->second.get_autoindex() << std::endl;
-// 			std::cout << "\e[33mServer_name:  \e[0m" << it1->second.get_server_name() << std::endl;
-// 			std::cout << "\e[33mRoute:        \e[0m" << it1->second.get_route() << std::endl;
-// 			std::cout << "\e[33mRoot:         \e[0m" << it1->second.get_root() << std::endl;
-// 			std::cout << "\e[33mRedirect_url: \e[0m" << it1->second.get_redirect_url() << std::endl;
-// 			std::vector<std::string>	indexVec = it1->second.get_index();
-// 			std::vector<std::string>::iterator	vecit;
-// 			std::cout << "INDEX: ";
-// 			for (vecit = indexVec.begin(); vecit != indexVec.end(); ++vecit)
-// 				std::cout << *vecit << " ";
-// 			std::cout << std::endl;
-// 			std::vector<std::string>	methVec = it1->second.get_methods_allowed();
-// 				std::cout << "METHODS: ";
-// 			for (vecit = methVec.begin(); vecit != methVec.end(); ++vecit)
-// 				std::cout << *vecit << " ";
-// 			std::cout << std::endl;
-// 		}
-// 	}
-// 	std::cout << "\e[31m************************\e[0m" << std::endl;
-// 		std::cout << "\e[35mServer Port Numbers\e[0m" << std::endl;
-// 		std::vector<int>::iterator itint;
-// 		for (itint = servPortNums.begin(); itint != servPortNums.end(); ++itint)
-// 			std::cout << *itint << " ";
-// 		std::cout << std::endl;
-// 		std::cout << "\e[36mError codes\e[0m" << std::endl;
-// 		for (itint = error_codes.begin(); itint != error_codes.end(); ++itint)
-// 			std::cout << *itint << " ";
-// 		std::cout << std::endl;
-
-// 		servErrorMap::iterator	errmapit;
-// 		for (errmapit = error_page_map.begin(); errmapit != error_page_map.end(); ++errmapit) {
-
-// 			std::cout << "\e[38mPORT: " << errmapit->first << "\e[0m" << std::endl;
-// 			std::map<int, std::string>::iterator	mapintit;
-// 			std::cout << "\e[37m* Error pages *\e[0m" << std::endl;
-// 			for (mapintit = errmapit->second.begin(); mapintit != errmapit->second.end(); ++mapintit)
-// 				std::cout << mapintit->first << " - " << mapintit->second << std::endl;
-// 			std::cout << std::endl;
-// 		}
-// }
+	dir = opendir(file_path.c_str()); //open all or present directory
+	if (dir) {
+		std::cout << "Directory listing: " << std::endl;
+		while ((en = readdir(dir)) != NULL) {
+			list.push_back(en->d_name);
+			std::cout << en->d_name << std::endl; //print all files in directory
+		}
+		closedir(dir); //close directory
+		output = START_OF_LIST;
+		output += "<h1>Directory listing</h1>";
+		output += "<ul>";
+		for (std::vector<std::string>::iterator it = list.begin(); it != list.end(); ++it) {
+			output += "<li><a href=\"file://" + file_path + "/" + *it + "\">" + *it + "</a></li>";
+		}
+		output += "</ul>";
+		output += END_OF_LIST;
+		return (output);
+	} else {
+		// TODO: Handle error case in case directory does not open.
+		// Ideally, we should be responding with a 403 error.
+		std::cout << "Could not open directory" << std::endl;
+		return (output);
+	}
+}

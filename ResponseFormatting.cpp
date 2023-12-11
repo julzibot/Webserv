@@ -15,6 +15,7 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
 		case 501:	status_infos.push_back(error_path + "/501.html"); status_infos.push_back("Not Implemented"); 	break;
 		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
+		case 1001:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
 		// case 201:	status_infos.push_back(error_path); status_infos.push_back("Created"); 	break;
 		// case 302:	status_infos.push_back(error_path); status_infos.push_back("Found"); 	break;
 		// case 303:	status_infos.push_back(error_path); status_infos.push_back("See Other"); 	break;
@@ -57,12 +58,12 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 
 std::string	ResponseFormatting::parse_body(std::string file_path, int const &status_code)
 {
-	if (status_code == 301)
-		return ("");
 	std::ifstream	inputFile(file_path);
 	std::string		output;
 	std::string		line;
 
+	if (status_code == 301)
+		return (output);
 	if (!inputFile.is_open())
 		return output;
 	while (std::getline(inputFile, line))
@@ -78,9 +79,16 @@ std::string	ResponseFormatting::format_response(
 	std::string	output;
 	std::string	body;
 	std::string	headers;
-	std::deque<std::string> status_infos = get_status_infos(status_code, file_path, config.getErrorPath(config.get_portnums()[0]));
+	std::deque<std::string> status_infos = get_status_infos(status_code,
+			file_path, config.getErrorPath(config.get_portnums()[0]));
 
-	body = parse_body(status_infos[0], status_code);
+	if (status_code == 1001)
+	{
+		body = get_directory_listing(file_path);
+		status_code = 200;
+	}
+	else
+		body = parse_body(status_infos[0], status_code);
 	headers = parse_headers(status_infos, http_version, status_code,
 			config, body.length());
 	output = headers;

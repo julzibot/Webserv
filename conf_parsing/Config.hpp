@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 15:49:38 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/11 16:55:09 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,9 +47,7 @@ class LocationDir
 		std::vector<std::string>	methods_allowed;
 
     public:
-
 		LocationDir( void );
-
 		void	removeMethod( std::string toRemove );
 
 		/* Accessors */
@@ -61,7 +59,6 @@ class LocationDir
 		std::string					get_redirect_url() const { return (this->redirect_url); };
 		std::vector<std::string>	get_index() const { return (this->index); };
 		std::vector<std::string>	get_methods_allowed() const { return (this->methods_allowed); };
-		std::string					get_directory_listing(HttpRequest &request, Config &config) const;
 
 		void	setRoute(std::string route) { this->route = route; };
 		void	setRedir(std::string redir) { this->redir = redir; };

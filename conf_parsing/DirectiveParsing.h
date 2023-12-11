@@ -6,12 +6,14 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:39:48 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 15:41:29 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/11 16:56:09 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 #include "Config.hpp"
+#include <dirent.h>
+#include "../types/types.h"
 
 typedef	void	(*funcPtr)(Config& config, std::string line, std::string directive);
 
@@ -22,6 +24,7 @@ void	dirParseTypes(Config& config, std::string line, std::string directive);
 void	dirParseEvents(Config& config, std::string line, std::string directive);
 void	dirParseServer(Config& config, std::string line, std::string directive);
 void	dirParseLocation(std::string line, Config &config, std::string directive);
+std::string	get_directory_listing(std::string & file_path);
 
 /* Helper functions */
 std::string	removeSpaces( std::string line );
