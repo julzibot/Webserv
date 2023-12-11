@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 22:18:26 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/11 16:55:09 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,9 +47,7 @@ class LocationDir
 		std::vector<std::string>	methods_allowed;
 
     public:
-
 		LocationDir( void );
-
 		void	removeMethod( std::string toRemove );
 
 		/* Accessors */

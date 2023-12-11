@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   types.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/01 19:07:18 by toshsharma        #+#    #+#             */
-/*   Updated: 2023/12/10 22:05:52 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/11 15:24:24 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,3 +18,6 @@
 #include <map>
 
 typedef std::map<std::string, std::string> strstrMap;
+const std::string START_OF_LIST =
+	"<!DOCTYPE html><html><head><title>Directory List</title></head><body>";
+const std::string END_OF_LIST = "</body></html>";

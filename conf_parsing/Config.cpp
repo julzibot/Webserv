@@ -3,19 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:43:37 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 22:05:24 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/11 16:19:30 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
-
-// Milan 27/11
-// 'methods_except' added
-// Constructor defined
-// removeMethod added
 
 LocationDir::LocationDir( void ) {
 

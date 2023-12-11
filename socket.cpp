@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 22:17:17 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/11 16:21:19 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,7 +125,6 @@ int main (void)
             else if (recvsize > 0)
             {
                 std::cout << std::string(buff) << std::endl;
-                
                 request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
                 filepath = get_file_path(request, config, status);
                 std::cout << "FILEPATH: " << filepath << std::endl;
