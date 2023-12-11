@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 22:22:50 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/11 10:41:46 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,12 +214,20 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
 	std::vector<std::string> ind;
 	std::string	locRoute;
-	unsigned int	slashPos = 1;
+	size_t	slashPos = 1;
+	size_t	dotPos;
 
-	if (request.path.find('.') != NPOS)
-		return (locations["/"].get_root() + "/" + request.path);
 	if (request.path.length() > 1)
 		slashPos = request.path.find('/', 1);
+	dotPos = request.path.find('.');
+	if (dotPos != NPOS && dotPos < slashPos)
+		return (locations["/"].get_root() + request.path);
+	else if (dotPos != NPOS)
+	{
+		while (request.path[--dotPos] != '/') ;
+		request.prio_file = request.path.substr(dotPos + 1);
+		request.path = request.path.substr(0, dotPos);
+	}
 	while (it != locEnd)
 	{
 		locRoute = it->first;
@@ -247,8 +255,8 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		if (i < methods.size())
 		{
 			ind = it->second.get_index();
-			// if (!request.prio_file.empty())
-			// 	ind.insert(ind.begin(), request.prio_file);
+			if (!request.prio_file.empty())
+				ind.insert(ind.begin(), request.prio_file);
 			file_path = it->second.get_root();
 			if (file_path[file_path.length() - 1] != '/') file_path += '/';
 			if (request.path.length() > slashPos)

@@ -8,6 +8,7 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 200:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
 		case 301:	status_infos.push_back(file_path); status_infos.push_back("Moved Permanently"); 	break;
 		case 400:	status_infos.push_back(error_path + "/400.html"); status_infos.push_back("Bad Request"); 	break;
+		case 403:	status_infos.push_back(error_path + "/403.html"); status_infos.push_back("Forbidden"); 	break;
 		case 404:	status_infos.push_back(error_path + "/404.html"); status_infos.push_back("Not Found"); 	break;
 		case 405:	status_infos.push_back(error_path + "/405.html"); status_infos.push_back("Method Not Allowed"); break;
 		case 413:	status_infos.push_back(error_path + "/413.html"); status_infos.push_back("Payload Too Large"); break;
@@ -18,7 +19,6 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		// case 302:	status_infos.push_back(error_path); status_infos.push_back("Found"); 	break;
 		// case 303:	status_infos.push_back(error_path); status_infos.push_back("See Other"); 	break;
 		// case 401:	status_infos.push_back(error_path); status_infos.push_back("Unauthorized"); 	break;
-		// case 403:	status_infos.push_back(error_path); status_infos.push_back("Forbidden"); 	break;
 		// case 502:	status_infos.push_back(error_path); status_infos.push_back("Bad Gateway"); 	break;
 		// case 503:	status_infos.push_back(error_path); status_infos.push_back("Service Unavailable"); 	break;
 	}
