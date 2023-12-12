@@ -73,14 +73,14 @@ std::string	ResponseFormatting::parse_body(std::string file_path, int const &sta
 }
 
 std::string	ResponseFormatting::format_response(
-	std::string const &http_version, int &status_code, std::string &file_path,
+	HttpRequest const &request, int &status_code, std::string &file_path,
 	Config &config)
 {
 	std::string	output;
 	std::string	body;
 	std::string	headers;
 	std::deque<std::string> status_infos = get_status_infos(status_code,
-			file_path, config.getServMain(config.get_portnums()[0])["server_error_path"]);
+			file_path, config.getServMain(request.port_number)["server_error_path"]);
 
 	if (status_code == 1001)
 	{
@@ -90,13 +90,13 @@ std::string	ResponseFormatting::format_response(
 		} catch (const std::ios_base::failure& e) {
 			status_code = 403;
 			status_infos = get_status_infos(status_code,
-				file_path, config.getServMain(config.get_portnums()[0])["server_error_path"]);
+				file_path, config.getServMain(request.port_number)["server_error_path"]);
 			body = parse_body(status_infos[0], status_code);
 		}
 	}
 	else
 		body = parse_body(status_infos[0], status_code);
-	headers = parse_headers(status_infos, http_version, status_code,
+	headers = parse_headers(status_infos, request.http_version, status_code,
 			config, body.length());
 	output = headers;
 	if (body.length() > 0)

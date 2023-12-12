@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/12 17:56:26 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/13 00:08:26 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,7 +213,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		slashPos = request.path.find('/', 1);
 	dotPos = request.path.find('.');
 	if (dotPos != NPOS && dotPos < slashPos)
-		return (config.getServMain(9999)["server_root"] + request.path);
+		return (config.getServMain(request.port_number)["server_root"] + request.path);
 	else if (dotPos != NPOS)
 	{
 		while (request.path[--dotPos] != '/') ;

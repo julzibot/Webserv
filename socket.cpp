@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/12 23:03:10 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/13 00:40:09 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,11 +83,10 @@ int main (void)
     {
         saddr[i].sin_family = AF_INET,
         saddr[i].sin_addr.s_addr = INADDR_ANY,
-        saddr[i].sin_port = htons(config.get_portnums().at(i));
+        saddr[i].sin_port = htons(config.get_portnums()[i]);
     }
 
     int option = 1;
-    // int saddr_size = sizeof(saddr);
     int servsock = socket(AF_INET, SOCK_STREAM, 0);
     fcntl(servsock, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
     if (servsock == -1)
@@ -152,19 +151,22 @@ int main (void)
 					clientsock = accept(servsock, (struct sockaddr*)&caddr, (socklen_t*)&caddrsize);
 					if (clientsock < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
 						printErrno(ACCEPT, NO_EXIT);
-						for (int j = 0; j < maxFD + 1; ++j)
-							if (FD_ISSET(j, &currentSockets))
-								close(i);
-						break;
+						// for (int j = 0; j < maxFD + 1; ++j)
+						// 	if (FD_ISSET(j, &currentSockets))
+						// 		close(i);
+						// break;
 					}
-					fcntl(clientsock, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
-					if (clientsock > maxFD)
-						maxFD = clientsock;
-					FD_SET(clientsock, &currentSockets);
+                    else if (clientsock >= 0)
+                    {
+                        fcntl(clientsock, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+                        if (clientsock > maxFD)
+                            maxFD = clientsock;
+                        FD_SET(clientsock, &currentSockets);
+                    }
 				}
 				else { // clientsock
-					std::cout << "\033[31mServer socket:   " << servsock << "\033[0m" << std::endl;
-					std::cout << "\033[31mExisting client: " << i << "\033[0m" << std::endl;
+					// std::cout << "\033[31mServer socket:   " << servsock << "\033[0m" << std::endl;
+					// std::cout << "\033[31mExisting client: " << i << "\033[0m" << std::endl;
 					memset(buff, 0, 4096);
 					recvsize = recv(i, buff, 4096, 0);
 
@@ -172,7 +174,6 @@ int main (void)
 						printErrno(RECV, NO_EXIT);
 						std::cerr << "\033[1m[SERVER] Error encountered while receiving message\033[0m" << std::endl;
 						close(i);
-						break;
 					}
 					else if (recvsize == 0) {
 						std::cout << "\033[1m[SERVER] Client disconnected\033[0m" << std::endl;
@@ -185,7 +186,7 @@ int main (void)
 				
 					request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
 					filepath = get_file_path(request, config, status);
-					output = formatter.format_response("HTTP/1.1", status, filepath, config);
+					output = formatter.format_response(request, status, filepath, config);
 					std::cout << "output: " << output.c_str() << std::endl;
 					send(i, output.c_str(), output.length(), 0);
 					}
