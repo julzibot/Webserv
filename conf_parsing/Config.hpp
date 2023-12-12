@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 16:55:09 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/12 17:01:46 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,7 @@ class LocationDir
 		std::vector<std::string>	get_index() const { return (this->index); };
 		std::vector<std::string>	get_methods_allowed() const { return (this->methods_allowed); };
 
+		void	setName(std::string name) { this->server_name = name; };
 		void	setRoute(std::string route) { this->route = route; };
 		void	setRedir(std::string redir) { this->redir = redir; };
 		void	setRoot(std::string root) { this->root = root; };
@@ -76,7 +77,6 @@ class Config
         strstrMap			types;
         servLocMap			server;
 		std::vector<int>	servPortNums;
-        std::vector<int>	error_codes;
         servErrorPath		error_paths;
 		// std::map<int, std::vector<std::string> > loc_index;
 

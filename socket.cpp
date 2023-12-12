@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 16:21:19 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/12 16:49:25 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,7 +115,7 @@ int main (void)
             // std::cout << "\e[31mRECV\e[0m" << std::endl;
             recvsize = recv(clientsock, buff, 4096, 0);
             if (recvsize < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
-                std::cout << "Recv(): ";
+                std::cerr << "Recv(): ";
                 printErrno();
                 std::cerr << "Error encountered while receiving message" << std::endl;
                 break;

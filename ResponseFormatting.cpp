@@ -6,6 +6,7 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 	switch (status_code)
 	{
 		case 200:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
+		case 1001:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
 		case 301:	status_infos.push_back(file_path); status_infos.push_back("Moved Permanently"); 	break;
 		case 400:	status_infos.push_back(error_path + "/400.html"); status_infos.push_back("Bad Request"); 	break;
 		case 403:	status_infos.push_back(error_path + "/403.html"); status_infos.push_back("Forbidden"); 	break;
@@ -13,13 +14,12 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 405:	status_infos.push_back(error_path + "/405.html"); status_infos.push_back("Method Not Allowed"); break;
 		case 413:	status_infos.push_back(error_path + "/413.html"); status_infos.push_back("Payload Too Large"); break;
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
-		case 501:	status_infos.push_back(error_path + "/501.html"); status_infos.push_back("Not Implemented"); 	break;
 		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
-		case 1001:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
 		// case 201:	status_infos.push_back(error_path); status_infos.push_back("Created"); 	break;
 		// case 302:	status_infos.push_back(error_path); status_infos.push_back("Found"); 	break;
 		// case 303:	status_infos.push_back(error_path); status_infos.push_back("See Other"); 	break;
 		// case 401:	status_infos.push_back(error_path); status_infos.push_back("Unauthorized"); 	break;
+		// case 501:	status_infos.push_back(error_path + "/501.html"); status_infos.push_back("Not Implemented"); 	break;
 		// case 502:	status_infos.push_back(error_path); status_infos.push_back("Bad Gateway"); 	break;
 		// case 503:	status_infos.push_back(error_path); status_infos.push_back("Service Unavailable"); 	break;
 	}
