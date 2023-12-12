@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/12 16:49:25 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/12 17:52:56 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,10 +124,10 @@ int main (void)
                 std::cout << "[Server] Client disconnected" << std::endl;
             else if (recvsize > 0)
             {
-                std::cout << std::string(buff) << std::endl;
+                // std::cout << std::string(buff) << std::endl;
                 request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
                 filepath = get_file_path(request, config, status);
-                std::cout << "FILEPATH: " << filepath << std::endl;
+                // std::cout << "FILEPATH: " << filepath << std::endl;
                 output = formatter.format_response("HTTP/1.1", status, filepath, config);
                 std::cout << output << std::endl;
                 send(clientsock, output.c_str(), output.length(), 0);
