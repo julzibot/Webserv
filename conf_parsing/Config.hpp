@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/12 17:01:46 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/12 17:21:51 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,9 +30,9 @@ class LocationDir;
 # define NPOS std::string::npos
 
 
-typedef std::map<int, std::map<std::string, LocationDir> > servLocMap;
-typedef std::map<int, std::string> servErrorPath;
 typedef std::map<std::string, std::string> strstrMap;
+typedef std::map<int, std::map<std::string, LocationDir> > servLocMap;
+typedef std::map<int, strstrMap> servInfos;
 
 class LocationDir
 {
@@ -75,9 +75,9 @@ class Config
         int					worker_processes;
         int					worker_connections;
         strstrMap			types;
-        servLocMap			server;
+        servLocMap			server_locs;
 		std::vector<int>	servPortNums;
-        servErrorPath		error_paths;
+        servInfos			server_main;
 		// std::map<int, std::vector<std::string> > loc_index;
 
     public:
@@ -85,12 +85,12 @@ class Config
         int				get_workproc() const { return (this->worker_processes); };
         int				get_workco() const { return (this->worker_connections); };
         std::vector<int>    get_portnums() const { return (this->servPortNums); };
-		servLocMap		getServ() const { return (this->server); };
+		servLocMap		getServ() const { return (this->server_locs); };
         std::string		get_type(std::string file_ext);
-        LocationDir		&getLocRef(int port, std::string route) { return (this->server[port][route]); };
-		std::string		&getErrorPath(int port) { return (this->error_paths[port]); };
+        LocationDir		&getLocRef(int port, std::string route) { return (this->server_locs[port][route]); };
+		strstrMap		&getServMain(int port) { return (this->server_main[port]); };
 		// servErrorPath&	getErrorMap( void ) { return (this->error_page_map); };
-		std::map<std::string, LocationDir>&	getLocMap(int port) { return (this->server[port]); };
+		std::map<std::string, LocationDir>&	getLocMap(int port) { return (this->server_locs[port]); };
 
         void	set_workproc(int value) { this->worker_processes = value; };
         void	set_workco(int value) { this->worker_connections = value; };

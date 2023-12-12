@@ -80,7 +80,7 @@ std::string	ResponseFormatting::format_response(
 	std::string	body;
 	std::string	headers;
 	std::deque<std::string> status_infos = get_status_infos(status_code,
-			file_path, config.getErrorPath(config.get_portnums()[0]));
+			file_path, config.getServMain(config.get_portnums()[0])["server_error_path"]);
 
 	if (status_code == 1001)
 	{
@@ -90,7 +90,7 @@ std::string	ResponseFormatting::format_response(
 		} catch (const std::ios_base::failure& e) {
 			status_code = 403;
 			status_infos = get_status_infos(status_code,
-				file_path, config.getErrorPath(config.get_portnums()[0]));
+				file_path, config.getServMain(config.get_portnums()[0])["server_error_path"]);
 			body = parse_body(status_infos[0], status_code);
 		}
 	}

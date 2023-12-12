@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/12 17:04:23 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/12 17:26:19 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,23 +108,26 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 
 	ls.clear(); ls.str(line);
 	ls >> varName;
-	if (varName == "error_pages")
+	if (varName == "server_name")
 	{
 		for (unsigned int i = 0; i < ports.size(); i++)
-			ls >> config.getErrorPath(ports[i]);
+			ls >> config.getServMain(ports[i])["server_name"];
+	}
+	else if (varName == "root")
+	{
+		for (unsigned int i = 0; i < ports.size(); i++)
+			ls >> config.getServMain(ports[i])["server_root"];
+	}
+	else if (varName == "error_pages")
+	{
+		for (unsigned int i = 0; i < ports.size(); i++)
+			ls >> config.getServMain(ports[i])["server_error_path"];
 	}
 	else if (varName == "listen")
 	{
 		for (unsigned int i = 0; i < ports.size(); i++)
 			config.add_portnum(ports[i]);
 	}
-	// else if (varName == "server_name")
-	// {
-	// 	for (unsigned int i = 0; i < ports.size(); i++)
-	// 		config.(ports[i]);
-	// }
-	// else if (varName == "root")
-	// {}
 	else
 		throw (std::invalid_argument("Unknown 'server' parameter."));
 }
