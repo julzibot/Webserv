@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParse.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 17:39:55 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/13 00:08:26 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,6 +115,8 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 	int			open_braces = 1;
 	int			i = dir_index.size() - 1;
 	std::string	line;
+	std::istringstream	portline;
+	std::string portbuff;
 	std::string	portnum = "";
 
 	dir_index.push_back(dir_key);
@@ -123,9 +125,12 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 		line = parse_comments(line);
 		if (add_portnum && line.find("listen") != NPOS)
 		{
-			std::istringstream(line) >> portnum >> portnum;
-			portnum = " " + portnum;
+			portnum = "";
+			portline.str(line); portline >> portbuff;
+			while (portline >> portbuff)
+				portnum += " " + portbuff;
 			dir_index.push_back(dir_key + portnum);
+			portline.clear();
 			add_portnum = 0;
 		}
 		if (isBrace('{', line) != NPOS)
@@ -181,7 +186,13 @@ Config	parse_config_file(std::string path)
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
 		parseDirective(line, directive, config);
-    }
+	}
+
+	// TESTING PARSING OUTPUT
+	// for (i = 0; i < dir_index.size(); i++)
+	// 	std::cout << "key: " << dir_index.at(i) << " value: "
+	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+
 	return (config);
 }
 
@@ -189,6 +200,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 {
 	std::string file_path;
 	unsigned int	i = 0;
+	int acss;
 	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
 	std::map<std::string, LocationDir>::iterator	it = locations.begin();
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
@@ -201,7 +213,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		slashPos = request.path.find('/', 1);
 	dotPos = request.path.find('.');
 	if (dotPos != NPOS && dotPos < slashPos)
-		return (locations["/"].get_root() + request.path);
+		return (config.getServMain(request.port_number)["server_root"] + request.path);
 	else if (dotPos != NPOS)
 	{
 		while (request.path[--dotPos] != '/') ;
@@ -244,15 +256,23 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 			if (file_path[file_path.length() - 1] != '/') file_path += '/';
 			for (unsigned int j = 0; j < ind.size(); j++)
 			{
-				if (!access((file_path + ind[j]).c_str(), R_OK))
+				acss = access((file_path + ind[j]).c_str(), F_OK);
+				if (!acss && !access((file_path + ind[j]).c_str(), R_OK))
+				{
+					status_code = 200;
 					return (file_path + ind[j]);
+				}
+				else if (!acss)
+					status_code = 403;
 			}
+			if (status_code == 403)
+				return ("");
 			if (it->second.get_autoindex())
 			{
 				status_code = 1001;
 				return (it->second.get_root());
 			}
-			status_code = 501;
+			status_code = 404;
 			return ("");
 		}
 		status_code = 405;

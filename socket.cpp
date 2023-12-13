@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 16:21:19 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/13 00:40:09 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,27 +18,57 @@
 #include <csignal>
 #include <fcntl.h>
 
+#define SOCKET 1
+#define BIND 2
+#define LISTEN 3
+#define ACCEPT 4
+#define RECV 5
+#define SELECT 6
+
+#define EXIT true
+#define NO_EXIT false
+
 volatile sig_atomic_t    isTrue = 1;
 
 // Function to run when CTRL-C is pressed
 void    sigHandler( int param ) { (void)param; isTrue = 0;}
 
-void    printErrno( void )
+void    printErrno(int func, bool ex)
 {
-    if (errno == EBADF)
-        std::cerr << "errno: Bad file descriptor" << std::endl;
-    else if (errno == ECONNABORTED)
-        std::cerr << "errno: Connection was aborted" << std::endl;
-    else if (errno == EINVAL)
-        std::cerr << "errno: Invalid argument" << std::endl;
-    else if (errno == ENOTSOCK)
-        std::cerr << "errno: Descriptor is not a socket" << std::endl;
-    else if (errno == EWOULDBLOCK || errno == EAGAIN)
-        std::cerr << "errno: Non-blocking socket" << std::endl;
-    else if (errno == EADDRINUSE)
-        std::cerr << "errno: Address already in use" << std::endl;
-    else
-        std::cout << "errno: Unknown error code, should update: " << errno << std::endl;
+    switch (func) {
+        case SOCKET: std::cerr << "socket(): ";
+        break;
+        case BIND: std::cerr << "bind(): ";
+        break;
+        case LISTEN: std::cerr << "listen(): ";
+        break;
+        case RECV: std::cerr << "recv(): ";
+        break;
+        case SELECT: std::cerr << "select(): ";
+        break;
+        default: std::cerr << "Unknown func(): ";
+    }
+
+    switch (errno) {
+        case EBADF: std::cerr << "errno: Bad file descriptor" << std::endl;
+        break;
+        case ECONNABORTED: std::cerr << "errno: Connection was aborted" << std::endl;
+        break;
+        case EINVAL: std::cerr << "errno: Invalid argument" << std::endl;
+        break;
+        case ENOTSOCK: std::cerr << "errno: Descriptor is not a socket" << std::endl;
+        break;
+        case EWOULDBLOCK: std::cerr << "errno: Non-blocking socket" << std::endl;
+        break;
+        case EADDRINUSE: std::cerr << "errno: Address already in use" << std::endl;
+        break;
+        case EINTR: std::cerr << "Interrupted system call" << std::endl;
+        break;
+        default: std::cerr << "errno: Unknown error code, should update: " << errno << std::endl;
+    }
+
+    if (ex)
+        exit(errno);
 }
 
 int main (void)
@@ -53,11 +83,10 @@ int main (void)
     {
         saddr[i].sin_family = AF_INET,
         saddr[i].sin_addr.s_addr = INADDR_ANY,
-        saddr[i].sin_port = htons(config.get_portnums().at(i));
+        saddr[i].sin_port = htons(config.get_portnums()[i]);
     }
 
     int option = 1;
-    // int saddr_size = sizeof(saddr);
     int servsock = socket(AF_INET, SOCK_STREAM, 0);
     fcntl(servsock, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
     if (servsock == -1)
@@ -75,17 +104,13 @@ int main (void)
     setsockopt(servsock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
     int ret = bind(servsock, (struct sockaddr*)&saddr[0], sizeof(saddr[0]));
     if (ret < 0) {
-        std::cerr << "Bind(): ";
-        printErrno();
-        exit(errno);
+        printErrno(BIND, EXIT);
     }
 
     //LISTENING
     ret = listen(servsock, SOMAXCONN);
     if (ret < 0) {
-        std::cerr << "Listen(): ";
-        printErrno();
-        exit(errno);
+        printErrno(LISTEN, EXIT);
     }
     std::cout << "[Server] listening on port " << config.get_portnums()[0] << std::endl;
 
@@ -97,45 +122,82 @@ int main (void)
     std::string line;
     std::string prevReqPath = "";
     ResponseFormatting  formatter;
+
+    fd_set            currentSockets;
+    fd_set            readySockets;
+    int               maxFD = servsock;
+    struct timeval    timeoutSocket;
+    timeoutSocket.tv_usec = 1;
+    timeoutSocket.tv_sec = 0;
+
+    FD_ZERO(&currentSockets);
+    FD_SET(servsock, &currentSockets);
     int recvsize;
+
     signal(SIGINT, sigHandler);
     while (isTrue)
     {
-        clientsock = accept(servsock, (struct sockaddr*)&caddr, (socklen_t*)&caddrsize);
-        if (clientsock < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
-            std::cout << "Accept(): ";
-            printErrno();
-            break;
-        }
-        else if (clientsock >= 0)
-        {
-            status = 200;
-            std::cout << "[Server] Client connected with success" << std::endl;
-            memset(buff, 0, 4096);
-            // std::cout << "\e[31mRECV\e[0m" << std::endl;
-            recvsize = recv(clientsock, buff, 4096, 0);
-            if (recvsize < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
-                std::cout << "Recv(): ";
-                printErrno();
-                std::cerr << "Error encountered while receiving message" << std::endl;
-                break;
-            }
-            else if (recvsize == 0)
-                std::cout << "[Server] Client disconnected" << std::endl;
-            else if (recvsize > 0)
-            {
-                std::cout << std::string(buff) << std::endl;
-                request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
-                filepath = get_file_path(request, config, status);
-                std::cout << "FILEPATH: " << filepath << std::endl;
-                output = formatter.format_response("HTTP/1.1", status, filepath, config);
-                std::cout << output << std::endl;
-                send(clientsock, output.c_str(), output.length(), 0);
-            }
-            close(clientsock);
-            std::cout << "[Server] Client socket closed" << std::endl;
-        }
-    }
+        status = 200;
+		readySockets = currentSockets;
+		if (select(maxFD + 1, &readySockets, NULL, NULL, &timeoutSocket) < 0)
+			printErrno(SELECT, EXIT);
+		for (int i = 0; i < maxFD + 1; ++i)
+		{
+			if (FD_ISSET(i, &readySockets))
+			{
+				if (i == servsock) // i is servSock, so accept new connection
+				{
+					std::cout << "\033[31mNow processing socket number: " << i << "\033[0m" << std::endl;
+					clientsock = accept(servsock, (struct sockaddr*)&caddr, (socklen_t*)&caddrsize);
+					if (clientsock < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
+						printErrno(ACCEPT, NO_EXIT);
+						// for (int j = 0; j < maxFD + 1; ++j)
+						// 	if (FD_ISSET(j, &currentSockets))
+						// 		close(i);
+						// break;
+					}
+                    else if (clientsock >= 0)
+                    {
+                        fcntl(clientsock, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+                        if (clientsock > maxFD)
+                            maxFD = clientsock;
+                        FD_SET(clientsock, &currentSockets);
+                    }
+				}
+				else { // clientsock
+					// std::cout << "\033[31mServer socket:   " << servsock << "\033[0m" << std::endl;
+					// std::cout << "\033[31mExisting client: " << i << "\033[0m" << std::endl;
+					memset(buff, 0, 4096);
+					recvsize = recv(i, buff, 4096, 0);
+
+					if (recvsize < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
+						printErrno(RECV, NO_EXIT);
+						std::cerr << "\033[1m[SERVER] Error encountered while receiving message\033[0m" << std::endl;
+						close(i);
+					}
+					else if (recvsize == 0) {
+						std::cout << "\033[1m[SERVER] Client disconnected\033[0m" << std::endl;
+						close(i);
+						FD_CLR(i, &currentSockets);
+					}
+					else if (recvsize > 0) {
+					std::cout << "\033[1m[SERVER] Client connected with success\033[0m" << std::endl;
+					std::cout << std::string(buff) << std::endl;
+				
+					request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
+					filepath = get_file_path(request, config, status);
+					output = formatter.format_response(request, status, filepath, config);
+					std::cout << "output: " << output.c_str() << std::endl;
+					send(i, output.c_str(), output.length(), 0);
+					}
+				}
+			}
+    	}
+	}
+	for (int i = 0; i < maxFD + 1; ++i) {
+		if (FD_ISSET(i, &currentSockets))
+			close(i);
+	}
     close(servsock);
     return(0);
 }
