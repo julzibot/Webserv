@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/13 00:40:09 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/13 18:33:43 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,7 @@ int main (void)
     int         status;
     // SERVER
     Config  config = parse_config_file("conf_parsing/webserv.conf");
+
     int arrsize = config.get_portnums().size();
     std::vector<sockaddr_in> saddr(arrsize);
     for (int i = 0; i < arrsize; i++)
@@ -102,7 +103,7 @@ int main (void)
 
     // BINDING
     setsockopt(servsock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-    int ret = bind(servsock, (struct sockaddr*)&saddr[0], sizeof(saddr[0]));
+    int ret = bind(servsock, (struct sockaddr*)&saddr[1], sizeof(saddr[1]));
     if (ret < 0) {
         printErrno(BIND, EXIT);
     }
@@ -112,7 +113,7 @@ int main (void)
     if (ret < 0) {
         printErrno(LISTEN, EXIT);
     }
-    std::cout << "[Server] listening on port " << config.get_portnums()[0] << std::endl;
+    std::cout << "[Server] listening on port " << config.get_portnums()[1] << std::endl;
 
     //WAITING TO ACCEPT
     char    buff[4096];
@@ -149,7 +150,8 @@ int main (void)
 				{
 					std::cout << "\033[31mNow processing socket number: " << i << "\033[0m" << std::endl;
 					clientsock = accept(servsock, (struct sockaddr*)&caddr, (socklen_t*)&caddrsize);
-					if (clientsock < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
+					if (clientsock < 0 && errno != EWOULDBLOCK && errno != EAGAIN)
+                    {
 						printErrno(ACCEPT, NO_EXIT);
 						// for (int j = 0; j < maxFD + 1; ++j)
 						// 	if (FD_ISSET(j, &currentSockets))
@@ -184,8 +186,9 @@ int main (void)
 					std::cout << "\033[1m[SERVER] Client connected with success\033[0m" << std::endl;
 					std::cout << std::string(buff) << std::endl;
 				
-					request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[0]);
+					request = HttpRequestParse::parse(std::string(buff), config.get_portnums()[1]);
 					filepath = get_file_path(request, config, status);
+                    std::cout << "FILEPATH: " << filepath << std::endl;
 					output = formatter.format_response(request, status, filepath, config);
 					std::cout << "output: " << output.c_str() << std::endl;
 					send(i, output.c_str(), output.length(), 0);

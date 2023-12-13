@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/13 00:08:26 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/13 18:26:32 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,7 +192,15 @@ Config	parse_config_file(std::string path)
 	// for (i = 0; i < dir_index.size(); i++)
 	// 	std::cout << "key: " << dir_index.at(i) << " value: "
 	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
-
+	strstrMap infos;
+	std::vector<int> ports = config.get_portnums();
+	for (i = 0; i < ports.size(); i++)
+	{
+		std::cout << "PORT NUMBER " << ports[i] << std::endl;
+		infos = config.getServMain(ports[i]);
+		std::cout << "name: " << infos["server_name"] << " | root: "\
+			<< infos["root"] << " | error path: " << infos["error_pages"] << std::endl << "----------" << std::endl;
+	}
 	return (config);
 }
 
@@ -207,13 +215,13 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	std::vector<std::string> ind;
 	std::string	locRoute;
 	size_t	slashPos = 1;
-	size_t	dotPos;
+	size_t	dotPos = NPOS;
 
 	if (request.path.length() > 1)
 		slashPos = request.path.find('/', 1);
 	dotPos = request.path.find('.');
 	if (dotPos != NPOS && dotPos < slashPos)
-		return (config.getServMain(request.port_number)["server_root"] + request.path);
+		return (config.getServMain(request.port_number)["root"] + request.path);
 	else if (dotPos != NPOS)
 	{
 		while (request.path[--dotPos] != '/') ;
@@ -264,6 +272,11 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 				}
 				else if (!acss)
 					status_code = 403;
+				else if (dotPos != NPOS)
+				{
+					status_code = 404;
+					return ("");
+				}
 			}
 			if (status_code == 403)
 				return ("");

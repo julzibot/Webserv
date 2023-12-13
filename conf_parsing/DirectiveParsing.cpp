@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/12 19:00:03 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/13 18:29:39 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,35 +98,26 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 		return;
 
 	std::istringstream	ls;
-	std::string			portStr;
+	std::string			buff;
 	std::string			varName;
 	std::vector<int>	ports;
 
-	ls.str(directive); ls >> portStr;
-	while (ls >> portStr)
-		ports.push_back(stoi(portStr));
+	ls.str(directive); ls >> buff;
+	while (ls >> buff)
+		ports.push_back(stoi(buff));
 
 	ls.clear(); ls.str(line);
 	ls >> varName;
-	if (varName == "server_name")
-	{
-		for (unsigned int i = 0; i < ports.size(); i++)
-			ls >> config.getServMain(ports[i])["server_name"];
-	}
-	else if (varName == "root")
-	{
-		for (unsigned int i = 0; i < ports.size(); i++)
-			ls >> config.getServMain(ports[i])["server_root"];
-	}
-	else if (varName == "error_pages")
-	{
-		for (unsigned int i = 0; i < ports.size(); i++)
-			ls >> config.getServMain(ports[i])["server_error_path"];
-	}
-	else if (varName == "listen")
+	if (varName == "listen")
 	{
 		for (unsigned int i = 0; i < ports.size(); i++)
 			config.add_portnum(ports[i]);
+	}
+	else if (varName == "server_name" || varName == "root" || varName == "error_pages")
+	{
+		ls >> buff;
+		for (unsigned int i = 0; i < ports.size(); i++)
+			config.getServMain(ports[i])[varName] = buff;
 	}
 	else
 		throw (std::invalid_argument("Unknown 'server' parameter."));
