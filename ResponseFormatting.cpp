@@ -45,13 +45,15 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 
 	headers = http_version + " " + std::to_string(status_code) + " "
 		+ status_infos[1] + "\n";
-	if (status_code != 301)
+	if (status_code != 301 && status_code != 408)
 	{
 		headers += "Content-Type: " + get_content_type(status_infos[0], config) + "\n";
 		headers += "Content-Length: " + std::to_string(content_length) + "\n";
 	}
-	else
+	else if (status_code == 301)
 		headers += "Location: " + status_infos[0];
+	else
+		headers += "Connection: close";
 
 	return (headers);
 }
@@ -62,7 +64,7 @@ std::string	ResponseFormatting::parse_body(std::string file_path, int const &sta
 	std::string		output;
 	std::string		line;
 
-	if (status_code == 301)
+	if (status_code == 301 || status_code == 408)
 		return (output);
 	if (!inputFile.is_open())
 		return output;
