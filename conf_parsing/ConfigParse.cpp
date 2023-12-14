@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/13 18:26:32 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/14 23:27:55 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ void    expandInclude(std::string &line, T &s)
 		return;
     std::ifstream    fs(filename);
     if (fs.fail())
-        throw (std::invalid_argument("Bad file/path."));
+        throw (std::invalid_argument("Error in config file: Bad include filename."));
     while (std::getline(fs, fileLine)) {
         fileContent += fileLine;
         fileContent += "\n";
@@ -103,7 +103,7 @@ size_t	isBrace(char brace, std::string line) {
 		while (++i < len && isspace(line[i]))
 			;
 		if (i < len)
-			throw (std::invalid_argument("Characters found after brace."));
+			throw (std::invalid_argument("Error in config file: Characters found after brace."));
 	}
 	return (braceRes);
 }
@@ -148,7 +148,7 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
-		throw std::invalid_argument("Unclosed braces found.");
+		throw std::invalid_argument("Error in config file: Unclosed braces found.");
 }
 
 Config	parse_config_file(std::string path)
@@ -156,13 +156,16 @@ Config	parse_config_file(std::string path)
     Config						config;
 	unsigned int							i = 0;
     size_t						bracepos;
-    std::ifstream				conf_file(path);
     std::istringstream			ls;
 	strstrMap					directives;
     std::string					line;
 	std::string					buffer;
     std::string					directive = "main";
 	std::vector<std::string>	dir_index;
+    std::ifstream				conf_file(path);
+
+	if (!conf_file.good())
+		throw std::invalid_argument("Error: invalid config file name");
 
 	while (std::getline(conf_file, buffer))
 		line += buffer + '\n';

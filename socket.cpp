@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/14 18:32:16 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/14 23:35:06 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,36 +81,26 @@ bool	isServSock(const std::vector<int>& servsock, const int& sock) {
 	return (false);
 }
 
-int main (void)
+void	init_sockets(Config const &config, std::vector<sockaddr_in> &saddr, std::vector<int> &servsock, \
+		std::map<int, int>	&SockPortMap)
 {
-    HttpRequest		request;
-    int				status = 200;
+	unsigned int	arrsize = config.get_portnums().size();
+	int	option = 1;
 
-    Config			config = parse_config_file("conf_parsing/webserv.conf");
-    unsigned int	arrsize = config.get_portnums().size();
-
-    std::vector<sockaddr_in>	saddr(arrsize);
-    for (unsigned int i = 0; i < arrsize; i++)
+	for (unsigned int i = 0; i < arrsize; i++)
     {
+		// SADDR
         saddr[i].sin_family = AF_INET,
         saddr[i].sin_addr.s_addr = INADDR_ANY,
         saddr[i].sin_port = htons(config.get_portnums()[i]);
-    }
 
-	std::vector<int>	servsock;
-
-	for (unsigned int i = 0; i < arrsize; ++i) {
+		//  SOCKET VECTOR
 		servsock.push_back(socket(AF_INET, SOCK_STREAM, 0));
 		fcntl(servsock[i], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 		if (servsock[i] == -1)
 			printErrno(SOCKET, EXIT);
-	}
 
-	std::map<int, int>	SockPortMap;
-
-    // BINDING AND LISTENING
-    int option = 1;
-	for (unsigned int i = 0; i < arrsize; ++i) {
+		// SOCKET->PORT MAP
 		setsockopt(servsock[i], SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 		if (bind(servsock[i], (struct sockaddr*)&saddr[i], sizeof(saddr[i])) < 0)
 			printErrno(BIND, EXIT);
@@ -118,7 +108,30 @@ int main (void)
 			printErrno(LISTEN, EXIT);
 		SockPortMap[servsock[i]] = ntohs(saddr[i].sin_port);
 		std::cout << "[SERVER] Now listening on port " << config.get_portnums()[i] << std::endl;
-	}
+    }
+}
+
+int main (int argc, char ** argv)
+{
+	if (argc > 2) {
+	std::cout << "Error: too many arguments.";
+	std::cout << " Either input config file or nothing as argument" << std::endl;
+	return (1); }
+	std::string conf_filename;
+	if (argc == 2) conf_filename = "server_files/" + std::string(argv[1]);
+	else conf_filename = "server_files/webserv.conf";
+
+	Config	config;
+	try { config = parse_config_file(conf_filename);}
+	catch (std::invalid_argument &a)
+	{std::cerr << a.what() << std::endl; return (1);}
+    int				status = 200;
+    HttpRequest		request;
+
+    std::vector<sockaddr_in>	saddr(config.get_portnums().size());
+	std::vector<int>	servsock;
+	std::map<int, int>	SockPortMap;
+	init_sockets(config, saddr, servsock, SockPortMap);
 
 	std::map<int, int>::iterator	it;
 	for (it = SockPortMap.begin(); it != SockPortMap.end(); ++it)
@@ -147,7 +160,7 @@ int main (void)
     timeoutSocket.tv_sec = 0;
 
     FD_ZERO(&currentSockets);
-	for (int i = 0; i < static_cast<int>(servsock.size()); ++i) {
+	for (unsigned int i = 0; i < servsock.size(); ++i) {
   		FD_SET(servsock[i], &currentSockets);
 		if (servsock[i] > maxFD)
 			maxFD = servsock[i];

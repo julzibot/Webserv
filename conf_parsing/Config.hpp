@@ -6,20 +6,20 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/12 17:21:51 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/14 22:57:24 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include <iostream>
+#include <map>
+#include <vector>
+#include <string>
 #include <fstream>
 #include <sstream>
-#include <string>
-#include <map>
+#include <iostream>
 #include <unistd.h>
 #include <forward_list>
-#include <vector>
 #include "../RequestParsing.hpp"
 
 class Config;
