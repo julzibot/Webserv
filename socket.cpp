@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/14 23:35:06 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/15 00:13:59 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,7 +124,7 @@ int main (int argc, char ** argv)
 	Config	config;
 	try { config = parse_config_file(conf_filename);}
 	catch (std::invalid_argument &a)
-	{std::cerr << a.what() << std::endl; return (1);}
+	{std::cerr << "Error: " << a.what() << std::endl; return (1);}
     int				status = 200;
     HttpRequest		request;
 

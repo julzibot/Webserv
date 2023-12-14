@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/13 18:29:39 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/15 00:13:36 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ void	assign_autoindex(LocationDir& ld, std::string value)
 	else if (value == "off")
 		ld.setAutoindex(false);
 	else
-		throw (std::invalid_argument("Unknown parameter in 'autoindex'."));
+		throw (std::invalid_argument("\"" + value + "\": Unknown parameter for 'autoindex'."));
 }
 
 void	dirParseLocation(Config &config, std::string line, std::string directive)
@@ -70,6 +70,8 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 
 
 	linestream >> keyword;
+	if (line.length() == keyword.length())
+		throw (std::invalid_argument("\"" + keyword + "\": Bad line in 'location' directive"));
 	value = line.substr(line.find(keyword) + keyword.length() + 1);
 	for (unsigned int i = 0; i < ports.size(); i++)
 	{
@@ -87,7 +89,7 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 		else if (keyword == "redirect")
 			ld.setRedir(value);
 		else
-			throw (std::invalid_argument("Unknown parameter in 'location' directive"));
+			throw (std::invalid_argument("\"" + keyword + "\": Unknown parameter in 'location' directive"));
 	}
 }
 
@@ -120,7 +122,7 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 			config.getServMain(ports[i])[varName] = buff;
 	}
 	else
-		throw (std::invalid_argument("Unknown 'server' parameter."));
+		throw (std::invalid_argument("\"" + varName + "\": Unknown parameter in 'server' directive"));
 }
 
 void	dirParseEvents(Config& config, std::string line, std::string directive)
@@ -138,7 +140,7 @@ void	dirParseEvents(Config& config, std::string line, std::string directive)
 	if (var == "worker_connections")
 		config.set_workco(std::atoi(value.c_str()));
 	else
-		throw (std::invalid_argument("Unknown parameter in 'events'."));
+		throw (std::invalid_argument("\"" + var + "\": Unknown parameter in 'events' directive."));
 }
 
 void	dirParseTypes(Config& config, std::string line, std::string directive)
@@ -170,28 +172,6 @@ void	dirParseMain(Config& config, std::string line, std::string directive)
 		config.set_workproc(std::atoi(value.c_str()));
 }
 
-bool	validErrorHtmlFile( std::string filename ) 
-{	
-	std::fstream	verifyFile(filename);
-
-	// if (!verifyFile.good())
-	// 	throw (std::invalid_argument("Problem with 'error_page' file."));
-	if (filename.find(".html") == NPOS)
-		throw (std::invalid_argument("Problem with 'error_page' file extension."));
-	return (true);
-}
-
-bool	isValidErrCode( const std::string& errCode ) 
-{	
-	if (errCode.length() > 3 || errCode.empty())
-		return (false);
-	for (unsigned int i = 0; i < errCode.length(); ++i) {
-		if (errCode[i] < '0' || errCode[i] > '9')
-			return (false);
-	}
-	return (true);
-}
-
 void	parseDirective(std::string line, std::string directive, Config& config) 
 {
 	std::map<std::string, funcPtr>	dirCase;
@@ -214,5 +194,5 @@ void	parseDirective(std::string line, std::string directive, Config& config)
 	if (dirCase.find(dirKey) != dirCase.end())
 		dirCase[dirKey](config, line, directive);
 	else if (dirKey != "http")
-		throw ("Unknown directive found.");
+		throw ("Unknown main directive found.");
 }
