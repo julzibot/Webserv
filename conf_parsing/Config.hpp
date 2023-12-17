@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 00:27:59 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 10:45:44 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,6 @@ class Config
         servLocMap			server_locs;
         servInfos			server_main;
 		std::vector<int>	servPortNums;
-		// std::map<int, std::vector<std::string> > loc_index;
 
     public:
 		/* Accessors */

@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 00:29:13 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 12:11:20 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,6 +121,7 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 	std::istringstream	portline;
 	std::string portbuff;
 	std::string	portnum = "";
+	std::vector<std::string>::iterator it;
 
 	dir_index.push_back(dir_key);
 	while (open_braces && std::getline(stream, line))
@@ -132,12 +133,20 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 			portline.str(line); portline >> portbuff;
 			while (portline >> portbuff)
 				portnum += " " + portbuff;
+			it = std::find(dir_index.begin(), dir_index.end(), dir_key + portnum);
+			while (it != dir_index.end())
+			{
+				portnum += "_";
+				it = std::find(dir_index.begin(), dir_index.end(), dir_key + portnum);
+			}
 			dir_index.push_back(dir_key + portnum);
 			portline.clear();
 			add_portnum = 0;
 		}
 		else if (add_portnum && line.find("listen") == NPOS)
 			throw std::invalid_argument("Config file: directive following server is not 'listen'");
+		else if (!add_portnum && line.find("listen") != NPOS)
+			throw std::invalid_argument("Config file: 'listen' directive at wrong line");
 		if (isBrace('{', line) != NPOS)
 		{
 			open_braces++;
@@ -197,9 +206,9 @@ Config	parse_config_file(std::string path)
 	}
 
 	// TESTING PARSING OUTPUT
-	// for (i = 0; i < dir_index.size(); i++)
-	// 	std::cout << "key: " << dir_index.at(i) << " value: "
-	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	for (i = 0; i < dir_index.size(); i++)
+		std::cout << "key: " << dir_index.at(i) << " value: "
+			<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 	// strstrMap infos;
 	// std::vector<int> ports = config.get_portnums();
 	// for (i = 0; i < ports.size(); i++)

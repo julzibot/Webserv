@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 01:44:04 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 13:02:35 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 
 	ls.str(directive); ls >> buff;
 	while (ls >> buff)
-		ports.push_back(stoi(buff));
+		ports.push_back(stoi(buff.substr(0, buff.find('_'))));
 
 	ls.clear(); ls.str(line);
 	ls >> varName;
@@ -79,6 +79,8 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 			std::vector<int>::iterator it = std::find(fuck.begin(), fuck.end(), ports[i]);
 			if (it == fuck.end())
 				config.add_portnum(ports[i]);
+			strstrMap &servMain = config.getServMain(ports[i], "", false);
+			servMain["server_name"] = ""; servMain["root"] = ""; servMain["error_pages"] = "";
 		}
 	}
 	else if (varName == "server_name" || varName == "root" || varName == "error_pages")
@@ -103,7 +105,7 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 	std::istringstream dirStream(directive);
 	dirStream >> route >> route;
 	while (dirStream >> portStr)
-		ports.push_back(stoi(portStr));
+		ports.push_back(stoi(portStr.substr(0, portStr.find('_'))));
 
     std::istringstream	linestream(line);
     std::string			keyword;
@@ -119,7 +121,9 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 		strstrMap &ServerMain = config.getServMain(ports[i], route, false);
 		if (ServerMain.empty())
 		{
-			strstrMap to_assign = config.getServMain(ports[i], "", false);
+			strstrMap &to_assign = config.getServMain(ports[i], "", false);
+			if (to_assign["root"].empty() || to_assign["error_pages"].empty())
+				throw std::invalid_argument("Config file: 'root' or 'server_pages' missing in server settings");
 			ServerMain["root"] = to_assign["root"];
 			ServerMain["server_name"] = to_assign["server_name"];
 			ServerMain["error_pages"] = to_assign["error_pages"];
