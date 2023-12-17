@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ResponseFormatting.hpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/01 19:01:48 by toshsharma        #+#    #+#             */
-/*   Updated: 2023/12/13 00:10:34 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 19:19:28 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <sstream>
 #include <string>
 #include <map>
+#include <deque>
 #include "types/types.h"
 #include "conf_parsing/Config.hpp"
 
