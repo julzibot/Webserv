@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 12:11:20 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 13:32:33 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,6 +117,7 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 {
 	bool		add_portnum = 0;
 	int			open_braces = 1;
+	bool		can_write = true;
 	std::string	line;
 	std::istringstream	portline;
 	std::string portbuff;
@@ -150,6 +151,7 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 		if (isBrace('{', line) != NPOS)
 		{
 			open_braces++;
+			can_write = true;
 			dir_key = line.substr(0, line.find('{'));
 			if (dir_key.find("server") != NPOS)
 				add_portnum = 1;
@@ -157,7 +159,11 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 				dir_index.push_back(dir_key + portnum);
 		}
 		else if (isBrace('}', line) != NPOS)
-			open_braces--;
+		{
+			open_braces--; can_write = false;
+		}
+		else if (open_braces && !can_write && !removeSpaces(line).empty())
+			throw std::invalid_argument("Config file: \"" + removeSpaces(line) + "\": wrong line place");
 		else if (open_braces)
 			directives[dir_key + portnum] += line + "\n";
 	}
