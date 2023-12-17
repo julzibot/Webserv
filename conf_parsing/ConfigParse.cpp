@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/15 00:10:41 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 00:29:13 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,12 +98,16 @@ size_t	isBrace(char brace, std::string line) {
 
 	if (braceRes != NPOS) 
 	{
-		size_t	i = braceRes;
+		unsigned int i;
 		size_t	len = line.length();
-		while (++i < len && isspace(line[i]))
-			;
+		for (i = 0; i < len; i++)
+		{
+			if (brace == '{' && ((i > braceRes && !isspace(line[i])) \
+					|| removeSpaces(line.substr(0, braceRes)).empty())) break;
+			else if (brace == '}' && i != braceRes && !isspace(line[i])) break;
+		}
 		if (i < len)
-			throw (std::invalid_argument("config file: Character found after brace."));
+			throw (std::invalid_argument("Config file: incorrect brace position."));
 	}
 	return (braceRes);
 }
@@ -113,7 +117,6 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 {
 	bool		add_portnum = 0;
 	int			open_braces = 1;
-	int			i = dir_index.size() - 1;
 	std::string	line;
 	std::istringstream	portline;
 	std::string portbuff;
@@ -134,7 +137,7 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 			add_portnum = 0;
 		}
 		else if (add_portnum && line.find("listen") == NPOS)
-			throw std::invalid_argument("config file: directive following server is not \"listen\"");
+			throw std::invalid_argument("Config file: directive following server is not 'listen'");
 		if (isBrace('{', line) != NPOS)
 		{
 			open_braces++;
@@ -144,13 +147,13 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 			if (!add_portnum)
 				dir_index.push_back(dir_key + portnum);
 		}
-		else if (isBrace('}', line) != NPOS && --open_braces > 0)
-			dir_key = dir_index.at(i + open_braces);
+		else if (isBrace('}', line) != NPOS)
+			open_braces--;
 		else if (open_braces)
 			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
-		throw std::invalid_argument("config file: Unclosed braces found.");
+		throw std::invalid_argument("Config file: Unclosed braces found.");
 }
 
 Config	parse_config_file(std::string path)
@@ -167,7 +170,7 @@ Config	parse_config_file(std::string path)
     std::ifstream				conf_file(path);
 
 	if (!conf_file.good())
-		throw std::invalid_argument("invalid config file name");
+		throw std::invalid_argument("Invalid config file name");
 
 	while (std::getline(conf_file, buffer))
 		line += buffer + '\n';
@@ -197,23 +200,23 @@ Config	parse_config_file(std::string path)
 	// for (i = 0; i < dir_index.size(); i++)
 	// 	std::cout << "key: " << dir_index.at(i) << " value: "
 	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
-	strstrMap infos;
-	std::vector<int> ports = config.get_portnums();
-	for (i = 0; i < ports.size(); i++)
-	{
-		std::cout << "PORT NUMBER " << ports[i] << std::endl;
-		infos = config.getServMain(ports[i]);
-		std::cout << "name: " << infos["server_name"] << " | root: "\
-			<< infos["root"] << " | error path: " << infos["error_pages"] << std::endl << "----------" << std::endl;
-	}
+	// strstrMap infos;
+	// std::vector<int> ports = config.get_portnums();
+	// for (i = 0; i < ports.size(); i++)
+	// {
+	// 	std::cout << "PORT NUMBER " << ports[i] << std::endl;
+	// 	infos = config.getServMain(ports[i]);
+	// 	std::cout << "name: " << infos["server_name"] << " | root: "\
+	// 		<< infos["root"] << " | error path: " << infos["error_pages"] << std::endl << "----------" << std::endl;
+	// }
 	return (config);
 }
 
 std::string get_file_path(HttpRequest &request, Config &config, int &status_code)
 {
+	int acss;
 	std::string file_path;
 	unsigned int	i = 0;
-	int acss;
 	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
 	std::map<std::string, LocationDir>::iterator	it = locations.begin();
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
@@ -226,7 +229,17 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		slashPos = request.path.find('/', 1);
 	dotPos = request.path.find('.');
 	if (dotPos != NPOS && dotPos < slashPos)
-		return (config.getServMain(request.port_number)["root"] + request.path);
+	{
+		std::string p = request.path.substr(0, slashPos);
+		file_path = config.getServMain(request.port_number, p, true)["root"] + request.path;
+		if (!access(file_path.c_str(), F_OK) && !access(file_path.c_str(), R_OK))
+			return (file_path);
+		else
+		{
+			status_code = 404;
+			return ("");
+		}
+	}
 	else if (dotPos != NPOS)
 	{
 		while (request.path[--dotPos] != '/') ;

@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/14 22:57:24 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 00:27:59 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,10 +29,9 @@ class LocationDir;
 
 # define NPOS std::string::npos
 
-
 typedef std::map<std::string, std::string> strstrMap;
-typedef std::map<int, std::map<std::string, LocationDir> > servLocMap;
-typedef std::map<int, strstrMap> servInfos;
+typedef std::map<int, std::map<std::string, LocationDir> > servLocMap; //IS GOOD
+typedef std::map<int, std::map<std::string, strstrMap> > servInfos;
 
 class LocationDir
 {
@@ -76,8 +75,8 @@ class Config
         int					worker_connections;
         strstrMap			types;
         servLocMap			server_locs;
-		std::vector<int>	servPortNums;
         servInfos			server_main;
+		std::vector<int>	servPortNums;
 		// std::map<int, std::vector<std::string> > loc_index;
 
     public:
@@ -88,7 +87,7 @@ class Config
 		servLocMap		getServ() const { return (this->server_locs); };
         std::string		get_type(std::string file_ext);
         LocationDir		&getLocRef(int port, std::string route) { return (this->server_locs[port][route]); };
-		strstrMap		&getServMain(int port) { return (this->server_main[port]); };
+		strstrMap		&getServMain(int port, std::string const &route, bool init);
 		// servErrorPath&	getErrorMap( void ) { return (this->error_page_map); };
 		std::map<std::string, LocationDir>&	getLocMap(int port) { return (this->server_locs[port]); };
 

@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/15 00:13:59 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/16 22:21:40 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,24 +90,27 @@ void	init_sockets(Config const &config, std::vector<sockaddr_in> &saddr, std::ve
 	for (unsigned int i = 0; i < arrsize; i++)
     {
 		// SADDR
-        saddr[i].sin_family = AF_INET,
-        saddr[i].sin_addr.s_addr = INADDR_ANY,
-        saddr[i].sin_port = htons(config.get_portnums()[i]);
+		if (SockPortMap.find(servsock[i]) == SockPortMap.end())
+		{
+			saddr[i].sin_family = AF_INET,
+			saddr[i].sin_addr.s_addr = INADDR_ANY,
+			saddr[i].sin_port = htons(config.get_portnums()[i]);
 
-		//  SOCKET VECTOR
-		servsock.push_back(socket(AF_INET, SOCK_STREAM, 0));
-		fcntl(servsock[i], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
-		if (servsock[i] == -1)
-			printErrno(SOCKET, EXIT);
+			//  SOCKET VECTOR
+			servsock.push_back(socket(AF_INET, SOCK_STREAM, 0));
+			fcntl(servsock[i], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+			if (servsock[i] == -1)
+				printErrno(SOCKET, EXIT);
 
-		// SOCKET->PORT MAP
-		setsockopt(servsock[i], SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
-		if (bind(servsock[i], (struct sockaddr*)&saddr[i], sizeof(saddr[i])) < 0)
-			printErrno(BIND, EXIT);
-		if (listen(servsock[i], SOMAXCONN) < 0)
-			printErrno(LISTEN, EXIT);
-		SockPortMap[servsock[i]] = ntohs(saddr[i].sin_port);
-		std::cout << "[SERVER] Now listening on port " << config.get_portnums()[i] << std::endl;
+			// SOCKET->PORT MAP
+			setsockopt(servsock[i], SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+			if (bind(servsock[i], (struct sockaddr*)&saddr[i], sizeof(saddr[i])) < 0)
+				printErrno(BIND, EXIT);
+			if (listen(servsock[i], SOMAXCONN) < 0)
+				printErrno(LISTEN, EXIT);
+			SockPortMap[servsock[i]] = ntohs(saddr[i].sin_port);
+			std::cout << "[SERVER] Now listening on port " << config.get_portnums()[i] << std::endl;
+		}
     }
 }
 

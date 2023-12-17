@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/15 00:13:36 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 01:44:04 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,47 @@ void	assign_autoindex(LocationDir& ld, std::string value)
 		throw (std::invalid_argument("\"" + value + "\": Unknown parameter for 'autoindex'."));
 }
 
+void	dirParseServer(Config& config, std::string line, std::string directive) 
+{
+	line = removeSpaces(line);
+	if (line.empty())
+		return;
+
+	std::istringstream	ls;
+	std::string			buff;
+	std::string			varName;
+	std::vector<int>	ports;
+
+	ls.str(directive); ls >> buff;
+	while (ls >> buff)
+		ports.push_back(stoi(buff));
+
+	ls.clear(); ls.str(line);
+	ls >> varName;
+	if (varName == "listen")
+	{
+		for (unsigned int i = 0; i < ports.size(); i++)
+		{
+			std::vector<int> fuck = config.get_portnums();
+			std::vector<int>::iterator it = std::find(fuck.begin(), fuck.end(), ports[i]);
+			if (it == fuck.end())
+				config.add_portnum(ports[i]);
+		}
+	}
+	else if (varName == "server_name" || varName == "root" || varName == "error_pages")
+	{
+		ls >> buff;
+		for (unsigned int i = 0; i < ports.size(); i++)
+		{
+			config.getServMain(ports[i], "", false)[varName] = buff;
+			if (config.getServMain(ports[i], "main", false)[varName].empty())
+				config.getServMain(ports[i], "main", false)[varName] = buff;
+		}
+	}
+	else
+		throw (std::invalid_argument("\"" + varName + "\": Unknown parameter in 'server' directive"));
+}
+
 void	dirParseLocation(Config &config, std::string line, std::string directive)
 {
 	std::string	portStr;
@@ -75,6 +116,14 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 	value = line.substr(line.find(keyword) + keyword.length() + 1);
 	for (unsigned int i = 0; i < ports.size(); i++)
 	{
+		strstrMap &ServerMain = config.getServMain(ports[i], route, false);
+		if (ServerMain.empty())
+		{
+			strstrMap to_assign = config.getServMain(ports[i], "", false);
+			ServerMain["root"] = to_assign["root"];
+			ServerMain["server_name"] = to_assign["server_name"];
+			ServerMain["error_pages"] = to_assign["error_pages"];
+		}
 		LocationDir	&ld = config.getLocRef(ports[i], route);
 		ld.setRoute(route);
 		
@@ -91,38 +140,6 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 		else
 			throw (std::invalid_argument("\"" + keyword + "\": Unknown parameter in 'location' directive"));
 	}
-}
-
-void	dirParseServer(Config& config, std::string line, std::string directive) 
-{
-	line = removeSpaces(line);
-	if (line.empty())
-		return;
-
-	std::istringstream	ls;
-	std::string			buff;
-	std::string			varName;
-	std::vector<int>	ports;
-
-	ls.str(directive); ls >> buff;
-	while (ls >> buff)
-		ports.push_back(stoi(buff));
-
-	ls.clear(); ls.str(line);
-	ls >> varName;
-	if (varName == "listen")
-	{
-		for (unsigned int i = 0; i < ports.size(); i++)
-			config.add_portnum(ports[i]);
-	}
-	else if (varName == "server_name" || varName == "root" || varName == "error_pages")
-	{
-		ls >> buff;
-		for (unsigned int i = 0; i < ports.size(); i++)
-			config.getServMain(ports[i])[varName] = buff;
-	}
-	else
-		throw (std::invalid_argument("\"" + varName + "\": Unknown parameter in 'server' directive"));
 }
 
 void	dirParseEvents(Config& config, std::string line, std::string directive)

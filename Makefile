@@ -1,16 +1,17 @@
 NAME	= webserv
 
-CC		= c++ -Wall -Wextra -Werror -std=c++98 -pedantic
+CC		= c++ -Wall -Wextra -Werror -std=c++98 -pedantic -g
 
 RM		= rm -rf
 
-SRCS	= *.cpp */*.cpp
+SRCS	= RequestParsing.cpp ResponseFormatting.cpp socket.cpp \
+			conf_parsing/Config.cpp conf_parsing/ConfigParse.cpp conf_parsing/DirectiveParsing.cpp
 
-OBJS	= ${SRCS:.c=.o}
+OBJS	= ${SRCS:.cpp=.o}
 
 all: 	${NAME}
 
-%.o:	%.c
+%.o:	%.cpp
 		${CC} -c $< -o $@
 
 ${NAME}:	${OBJS}
