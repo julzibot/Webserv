@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/13 18:26:32 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 15:20:39 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ void    expandInclude(std::string &line, T &s)
 		return;
     std::ifstream    fs(filename);
     if (fs.fail())
-        throw (std::invalid_argument("Bad file/path."));
+        throw (std::invalid_argument("config file: Bad include filename."));
     while (std::getline(fs, fileLine)) {
         fileContent += fileLine;
         fileContent += "\n";
@@ -98,12 +98,16 @@ size_t	isBrace(char brace, std::string line) {
 
 	if (braceRes != NPOS) 
 	{
-		size_t	i = braceRes;
+		unsigned int i;
 		size_t	len = line.length();
-		while (++i < len && isspace(line[i]))
-			;
+		for (i = 0; i < len; i++)
+		{
+			if (brace == '{' && ((i > braceRes && !isspace(line[i])) \
+					|| removeSpaces(line.substr(0, braceRes)).empty())) break;
+			else if (brace == '}' && i != braceRes && !isspace(line[i])) break;
+		}
 		if (i < len)
-			throw (std::invalid_argument("Characters found after brace."));
+			throw (std::invalid_argument("Config file: incorrect brace position."));
 	}
 	return (braceRes);
 }
@@ -113,11 +117,12 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 {
 	bool		add_portnum = 0;
 	int			open_braces = 1;
-	int			i = dir_index.size() - 1;
+	bool		can_write = true;
 	std::string	line;
 	std::istringstream	portline;
 	std::string portbuff;
 	std::string	portnum = "";
+	std::vector<std::string>::iterator it;
 
 	dir_index.push_back(dir_key);
 	while (open_braces && std::getline(stream, line))
@@ -129,26 +134,41 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 			portline.str(line); portline >> portbuff;
 			while (portline >> portbuff)
 				portnum += " " + portbuff;
+			it = std::find(dir_index.begin(), dir_index.end(), dir_key + portnum);
+			while (it != dir_index.end())
+			{
+				portnum += "_";
+				it = std::find(dir_index.begin(), dir_index.end(), dir_key + portnum);
+			}
 			dir_index.push_back(dir_key + portnum);
 			portline.clear();
 			add_portnum = 0;
 		}
+		else if (add_portnum && line.find("listen") == NPOS)
+			throw std::invalid_argument("Config file: directive following server is not 'listen'");
+		else if (!add_portnum && line.find("listen") != NPOS)
+			throw std::invalid_argument("Config file: 'listen' directive at wrong line");
 		if (isBrace('{', line) != NPOS)
 		{
 			open_braces++;
+			can_write = true;
 			dir_key = line.substr(0, line.find('{'));
 			if (dir_key.find("server") != NPOS)
 				add_portnum = 1;
 			if (!add_portnum)
 				dir_index.push_back(dir_key + portnum);
 		}
-		else if (isBrace('}', line) != NPOS && --open_braces > 0)
-			dir_key = dir_index.at(i + open_braces);
+		else if (isBrace('}', line) != NPOS)
+		{
+			open_braces--; can_write = false;
+		}
+		else if (open_braces && !can_write && !removeSpaces(line).empty())
+			throw std::invalid_argument("Config file: \"" + removeSpaces(line) + "\": wrong line place");
 		else if (open_braces)
 			directives[dir_key + portnum] += line + "\n";
 	}
 	if (open_braces)
-		throw std::invalid_argument("Unclosed braces found.");
+		throw std::invalid_argument("Config file: Unclosed braces found.");
 }
 
 Config	parse_config_file(std::string path)
@@ -156,13 +176,16 @@ Config	parse_config_file(std::string path)
     Config						config;
 	unsigned int							i = 0;
     size_t						bracepos;
-    std::ifstream				conf_file(path);
     std::istringstream			ls;
 	strstrMap					directives;
     std::string					line;
 	std::string					buffer;
     std::string					directive = "main";
 	std::vector<std::string>	dir_index;
+    std::ifstream				conf_file(path);
+
+	if (!conf_file.good())
+		throw std::invalid_argument("Invalid config file name");
 
 	while (std::getline(conf_file, buffer))
 		line += buffer + '\n';
@@ -189,26 +212,26 @@ Config	parse_config_file(std::string path)
 	}
 
 	// TESTING PARSING OUTPUT
-	// for (i = 0; i < dir_index.size(); i++)
-	// 	std::cout << "key: " << dir_index.at(i) << " value: "
-	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
-	strstrMap infos;
-	std::vector<int> ports = config.get_portnums();
-	for (i = 0; i < ports.size(); i++)
-	{
-		std::cout << "PORT NUMBER " << ports[i] << std::endl;
-		infos = config.getServMain(ports[i]);
-		std::cout << "name: " << infos["server_name"] << " | root: "\
-			<< infos["root"] << " | error path: " << infos["error_pages"] << std::endl << "----------" << std::endl;
-	}
+	for (i = 0; i < dir_index.size(); i++)
+		std::cout << "key: " << dir_index.at(i) << " value: "
+			<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	// strstrMap infos;
+	// std::vector<int> ports = config.get_portnums();
+	// for (i = 0; i < ports.size(); i++)
+	// {
+	// 	std::cout << "PORT NUMBER " << ports[i] << std::endl;
+	// 	infos = config.getServMain(ports[i]);
+	// 	std::cout << "name: " << infos["server_name"] << " | root: "\
+	// 		<< infos["root"] << " | error path: " << infos["error_pages"] << std::endl << "----------" << std::endl;
+	// }
 	return (config);
 }
 
 std::string get_file_path(HttpRequest &request, Config &config, int &status_code)
 {
+	int acss;
 	std::string file_path;
 	unsigned int	i = 0;
-	int acss;
 	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
 	std::map<std::string, LocationDir>::iterator	it = locations.begin();
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
@@ -221,7 +244,17 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		slashPos = request.path.find('/', 1);
 	dotPos = request.path.find('.');
 	if (dotPos != NPOS && dotPos < slashPos)
-		return (config.getServMain(request.port_number)["root"] + request.path);
+	{
+		std::string p = request.path.substr(0, slashPos);
+		file_path = config.getServMain(request.port_number, p, true)["root"] + request.path;
+		if (!access(file_path.c_str(), F_OK) && !access(file_path.c_str(), R_OK))
+			return (file_path);
+		else
+		{
+			status_code = 404;
+			return ("");
+		}
+	}
 	else if (dotPos != NPOS)
 	{
 		while (request.path[--dotPos] != '/') ;
