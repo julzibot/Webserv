@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 13:02:35 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/17 15:44:19 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,9 +75,9 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 	{
 		for (unsigned int i = 0; i < ports.size(); i++)
 		{
-			std::vector<int> fuck = config.get_portnums();
-			std::vector<int>::iterator it = std::find(fuck.begin(), fuck.end(), ports[i]);
-			if (it == fuck.end())
+			std::vector<int> portnums = config.get_portnums();
+			std::vector<int>::iterator it = std::find(portnums.begin(), portnums.end(), ports[i]);
+			if (it == portnums.end())
 				config.add_portnum(ports[i]);
 			strstrMap &servMain = config.getServMain(ports[i], "", false);
 			servMain["server_name"] = ""; servMain["root"] = ""; servMain["error_pages"] = "";
