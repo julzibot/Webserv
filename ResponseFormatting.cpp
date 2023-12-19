@@ -87,7 +87,7 @@ std::string	ResponseFormatting::format_response(
 	if (status_code == 1001)
 	{
 		try {
-			body = get_directory_listing(file_path);
+			body = get_directory_listing(file_path, request, config);
 			status_code = 200;
 			headers = parse_headers(status_infos, request.http_version, status_code,
 						config, body.length());
