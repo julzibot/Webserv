@@ -2,6 +2,7 @@
 
 std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string const &error_path)
 {
+	std::cout << "ERRORPATH: " << error_path << std::endl;
 	std::deque<std::string>	status_infos;
 	switch (status_code)
 	{
@@ -81,8 +82,9 @@ std::string	ResponseFormatting::format_response(
 	std::string	output;
 	std::string	body;
 	std::string	headers;
+	std::string p = request.path.substr(0, request.path.find('/', 1));
 	std::deque<std::string> status_infos = get_status_infos(status_code,
-			file_path, config.getServMain(request.port_number)["error_pages"]);
+			file_path, config.getServMain(request.port_number, p, true)["error_pages"]);
 
 	if (status_code == 1001)
 	{
@@ -94,7 +96,7 @@ std::string	ResponseFormatting::format_response(
 		} catch (const std::ios_base::failure& e) {
 			status_code = 403;
 			status_infos = get_status_infos(status_code,
-				file_path, config.getServMain(request.port_number)["error_pages"]);
+				file_path, config.getServMain(request.port_number, p, true)["error_pages"]);
 			body = parse_body(status_infos[0], status_code);
 		}
 	}

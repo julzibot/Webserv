@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:43:37 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/11 16:19:30 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/17 02:00:44 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,4 +48,30 @@ void	LocationDir::setindex(std::string indexFiles)
 std::string	Config::get_type(std::string file_ext)
 {
 	return (this->types[file_ext]);
+}
+
+strstrMap		&Config::getServMain(int port, std::string const  &route, bool init)
+{
+	std::map<std::string, strstrMap> &servers = this->server_main[port];
+	std::map<std::string, strstrMap>::iterator it;
+
+	if (!init)
+		return (servers[route]);
+	if (route.find('.') ==  NPOS)
+	{
+		for (it = servers.begin(); it != servers.end(); it++)
+		{
+			if (it->first == route)
+				return (servers[route]);
+		}
+		return (servers["main"]);
+	}
+	std::string path;
+	for (it = servers.begin(); it != servers.end(); it++)
+	{
+		path = it->second["root"] + route;
+		if (!access(path.c_str(), F_OK))
+			return (it->second);
+	}
+	return (servers["main"]);
 }
