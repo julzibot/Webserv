@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/19 16:01:58 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/20 14:31:44 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -212,9 +212,9 @@ Config	parse_config_file(std::string path)
 	}
 
 	// TESTING PARSING OUTPUT
-	for (i = 0; i < dir_index.size(); i++)
-		std::cout << "key: " << dir_index.at(i) << " value: "
-			<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	// for (i = 0; i < dir_index.size(); i++)
+	// 	std::cout << "key: " << dir_index.at(i) << " value: "
+	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 	// strstrMap infos;
 	// std::vector<int> ports = config.get_portnums();
 	// for (i = 0; i < ports.size(); i++)

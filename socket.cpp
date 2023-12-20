@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/16 22:21:40 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/20 18:34:03 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,22 +114,32 @@ void	init_sockets(Config const &config, std::vector<sockaddr_in> &saddr, std::ve
     }
 }
 
-int main (int argc, char ** argv)
+int main (int argc, char ** argv, char **env)
 {
 	if (argc > 2) {
-	std::cout << "Error: too many arguments.";
-	std::cout << " Either input config file or nothing as argument" << std::endl;
-	return (1); }
+		std::cout << "Error: too many arguments.";
+		std::cout << " Either input config file or nothing as argument" << std::endl;
+		return (1);
+	}
 	std::string conf_filename;
+	std::string	python_executable = "python3";
+	std::string	temp_root = "/Users/toshsharma/Documents/42cursus/Webserv/server_files";
 	if (argc == 2) conf_filename = "server_files/" + std::string(argv[1]);
 	else conf_filename = "server_files/webserv.conf";
 
 	Config	config;
-	try { config = parse_config_file(conf_filename);}
+	CGI		py_cgi = CGI(env, python_executable, temp_root);
+	try {
+		config = parse_config_file(conf_filename);
+	}
 	catch (std::invalid_argument &a)
-	{std::cerr << "Error: " << a.what() << std::endl; return (1);}
+	{
+		std::cerr << "Error: " << a.what() << std::endl;
+		return (1);
+	}
     int				status = 200;
     HttpRequest		request;
+	execute_cgi(request, py_cgi);
 
     std::vector<sockaddr_in>	saddr(config.get_portnums().size());
 	std::vector<int>	servsock;

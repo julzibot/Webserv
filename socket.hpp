@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:32 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/13 15:58:46 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/19 17:10:46 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,3 +22,4 @@
 #include <stdio.h>
 #include <iostream>
 #include <sstream>
+#include "cgi/Cgi.hpp"
