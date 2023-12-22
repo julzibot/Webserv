@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/18 15:31:03 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/12/22 12:29:17 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,5 +98,6 @@ class Config
 		void	printAll( void );
 };
 
-Config		parse_config_file(std::string path);
-std::string	get_file_path(HttpRequest &request, Config &config, int &status);
+Config	parse_config_file(std::string path);
+std::string get_file_path(HttpRequest &request, Config &config, int &status);
+LocationDir& get_Location_for_Path(HttpRequest const &request, Config &config);

@@ -89,8 +89,10 @@ std::string	ResponseFormatting::format_response(
 	if (status_code == 1001)
 	{
 		try {
-			body = get_directory_listing(file_path);
+			body = get_directory_listing(file_path, request, config);
 			status_code = 200;
+			headers = parse_headers(status_infos, request.http_version, status_code,
+						config, body.length());
 		} catch (const std::ios_base::failure& e) {
 			status_code = 403;
 			status_infos = get_status_infos(status_code,
@@ -99,9 +101,11 @@ std::string	ResponseFormatting::format_response(
 		}
 	}
 	else
+	{
 		body = parse_body(status_infos[0], status_code);
 	headers = parse_headers(status_infos, request.http_version, status_code,
 			config, body.length());
+	}
 	output = headers;
 	if (body.length() > 0)
 		output += '\n' + body;
