@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParse.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 15:20:39 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/18 18:07:25 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,10 +171,11 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 		throw std::invalid_argument("Config file: Unclosed braces found.");
 }
 
-Config	parse_config_file(std::string path)
+Config	parse_config_file( std::string path )
 {
+
     Config						config;
-	unsigned int							i = 0;
+	unsigned int				i = 0;
     size_t						bracepos;
     std::istringstream			ls;
 	strstrMap					directives;
@@ -183,10 +184,9 @@ Config	parse_config_file(std::string path)
     std::string					directive = "main";
 	std::vector<std::string>	dir_index;
     std::ifstream				conf_file(path);
-
+	
 	if (!conf_file.good())
 		throw std::invalid_argument("Invalid config file name");
-
 	while (std::getline(conf_file, buffer))
 		line += buffer + '\n';
 	ls.str(line);
@@ -212,9 +212,9 @@ Config	parse_config_file(std::string path)
 	}
 
 	// TESTING PARSING OUTPUT
-	for (i = 0; i < dir_index.size(); i++)
-		std::cout << "key: " << dir_index.at(i) << " value: "
-			<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	// for (i = 0; i < dir_index.size(); i++)
+	// 	std::cout << "key: " << dir_index.at(i) << " value: "
+	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 	// strstrMap infos;
 	// std::vector<int> ports = config.get_portnums();
 	// for (i = 0; i < ports.size(); i++)
