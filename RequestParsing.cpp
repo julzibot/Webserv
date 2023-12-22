@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestParsing.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 15:05:41 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/22 15:57:40 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,9 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str, int portnum)
 	// PARSING START LINE
 	std::istringstream linestream(line);
 	linestream >> request.method >> request.path >> request.http_version;
+	// TODO: 
+	// CHECK REQUEST.METHOD IF IT IS ALLOWED METHOD
+	
 	// std::cout << request.method << request.path << request.http_version << std::endl;
 	// PARSING HEADERS
 	HttpRequestParse::parse_headers(requestStream, request);

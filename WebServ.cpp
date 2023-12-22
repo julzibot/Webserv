@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/18 19:33:49 by mstojilj         ###   ########.fr       */
+/*   Updated: 2023/12/22 15:23:02 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ void    printErrno(int func, bool ex)
 }
 
 WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
-	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)), _socketTimeoutValue(5) {
+	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)), _socketTimeoutValue(90) {
 
 	try {
 		_config = parse_config_file(confFilenamePath);
@@ -129,7 +129,7 @@ void	WebServ::initSelectFDs( const unsigned int& size ) {
 void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 	const int& keepAliveTimeout, const int& clientSock ) {
 
-	std::cout << "[socket: " << _clientsock << "] - " << currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec << "s" << std::endl;
+	// std::cout << "[socket: " << _clientsock << "] - " << currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec << "s" << std::endl;
 	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout) {
 		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to " << _socketTimeoutValue << "s)" << RESETCLR << std::endl;
 		_request.http_version = "HTTP/1.1";
@@ -188,6 +188,17 @@ void	WebServ::receiveFromExistingClient( const int& sockClient ) {
 	std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Receiving from existing client" << RESETCLR << std::endl;
 	memset(_buff, 0, 4096);
 	_recvsize = recv(sockClient, _buff, 4096, 0);
+
+	// int	chunkSize;
+	// std::string	totalBuff;
+	// while (1) {
+	// 	memset(_buff, 0, 4096);
+	// 	chunkSize = recv(sockClient, _buff, 4096, 0);
+	// 	if (chunkSize == 0)
+	// 		break;
+	// 	_recvsize += chunkSize;
+	// 	totalBuff.append(_buff);
+	// }
 
 	if (_recvsize < 0 && errno != EWOULDBLOCK) {
 		printErrno(RECV, NO_EXIT);
