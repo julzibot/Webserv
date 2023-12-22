@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParse.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 15:20:39 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/20 14:31:44 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -212,9 +212,9 @@ Config	parse_config_file(std::string path)
 	}
 
 	// TESTING PARSING OUTPUT
-	for (i = 0; i < dir_index.size(); i++)
-		std::cout << "key: " << dir_index.at(i) << " value: "
-			<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	// for (i = 0; i < dir_index.size(); i++)
+	// 	std::cout << "key: " << dir_index.at(i) << " value: "
+	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 	// strstrMap infos;
 	// std::vector<int> ports = config.get_portnums();
 	// for (i = 0; i < ports.size(); i++)
@@ -225,6 +225,23 @@ Config	parse_config_file(std::string path)
 	// 		<< infos["root"] << " | error path: " << infos["error_pages"] << std::endl << "----------" << std::endl;
 	// }
 	return (config);
+}
+
+LocationDir& get_Location_for_Path(HttpRequest const &request, Config &config)
+{
+	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
+	std::map<std::string, LocationDir>::iterator	it = locations.begin();
+	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+	std::string	locRoute;
+
+	while (it != locEnd)
+	{
+		locRoute = it->first;
+		if (locRoute == request.path)
+			return (it->second);
+		++it;
+	}
+	return (it->second);
 }
 
 std::string get_file_path(HttpRequest &request, Config &config, int &status_code)
@@ -326,12 +343,14 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	}
 }
 
-std::string	get_directory_listing(std::string & file_path) {
+std::string	get_directory_listing(std::string & file_path, HttpRequest const &request,
+		Config &config) {
 	DIR *dir;
 	struct dirent *en;
 	std::vector<std::string> list;
 	std::vector<std::string>::iterator it;
 	std::string	output;
+	LocationDir	&loc = get_Location_for_Path(request, config);
 
 	dir = opendir(file_path.c_str());
 	if (dir) {
@@ -343,8 +362,8 @@ std::string	get_directory_listing(std::string & file_path) {
 		output += "<h1>Directory listing</h1>";
 		output += "<ul>";
 		for (it = list.begin(); it != list.end(); ++it) {
-			output += "<li><a href=\"file://" + file_path + "/"
-				+ *it + "\">" + *it + "</a></li>";
+			output += "<li><a href=\"http://localhost:" + std::to_string(request.port_number)
+			+ loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
 		}
 		output += "</ul>";
 		output += END_OF_LIST;

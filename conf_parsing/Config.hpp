@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 10:45:44 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/19 16:01:48 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,3 +100,4 @@ class Config
 
 Config	parse_config_file(std::string path);
 std::string get_file_path(HttpRequest &request, Config &config, int &status);
+LocationDir& get_Location_for_Path(HttpRequest const &request, Config &config);
