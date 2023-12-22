@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/19 16:01:48 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/22 12:29:17 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,13 +80,13 @@ class Config
 
     public:
 		/* Accessors */
-        int				get_workproc() const { return (this->worker_processes); };
-        int				get_workco() const { return (this->worker_connections); };
+        int					get_workproc() const { return (this->worker_processes); };
+        int					get_workco() const { return (this->worker_connections); };
         std::vector<int>    get_portnums() const { return (this->servPortNums); };
-		servLocMap		getServ() const { return (this->server_locs); };
-        std::string		get_type(std::string file_ext);
-        LocationDir		&getLocRef(int port, std::string route) { return (this->server_locs[port][route]); };
-		strstrMap		&getServMain(int port, std::string const &route, bool init);
+		servLocMap			getServ() const { return (this->server_locs); };
+        std::string			get_type(std::string file_ext);
+        LocationDir			&getLocRef(int port, std::string route) { return (this->server_locs[port][route]); };
+		strstrMap			&getServMain(int port, std::string const &route, bool init);
 		// servErrorPath&	getErrorMap( void ) { return (this->error_page_map); };
 		std::map<std::string, LocationDir>&	getLocMap(int port) { return (this->server_locs[port]); };
 

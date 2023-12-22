@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParse.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/20 14:31:44 by toshsharma       ###   ########.fr       */
+/*   Updated: 2023/12/22 12:29:33 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,10 +171,11 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 		throw std::invalid_argument("Config file: Unclosed braces found.");
 }
 
-Config	parse_config_file(std::string path)
+Config	parse_config_file( std::string path )
 {
+
     Config						config;
-	unsigned int							i = 0;
+	unsigned int				i = 0;
     size_t						bracepos;
     std::istringstream			ls;
 	strstrMap					directives;
@@ -183,10 +184,9 @@ Config	parse_config_file(std::string path)
     std::string					directive = "main";
 	std::vector<std::string>	dir_index;
     std::ifstream				conf_file(path);
-
+	
 	if (!conf_file.good())
 		throw std::invalid_argument("Invalid config file name");
-
 	while (std::getline(conf_file, buffer))
 		line += buffer + '\n';
 	ls.str(line);

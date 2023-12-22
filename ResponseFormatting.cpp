@@ -2,7 +2,6 @@
 
 std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string const &error_path)
 {
-	std::cout << "ERRORPATH: " << error_path << std::endl;
 	std::deque<std::string>	status_infos;
 	switch (status_code)
 	{
@@ -13,6 +12,7 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 403:	status_infos.push_back(error_path + "/403.html"); status_infos.push_back("Forbidden"); 	break;
 		case 404:	status_infos.push_back(error_path + "/404.html"); status_infos.push_back("Not Found"); 	break;
 		case 405:	status_infos.push_back(error_path + "/405.html"); status_infos.push_back("Method Not Allowed"); break;
+		case 408:	status_infos.push_back(error_path + "/408.html"); status_infos.push_back("Request Timeout"); break;
 		case 413:	status_infos.push_back(error_path + "/413.html"); status_infos.push_back("Payload Too Large"); break;
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
 		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
