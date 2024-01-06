@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 15:20:39 by julzibot         ###   ########.fr       */
+/*   Updated: 2023/12/18 15:46:56 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -227,102 +227,115 @@ Config	parse_config_file(std::string path)
 	return (config);
 }
 
-std::string get_file_path(HttpRequest &request, Config &config, int &status_code)
+std::string	file_request_case(size_t const &slashPos, size_t &dotPos, HttpRequest &request, Config &config, int &status_code)
 {
-	int acss;
 	std::string file_path;
-	unsigned int	i = 0;
-	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
-	std::map<std::string, LocationDir>::iterator	it = locations.begin();
-	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
-	std::vector<std::string> ind;
-	std::string	locRoute;
-	size_t	slashPos = 1;
-	size_t	dotPos = NPOS;
+	int	acss;
 
-	if (request.path.length() > 1)
-		slashPos = request.path.find('/', 1);
-	dotPos = request.path.find('.');
-	if (dotPos != NPOS && dotPos < slashPos)
+	if (dotPos < slashPos)
 	{
 		std::string p = request.path.substr(0, slashPos);
 		file_path = config.getServMain(request.port_number, p, true)["root"] + request.path;
-		if (!access(file_path.c_str(), F_OK) && !access(file_path.c_str(), R_OK))
+		acss = access(file_path.c_str(), F_OK);
+		if (!acss && !access(file_path.c_str(), R_OK))
 			return (file_path);
+		else if (!acss)
+			status_code = 403;
 		else
+			status_code = 404;
+		return ("");
+	}
+	else
+	{
+		while (request.path[--dotPos] != '/') ;
+		request.prio_file = request.path.substr(dotPos + 1);
+		request.path = request.path.substr(0, dotPos);
+		return ("");
+	}
+}
+
+std::string	check_index_files(HttpRequest &request, std::map<std::string, LocationDir>::iterator it, size_t const &slashPos, size_t const &dotPos, int &status_code)
+{
+	std::vector<std::string> ind;
+	std::string	file_path;
+	int acss;
+
+	ind = it->second.get_index();
+	if (!request.prio_file.empty())
+		ind.insert(ind.begin(), request.prio_file);
+	file_path = it->second.get_root();
+	if (file_path[file_path.length() - 1] != '/')
+		file_path += '/';
+	if (request.path.length() > slashPos)
+		file_path += request.path.substr(slashPos + 1);
+	if (file_path[file_path.length() - 1] != '/')
+		file_path += '/';
+	for (unsigned int j = 0; j < ind.size(); j++)
+	{
+		acss = access((file_path + ind[j]).c_str(), F_OK);
+		if (!acss && !access((file_path + ind[j]).c_str(), R_OK))
+		{
+			status_code = 200;
+			return (file_path + ind[j]);
+		}
+		else if (!acss)
+			status_code = 403;
+		else if (dotPos != NPOS)
 		{
 			status_code = 404;
 			return ("");
 		}
 	}
-	else if (dotPos != NPOS)
+	if (status_code == 403)
+		return ("");
+	if (it->second.get_autoindex())
 	{
-		while (request.path[--dotPos] != '/') ;
-		request.prio_file = request.path.substr(dotPos + 1);
-		request.path = request.path.substr(0, dotPos);
+		status_code = 1001;
+		return (it->second.get_root());
 	}
-	while (it != locEnd)
+	status_code = 404;
+		return ("");
+}
+
+std::string get_file_path(HttpRequest &request, Config &config, int &status_code)
+{
+	std::string file_path;
+	unsigned int	i = 0;
+	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
+	std::map<std::string, LocationDir>::iterator	it;
+	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+	std::string	locRoute;
+	size_t	slashPos = 1;
+	size_t dotPos = NPOS;
+
+	if (request.path.length() > 1)
+		slashPos = request.path.find('/', 1);
+	dotPos = request.path.find('.');
+	if (dotPos != NPOS)
+	{
+		file_path = file_request_case(slashPos, dotPos, request, config, status_code);
+		if (status_code != 200 || !file_path.empty()) return (file_path);
+	}
+	for (it = locations.begin(); it != locEnd; it++)
 	{
 		locRoute = it->first;
 		if (locRoute == request.path.substr(0, slashPos))
 		{
 			if (!(it->second.get_redir().empty()))
-			{
-				status_code = 301;
-				return (it->second.get_redir());
-			}
+			{ status_code = 301; return (it->second.get_redir()); }
 			break;
 		}
-		it++;
 	}
 	if (it == locEnd && locations.begin() != locEnd)
-	{
-		status_code = 404;
-		return ("");
-	}
+	{ status_code = 404; return (""); }
 	else
 	{
 		std::vector<std::string> methods = it->second.get_methods_allowed();
 		while (i < methods.size() && methods.at(i) != request.method)
 			i++;
 		if (i < methods.size())
-		{
-			ind = it->second.get_index();
-			if (!request.prio_file.empty())
-				ind.insert(ind.begin(), request.prio_file);
-			file_path = it->second.get_root();
-			if (file_path[file_path.length() - 1] != '/') file_path += '/';
-			if (request.path.length() > slashPos)
-				file_path += request.path.substr(slashPos + 1);
-			if (file_path[file_path.length() - 1] != '/') file_path += '/';
-			for (unsigned int j = 0; j < ind.size(); j++)
-			{
-				acss = access((file_path + ind[j]).c_str(), F_OK);
-				if (!acss && !access((file_path + ind[j]).c_str(), R_OK))
-				{
-					status_code = 200;
-					return (file_path + ind[j]);
-				}
-				else if (!acss)
-					status_code = 403;
-				else if (dotPos != NPOS)
-				{
-					status_code = 404;
-					return ("");
-				}
-			}
-			if (status_code == 403)
-				return ("");
-			if (it->second.get_autoindex())
-			{
-				status_code = 1001;
-				return (it->second.get_root());
-			}
-			status_code = 404;
-			return ("");
-		}
-		status_code = 405;
-		return ("");
+			return (check_index_files(request, it, slashPos, dotPos, status_code));
+		status_code = 405; return ("");
 	}
 }
 

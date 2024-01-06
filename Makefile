@@ -1,6 +1,6 @@
 NAME	= webserv
 
-CC		= c++ -Wall -Wextra -Werror -std=c++98 -pedantic
+CC		= c++ -Wall -Wextra -Werror -std=c++98 -pedantic -g
 
 RM		= rm -rf
 
