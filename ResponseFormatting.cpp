@@ -34,7 +34,8 @@ std::string	get_content_type(std::string file_path, Config &config)
 
 	file_ext = file_path.substr(file_path.find_last_of(".") + 1);
 	content_type = config.get_type(file_ext);
-
+	if (content_type == "")
+		content_type = "application/octet-stream";
 	return (content_type);
 }
 
@@ -52,7 +53,7 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 		headers += "Content-Length: " + std::to_string(content_length) + "\n";
 	}
 	else if (status_code == 301)
-		headers += "Location: " + status_infos[0];
+		headers += "Location: " + status_infos[0] + "\nContent-Length: 0";
 	else
 		headers += "Connection: close";
 
@@ -75,9 +76,8 @@ std::string	ResponseFormatting::parse_body(std::string file_path, int const &sta
 	return output;
 }
 
-std::string	ResponseFormatting::format_response(
-	HttpRequest const &request, int &status_code, std::string &file_path,
-	Config &config)
+std::string	ResponseFormatting::format_response(HttpRequest const &request, int &status_code,
+		std::string &file_path, Config &config)
 {
 	std::string	output;
 	std::string	body;
@@ -103,11 +103,11 @@ std::string	ResponseFormatting::format_response(
 	else
 	{
 		body = parse_body(status_infos[0], status_code);
-	headers = parse_headers(status_infos, request.http_version, status_code,
-			config, body.length());
+		headers = parse_headers(status_infos, request.http_version,
+				status_code, config, body.length());
 	}
 	output = headers;
-	if (body.length() > 0)
-		output += '\n' + body;
+	// if (body.length() > 0)
+	output += '\n' + body + '\n';
 	return (output);
 }

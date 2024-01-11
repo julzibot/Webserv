@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   cgi.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/15 18:49:50 by toshsharma        #+#    #+#             */
-/*   Updated: 2023/12/20 18:54:10 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/07 13:38:38 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Cgi.hpp"
+#include "cgi.hpp"
 
 std::string	execute_cgi(HttpRequest &request, CGI &cgi)
 {

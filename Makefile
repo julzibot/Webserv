@@ -6,7 +6,7 @@ RM		= rm -rf
 
 SRCS	= RequestParsing.cpp ResponseFormatting.cpp main.cpp WebServ.cpp \
 			conf_parsing/Config.cpp conf_parsing/ConfigParse.cpp conf_parsing/DirectiveParsing.cpp \
-			cgi/Cgi.cpp
+			cgi/cgi.cpp
 
 OBJS	= ${SRCS:.cpp=.o}
 

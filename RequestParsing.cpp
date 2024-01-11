@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestParsing.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/22 15:57:40 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/11 09:26:04 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

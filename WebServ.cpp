@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   WebServ.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/22 15:23:02 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/11 09:25:56 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,8 +178,18 @@ void	WebServ::acceptNewConnection( const int& servSock ) {
 	}
 }
 
-void	WebServ::receiveFromExistingClient( const int& sockClient ) {
+// std::string	get_response(std::string &filepath, int &status, HttpRequest const &request, Config &config)
+// {
+// 	if (!filepath.empty())
+// 		std::string	extension = filepath.substr(filepath.find_last_of(".") + 1);
+// 		std::string cgiExecPath = config.get_cgi_type(extension);
+// 		if (cgiExecPath != "")
+// 			return (/* TOSH'S CGI HANDLING + CGI RESPONSE BUILDING HERE */);
+// 	return (ResponseFormatting::format_response(request, status, filepath, config));
+// }
 
+void	WebServ::receiveFromExistingClient(const int& sockClient )
+{
 	struct timeval	timeoutUpdate;
 	if (gettimeofday(&timeoutUpdate, NULL) < 0)
 		printErrno(GETTIMEOFDAY, EXIT);
@@ -216,7 +226,9 @@ void	WebServ::receiveFromExistingClient( const int& sockClient ) {
 		std::cout << std::string(_buff) << std::endl;
 		_request = HttpRequestParse::parse(std::string(_buff), _sockPortMap[sockClient]);
 		_filepath = get_file_path(_request, _config, _status);
-		_output = _formatter.format_response(_request, _status, _filepath, _config);
+		_output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
+		// @TOSH UNCOMMENT THIS:
+		// _output = get_response(_filepath, _status, _request, _config);
 		std::cout << _output.c_str() << std::endl;
 		send(sockClient, _output.c_str(), _output.length(), 0);
 	}
