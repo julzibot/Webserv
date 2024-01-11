@@ -6,17 +6,17 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/11 09:26:04 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/11 16:29:13 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestParsing.hpp"
 #include "conf_parsing/Config.hpp"
 
-HttpRequest::HttpRequest() {}
+HttpRequest::HttpRequest() : cgi(false) {}
 
 HttpRequest::HttpRequest(HttpRequest const &req) : headers(req.headers), method(req.method), path(req.path), \
-												http_version(req.http_version), body(req.body), port_number(req.port_number)
+												http_version(req.http_version), body(req.body), port_number(req.port_number), cgi(false)
 {}
 
 void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &request)
@@ -55,8 +55,7 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str, int portnum)
 	// PARSING HEADERS
 	HttpRequestParse::parse_headers(requestStream, request);
 	// PARSING BODY IF NECESSARY
-	if (std::getline(requestStream, line) && !line.empty())
-		request.body = line;
-
+	while (std::getline(requestStream, line) && !line.empty())
+		request.body += line;
     return (request);
 }
