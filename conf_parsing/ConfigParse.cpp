@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/18 15:46:56 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/11 09:35:59 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,9 +75,10 @@ void    expandInclude(std::string &line, T &s)
 	toParse >> command >> filename;
 	if (command != "include")
 		return;
-    std::ifstream    fs(filename);
+	std::cout << filename << std::endl;
+    std::ifstream    fs("./conf_parsing/" + filename);
     if (fs.fail())
-        throw (std::invalid_argument("config file: Bad include filename."));
+        throw (std::invalid_argument("Config file: Bad include filename."));
     while (std::getline(fs, fileLine)) {
         fileContent += fileLine;
         fileContent += "\n";
@@ -92,8 +93,8 @@ void    expandInclude(std::string &line, T &s)
 		std::getline(s, line);
 }
 
-size_t	isBrace(char brace, std::string line) {
-
+size_t	isBrace(char brace, std::string line)
+{
 	size_t	braceRes = line.find(brace);
 
 	if (braceRes != NPOS) 
@@ -171,10 +172,11 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 		throw std::invalid_argument("Config file: Unclosed braces found.");
 }
 
-Config	parse_config_file(std::string path)
+Config	parse_config_file( std::string path )
 {
+
     Config						config;
-	unsigned int							i = 0;
+	unsigned int				i = 0;
     size_t						bracepos;
     std::istringstream			ls;
 	strstrMap					directives;
@@ -183,10 +185,9 @@ Config	parse_config_file(std::string path)
     std::string					directive = "main";
 	std::vector<std::string>	dir_index;
     std::ifstream				conf_file(path);
-
+	
 	if (!conf_file.good())
 		throw std::invalid_argument("Invalid config file name");
-
 	while (std::getline(conf_file, buffer))
 		line += buffer + '\n';
 	ls.str(line);
@@ -208,13 +209,14 @@ Config	parse_config_file(std::string path)
 		bracepos = isBrace('{', line);
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
+		// std::cout << line << std::endl;
 		parseDirective(line, directive, config);
 	}
 
 	// TESTING PARSING OUTPUT
-	for (i = 0; i < dir_index.size(); i++)
-		std::cout << "key: " << dir_index.at(i) << " value: "
-			<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	// for (i = 0; i < dir_index.size(); i++)
+	// 	std::cout << "key: " << dir_index.at(i) << " value: " \
+	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 	// strstrMap infos;
 	// std::vector<int> ports = config.get_portnums();
 	// for (i = 0; i < ports.size(); i++)
@@ -225,6 +227,23 @@ Config	parse_config_file(std::string path)
 	// 		<< infos["root"] << " | error path: " << infos["error_pages"] << std::endl << "----------" << std::endl;
 	// }
 	return (config);
+}
+
+LocationDir& get_Location_for_Path(HttpRequest const &request, Config &config)
+{
+	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
+	std::map<std::string, LocationDir>::iterator	it = locations.begin();
+	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+	std::string	locRoute;
+
+	while (it != locEnd)
+	{
+		locRoute = it->first;
+		if (locRoute == request.path)
+			return (it->second);
+		++it;
+	}
+	return (it->second);
 }
 
 std::string	file_request_case(size_t const &slashPos, size_t &dotPos, HttpRequest &request, Config &config, int &status_code)
@@ -339,12 +358,14 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	}
 }
 
-std::string	get_directory_listing(std::string & file_path) {
+std::string	get_directory_listing(std::string & file_path, HttpRequest const &request,
+		Config &config) {
 	DIR *dir;
 	struct dirent *en;
 	std::vector<std::string> list;
 	std::vector<std::string>::iterator it;
 	std::string	output;
+	LocationDir	&loc = get_Location_for_Path(request, config);
 
 	dir = opendir(file_path.c_str());
 	if (dir) {
@@ -356,8 +377,8 @@ std::string	get_directory_listing(std::string & file_path) {
 		output += "<h1>Directory listing</h1>";
 		output += "<ul>";
 		for (it = list.begin(); it != list.end(); ++it) {
-			output += "<li><a href=\"file://" + file_path + "/"
-				+ *it + "\">" + *it + "</a></li>";
+			output += "<li><a href=\"http://localhost:" + std::to_string(request.port_number)
+			+ loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
 		}
 		output += "</ul>";
 		output += END_OF_LIST;

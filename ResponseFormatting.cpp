@@ -2,7 +2,6 @@
 
 std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string const &error_path)
 {
-	std::cout << "ERRORPATH: " << error_path << std::endl;
 	std::deque<std::string>	status_infos;
 	switch (status_code)
 	{
@@ -13,6 +12,7 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 403:	status_infos.push_back(error_path + "/403.html"); status_infos.push_back("Forbidden"); 	break;
 		case 404:	status_infos.push_back(error_path + "/404.html"); status_infos.push_back("Not Found"); 	break;
 		case 405:	status_infos.push_back(error_path + "/405.html"); status_infos.push_back("Method Not Allowed"); break;
+		case 408:	status_infos.push_back(error_path + "/408.html"); status_infos.push_back("Request Timeout"); break;
 		case 413:	status_infos.push_back(error_path + "/413.html"); status_infos.push_back("Payload Too Large"); break;
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
 		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
@@ -34,7 +34,8 @@ std::string	get_content_type(std::string file_path, Config &config)
 
 	file_ext = file_path.substr(file_path.find_last_of(".") + 1);
 	content_type = config.get_type(file_ext);
-
+	if (content_type == "")
+		content_type = "application/octet-stream";
 	return (content_type);
 }
 
@@ -52,7 +53,7 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 		headers += "Content-Length: " + std::to_string(content_length) + "\n";
 	}
 	else if (status_code == 301)
-		headers += "Location: " + status_infos[0];
+		headers += "Location: " + status_infos[0] + "\nContent-Length: 0";
 	else
 		headers += "Connection: close";
 
@@ -75,9 +76,8 @@ std::string	ResponseFormatting::parse_body(std::string file_path, int const &sta
 	return output;
 }
 
-std::string	ResponseFormatting::format_response(
-	HttpRequest const &request, int &status_code, std::string &file_path,
-	Config &config)
+std::string	ResponseFormatting::format_response(HttpRequest const &request, int &status_code,
+		std::string &file_path, Config &config)
 {
 	std::string	output;
 	std::string	body;
@@ -89,8 +89,10 @@ std::string	ResponseFormatting::format_response(
 	if (status_code == 1001)
 	{
 		try {
-			body = get_directory_listing(file_path);
+			body = get_directory_listing(file_path, request, config);
 			status_code = 200;
+			headers = parse_headers(status_infos, request.http_version, status_code,
+						config, body.length());
 		} catch (const std::ios_base::failure& e) {
 			status_code = 403;
 			status_infos = get_status_infos(status_code,
@@ -99,11 +101,13 @@ std::string	ResponseFormatting::format_response(
 		}
 	}
 	else
+	{
 		body = parse_body(status_infos[0], status_code);
-	headers = parse_headers(status_infos, request.http_version, status_code,
-			config, body.length());
+		headers = parse_headers(status_infos, request.http_version,
+				status_code, config, body.length());
+	}
 	output = headers;
-	if (body.length() > 0)
-		output += '\n' + body;
+	// if (body.length() > 0)
+	output += '\n' + body + '\n';
 	return (output);
 }

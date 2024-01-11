@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 15:44:19 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/11 09:31:41 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,6 +175,20 @@ void	dirParseTypes(Config& config, std::string line, std::string directive)
 	stream >> value;
 	while (stream >> extension)
 		config.add_type(extension.substr(0, extension.find(';')), value);
+
+}
+
+void	dirParseCGI(Config& config, std::string line, std::string directive)
+{
+	(void)directive;
+	if (line.empty())
+		return;
+	std::istringstream	stream(line);
+	std::string	value;
+	std::string	extension;
+	stream >> value;
+	while (stream >> extension)
+		config.add_cgi(extension.substr(0, extension.find(';')), value);
 }
 
 void	dirParseMain(Config& config, std::string line, std::string directive)
@@ -208,6 +222,7 @@ void	parseDirective(std::string line, std::string directive, Config& config)
 	dirCase["events"] = &dirParseEvents;
 	dirCase["types"] = &dirParseTypes;
 	dirCase["main"] = &dirParseMain;
+	dirCase["cgi"] = &dirParseCGI;
 
 	directive = removeSpaces(directive);
 	std::istringstream(directive) >> dirKey;
