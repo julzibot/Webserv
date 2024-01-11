@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/11 16:05:02 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/11 16:57:38 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -320,6 +320,7 @@ std::string	fetch_post_path(HttpRequest &request, std::map<std::string, Location
 {
 	std::string	filepath;
 
+	(void) status_code;
 	filepath = it->second.get_root();
 	if (filepath[filepath.length() - 1] != '/')
 		filepath += '/';
@@ -327,6 +328,8 @@ std::string	fetch_post_path(HttpRequest &request, std::map<std::string, Location
 		filepath += request.path.substr(slashPos + 1);
 	if (filepath[filepath.length() - 1] != '/')
 		filepath += '/';
+	
+	return (filepath);
 }
 
 std::string get_file_path(HttpRequest &request, Config &config, int &status_code)
@@ -366,10 +369,12 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		while (i < methods.size() && methods[i] != request.method)
 			i++;
 		if (i < methods.size())
+		{
 			if (methods[i] == "GET")
 				return (check_index_files(request, it, slashPos, dotPos, status_code));
 			else if (methods[i] == "POST")
 				return (fetch_post_path(request, it, slashPos, status_code));
+		}
 		status_code = 405; return ("");
 	}
 }
