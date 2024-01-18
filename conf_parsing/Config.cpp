@@ -6,21 +6,21 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:43:37 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/17 02:00:44 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/11 00:25:49 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 
-LocationDir::LocationDir( void ) {
-
+LocationDir::LocationDir( void )
+{
 	this->methods_allowed.push_back("GET");
 	this->methods_allowed.push_back("POST");
 	this->methods_allowed.push_back("DELETE");
 }
 
-void	LocationDir::removeMethod( std::string toRemove ) {
-
+void	LocationDir::removeMethod( std::string toRemove )
+{
 	std::vector<std::string>::iterator it;
 
 	if (toRemove != "GET" && toRemove != "POST" && toRemove != "DELETE")
@@ -48,6 +48,11 @@ void	LocationDir::setindex(std::string indexFiles)
 std::string	Config::get_type(std::string file_ext)
 {
 	return (this->types[file_ext]);
+}
+
+std::string	Config::get_cgi_type(std::string file_ext)
+{
+	return (this->cgi[file_ext]);
 }
 
 strstrMap		&Config::getServMain(int port, std::string const  &route, bool init)

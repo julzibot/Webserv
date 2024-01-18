@@ -17,3 +17,27 @@ And the user should be able to handle it until it is sorted out
 	You have to go through the entire chunked request (Or the whole size of the data)
 5. `Multi-part form/data` is used to send images over in our request
 Figure out syntax for multipart handling... Or use content-length maybe
+Tests to run:
+
+0. Arguments test, bad .config file
+
+1. Basic GET, POST, DELETE 
+  a. Incorrect route/location/youpi
+  b. Incorrect method
+2. Autoindexing
+3. Redirection
+4. Accessing a file inside a certain route
+5. Error pages
+  * 404
+  * 405 - method not implemented
+  * 408
+6. Multiple port access (testing throughout all open ports)
+7. Multiserver-level access (testing same port multiple server access)
+8. Connection timeout
+
+To fix ASAP:
+  1. Allow only authorised METHODS
+  2. Redirect does not work with neither the Postman or the browser, find out why
+  3. How to test 405?
+  4. What if someone sends invalid method in a request:
+    How will output be sent to it? ReceiveFromExistingClient needs updating, (_recvsize > 0)

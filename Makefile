@@ -1,12 +1,12 @@
 NAME	= webserv
 
-CC		= c++ -Wall -Wextra -Werror -std=c++98 -pedantic
+CC		= c++ -Wall -Wextra -Werror -std=c++98 -pedantic -o3 # TODO: remove -o3 before submission
 
 RM		= rm -rf
 
-SRCS	= RequestParsing.cpp ResponseFormatting.cpp socket.cpp \
+SRCS	= RequestParsing.cpp ResponseFormatting.cpp main.cpp WebServ.cpp \
 			conf_parsing/Config.cpp conf_parsing/ConfigParse.cpp conf_parsing/DirectiveParsing.cpp \
-			cgi/Cgi.cpp
+			cgi/cgi.cpp
 
 OBJS	= ${SRCS:.cpp=.o}
 

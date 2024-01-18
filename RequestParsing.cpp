@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/14 19:00:25 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/18 13:56:26 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,9 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str, int portnum)
 	// PARSING START LINE
 	std::istringstream linestream(line);
 	linestream >> request.method >> request.path >> request.http_version;
+	// TODO: 
+	// CHECK REQUEST.METHOD IF IT IS ALLOWED METHOD
+	
 	// std::cout << request.method << request.path << request.http_version << std::endl;
 	// PARSING HEADERS
 	HttpRequestParse::parse_headers(requestStream, request);

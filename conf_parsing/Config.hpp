@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/19 16:01:48 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/11 00:25:42 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ class LocationDir
 		std::vector<std::string>	methods_allowed;
 
     public:
-		LocationDir( void );
+		LocationDir(void);
 		void	removeMethod( std::string toRemove );
 
 		/* Accessors */
@@ -74,25 +74,28 @@ class Config
         int					worker_processes;
         int					worker_connections;
         strstrMap			types;
+		strstrMap			cgi;
         servLocMap			server_locs;
         servInfos			server_main;
 		std::vector<int>	servPortNums;
 
     public:
 		/* Accessors */
-        int				get_workproc() const { return (this->worker_processes); };
-        int				get_workco() const { return (this->worker_connections); };
+        int					get_workproc() const { return (this->worker_processes); };
+        int					get_workco() const { return (this->worker_connections); };
         std::vector<int>    get_portnums() const { return (this->servPortNums); };
-		servLocMap		getServ() const { return (this->server_locs); };
-        std::string		get_type(std::string file_ext);
-        LocationDir		&getLocRef(int port, std::string route) { return (this->server_locs[port][route]); };
-		strstrMap		&getServMain(int port, std::string const &route, bool init);
+		servLocMap			getServ() const { return (this->server_locs); };
+        std::string			get_type(std::string file_ext);
+        std::string			get_cgi_type(std::string file_ext);
+        LocationDir			&getLocRef(int port, std::string route) { return (this->server_locs[port][route]); };
+		strstrMap			&getServMain(int port, std::string const &route, bool init);
 		// servErrorPath&	getErrorMap( void ) { return (this->error_page_map); };
 		std::map<std::string, LocationDir>&	getLocMap(int port) { return (this->server_locs[port]); };
 
         void	set_workproc(int value) { this->worker_processes = value; };
         void	set_workco(int value) { this->worker_connections = value; };
         void	add_type(std::string extension, std::string path) { this->types[extension] += path; };
+        void	add_cgi(std::string extension, std::string path) { this->cgi[extension] += path; };
         void    add_portnum(int portnum) { this->servPortNums.push_back(portnum); };
 
 		void	printAll( void );

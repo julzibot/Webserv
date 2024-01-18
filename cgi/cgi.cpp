@@ -6,11 +6,11 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/15 18:49:50 by toshsharma        #+#    #+#             */
-/*   Updated: 2024/01/14 18:59:59 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/18 13:56:50 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Cgi.hpp"
+#include "cgi.hpp"
 
 std::string	execute_cgi(HttpRequest &request, CGI &cgi)
 {
