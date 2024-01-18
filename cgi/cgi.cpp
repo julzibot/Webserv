@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/15 18:49:50 by toshsharma        #+#    #+#             */
-/*   Updated: 2023/12/20 18:54:10 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/14 18:59:59 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ std::string	execute_cgi(HttpRequest &request, CGI &cgi)
  * The root will be dependant on the request that comes in to the code
  * We need to ensure that the root is set before we call the CGI constructor.
 */
-CGI::CGI(char ** cgi_env, std::string & executable, std::string & root)
+CGI::CGI(char ** cgi_env, std::string & executable)
 {
 	int			i = 0;
 
@@ -67,11 +67,10 @@ CGI::CGI(char ** cgi_env, std::string & executable, std::string & root)
 		this->cgi_envp.push_back(cgi_env[i]);
 		++i;
 	}
-	this->set_root(root);
 	if (executable == "python3")
-		this->cgi_path = this->get_root() + "/cgi-bin/py-cgi";
+		this->cgi_path = "/usr/bin/python3";
 	else
-		this->cgi_path = this->get_root() + "/cgi-bin/py-cgi";
+		this->cgi_path = "/usr/bin/python3";
 	this->insert_arg(this->cgi_path);
 }
 

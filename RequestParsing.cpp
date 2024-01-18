@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 15:05:41 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/14 19:00:25 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,8 +52,9 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str, int portnum)
 	// PARSING HEADERS
 	HttpRequestParse::parse_headers(requestStream, request);
 	// PARSING BODY IF NECESSARY
-	if (std::getline(requestStream, line) && !line.empty())
+	while (std::getline(requestStream, line) && !line.empty())
 		request.body = line;
-
+	
+	std::cout << "Request body: " << request.body << std::endl;
     return (request);
 }

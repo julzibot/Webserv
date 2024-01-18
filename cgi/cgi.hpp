@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/15 18:41:58 by toshsharma        #+#    #+#             */
-/*   Updated: 2023/12/20 16:26:00 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/14 18:59:56 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ class CGI {
 		std::vector<char *>	cgi_envp;
 		std::string			root;
 	public:
-		CGI(char ** cgi_env, std::string &executable, std::string & root);
+		CGI(char ** cgi_env, std::string &executable);
 		~CGI();
 		std::string		get_cgi_path();
 		char **	get_cgi_args();

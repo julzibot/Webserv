@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/20 18:34:03 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/18 13:54:06 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,12 +123,11 @@ int main (int argc, char ** argv, char **env)
 	}
 	std::string conf_filename;
 	std::string	python_executable = "python3";
-	std::string	temp_root = "/Users/toshsharma/Documents/42cursus/Webserv/server_files";
 	if (argc == 2) conf_filename = "server_files/" + std::string(argv[1]);
 	else conf_filename = "server_files/webserv.conf";
 
 	Config	config;
-	CGI		py_cgi = CGI(env, python_executable, temp_root);
+	CGI		py_cgi = CGI(env, python_executable);
 	try {
 		config = parse_config_file(conf_filename);
 	}
@@ -139,7 +138,6 @@ int main (int argc, char ** argv, char **env)
 	}
     int				status = 200;
     HttpRequest		request;
-	execute_cgi(request, py_cgi);
 
     std::vector<sockaddr_in>	saddr(config.get_portnums().size());
 	std::vector<int>	servsock;
