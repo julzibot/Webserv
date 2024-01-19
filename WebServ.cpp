@@ -1,17 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   WebServ.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/11 09:25:56 by julzibot         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "WebServ.hpp"
-
+#include "cgi/cgi.hpp"
 
 // Function to run when CTRL-C is pressed
 volatile sig_atomic_t    isTrue = 1;
@@ -59,9 +47,9 @@ void    printErrno(int func, bool ex)
         exit(errno);
 }
 
-WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
-	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)), _socketTimeoutValue(90) {
-
+WebServ::WebServ(const std::string& confFilenamePath, char **envp) : _status(200),
+	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)), _socketTimeoutValue(90)
+{
 	try {
 		_config = parse_config_file(confFilenamePath);
 	}
@@ -69,6 +57,7 @@ WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
 		std::cerr << "Error: " << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	this->envp = envp;
 	initSockets(_config.get_portnums());
 	bindAndListen(_servsock, _config.get_portnums(), _saddr, _arrsize);
 	initSelectFDs(_servsock.size());
@@ -127,8 +116,8 @@ void	WebServ::initSelectFDs( const unsigned int& size ) {
 }
 
 void	WebServ::checkClientTimeout(const struct timeval& currentTime,
-	const int& keepAliveTimeout, const int& clientSock ) {
-
+	const int& keepAliveTimeout, const int& clientSock )
+{
 	// std::cout << "[socket: " << _clientsock << "] - " << currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec << "s" << std::endl;
 	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout) {
 		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to " << _socketTimeoutValue << "s)" << RESETCLR << std::endl;
@@ -178,17 +167,26 @@ void	WebServ::acceptNewConnection( const int& servSock ) {
 	}
 }
 
-// std::string	get_response(std::string &filepath, int &status, HttpRequest const &request, Config &config)
-// {
-// 	if (!filepath.empty())
-// 		std::string	extension = filepath.substr(filepath.find_last_of(".") + 1);
-// 		std::string cgiExecPath = config.get_cgi_type(extension);
-// 		if (cgiExecPath != "")
-// 			return (/* TOSH'S CGI HANDLING + CGI RESPONSE BUILDING HERE */);
-// 	return (ResponseFormatting::format_response(request, status, filepath, config));
-// }
+std::string	WebServ::get_response(std::string &filepath, int &status,
+	HttpRequest &request, Config &config)
+{
+	if (!filepath.empty())
+	{
+		std::string	extension = filepath.substr(filepath.find_last_of(".") + 1);
+		std::string cgiExecPath = config.get_cgi_type(extension);
+		if (cgiExecPath == "/usr/bin/python3")
+		{
+			std::string python3 = "python3";
+			CGI *cgi = new CGI(this->envp, python3);
+			std::string response = cgi->execute_cgi(request, cgi);
+			std::cout << "response from CGI is " << response << std::endl;
+			return (response);
+		}
+	}
+	return (ResponseFormatting::format_response(request, status, filepath, config));
+}
 
-void	WebServ::receiveFromExistingClient(const int& sockClient )
+void	WebServ::receiveFromExistingClient(const int& sockClient)
 {
 	struct timeval	timeoutUpdate;
 	if (gettimeofday(&timeoutUpdate, NULL) < 0)
@@ -226,9 +224,9 @@ void	WebServ::receiveFromExistingClient(const int& sockClient )
 		std::cout << std::string(_buff) << std::endl;
 		_request = HttpRequestParse::parse(std::string(_buff), _sockPortMap[sockClient]);
 		_filepath = get_file_path(_request, _config, _status);
-		_output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
-		// @TOSH UNCOMMENT THIS:
-		// _output = get_response(_filepath, _status, _request, _config);
+		_filepath = "/Users/toshsharma/Documents/42cursus/Webserv/server_files/cgi-bin/cgi_executer.py";
+		// _output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
+		_output = WebServ::get_response(_filepath, _status, _request, _config);
 		std::cout << _output.c_str() << std::endl;
 		send(sockClient, _output.c_str(), _output.length(), 0);
 	}

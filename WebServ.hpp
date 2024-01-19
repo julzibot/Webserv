@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   WebServ.hpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/12/17 19:35:25 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/18 19:29:27 by mstojilj         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #pragma once
 
 #include <sys/socket.h>
@@ -65,6 +53,7 @@ private:
     std::string			_prevReqPath;
     std::ifstream		_fs;
     ResponseFormatting	_formatter;
+	char				**envp;
 
 	// CLIENT
     struct sockaddr_in	_caddr;
@@ -93,10 +82,11 @@ private:
 	bool	isServSock(const std::vector<int>& servsock, const int& sock);
 	void	acceptNewConnection( const int& servSock );
 	void	receiveFromExistingClient( const int& sockClient );
-	
+	std::string	get_response(std::string &filepath, int &status, HttpRequest &request, Config &config);
+
 public:
 
-	WebServ( const std::string& confFilenamePath );
+	WebServ( const std::string& confFilenamePath, char **envp);
 	~WebServ( void ) {};
 
 	void	startServer( void );

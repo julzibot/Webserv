@@ -6,21 +6,30 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/15 18:49:50 by toshsharma        #+#    #+#             */
-/*   Updated: 2024/01/18 13:56:50 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/19 17:26:39 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "cgi.hpp"
 
-std::string	execute_cgi(HttpRequest &request, CGI &cgi)
+std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi)
 {
 	std::string	output;
 	int			fd[2];
 	pid_t		pid;
 
-	(void)request;
-	std::string file_to_exec = "/Users/toshsharma/Documents/42cursus/Webserv/server_files/cgi-bin/sample.py";
-	cgi.insert_arg(file_to_exec);
+	std::string file_to_exec = "/Users/toshsharma/Documents/42cursus/Webserv/server_files/cgi-bin/cgi_executer.py";
+	cgi->insert_arg(file_to_exec);
+	// Insert request details into CGI arguments
+	cgi->insert_arg(request.method);
+	for (std::map<std::string, std::string>::const_iterator it = request.headers.begin();
+			it != request.headers.end();
+			++it)
+	{
+		std::string header = it->first + ": " + it->second;
+		cgi->insert_arg(header);
+	}
+	cgi->insert_arg(request.body);
 	if (pipe(fd) == -1)
 		throw std::exception();
 	pid = fork();
@@ -31,7 +40,7 @@ std::string	execute_cgi(HttpRequest &request, CGI &cgi)
 		close(fd[0]);
 		dup2(fd[1], STDOUT_FILENO);
 		close(fd[1]);
-		if (execve(cgi.get_cgi_path().c_str(), cgi.get_cgi_args(), cgi.get_envp()) == -1)
+		if (execve(cgi->get_cgi_path().c_str(), cgi->get_cgi_args(), cgi->get_envp()) == -1)
 		{
 			throw std::exception();
 		}
