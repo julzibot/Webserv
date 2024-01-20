@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigParse.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/11 16:57:38 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/13 17:12:47 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -316,69 +316,66 @@ std::string	check_index_files(HttpRequest &request, std::map<std::string, Locati
 		return ("");
 }
 
-std::string	fetch_post_path(HttpRequest &request, std::map<std::string, LocationDir>::iterator it, size_t const &slashPos, int &status_code)
+std::string    fetch_post_path(HttpRequest &request, std::map<std::string, LocationDir>::iterator it, size_t const &slashPos, int &status_code)
 {
-	std::string	filepath;
+    std::string    filepath;
 
-	(void) status_code;
-	filepath = it->second.get_root();
-	if (filepath[filepath.length() - 1] != '/')
-		filepath += '/';
-	if (request.path.length() > slashPos)
-		filepath += request.path.substr(slashPos + 1);
-	if (filepath[filepath.length() - 1] != '/')
-		filepath += '/';
-	
-	return (filepath);
+    (void) status_code;
+    filepath = it->second.get_root();
+    if (filepath[filepath.length() - 1] != '/')
+        filepath += '/';
+    if (request.path.length() > slashPos)
+        filepath += request.path.substr(slashPos + 1);
+    if (filepath[filepath.length() - 1] != '/')
+        filepath += '/';
+    return (filepath);
 }
-
 std::string get_file_path(HttpRequest &request, Config &config, int &status_code)
 {
-	std::string file_path;
-	unsigned int	i = 0;
-	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
-	std::map<std::string, LocationDir>::iterator	it;
-	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
-	std::string	locRoute;
-	size_t	slashPos = 1;
-	size_t dotPos = NPOS;
+    std::string file_path;
+    unsigned int    i = 0;
+    std::map<std::string, LocationDir>    &locations = config.getLocMap(request.port_number);
+    std::map<std::string, LocationDir>::iterator    it;
+    std::map<std::string, LocationDir>::iterator    locEnd = locations.end();
+    std::string    locRoute;
+    size_t    slashPos = 1;
+    size_t dotPos = NPOS;
 
-	if (request.path.length() > 1)
-		slashPos = request.path.find('/', 1);
-	dotPos = request.path.find('.');
-	if (dotPos != NPOS)
-	{
-		file_path = file_request_case(slashPos, dotPos, request, config, status_code);
-		if (status_code != 200 || !file_path.empty()) return (file_path);
-	}
-	for (it = locations.begin(); it != locEnd; it++)
-	{
-		locRoute = it->first;
-		if (locRoute == request.path.substr(0, slashPos))
-		{
-			if (!(it->second.get_redir().empty()))
-			{ status_code = 301; return (it->second.get_redir()); }
-			break;
-		}
-	}
-	if (it == locEnd && locations.begin() != locEnd)
-	{ status_code = 404; return (""); }
-	else
-	{
-		std::vector<std::string> methods = it->second.get_methods_allowed();
-		while (i < methods.size() && methods[i] != request.method)
-			i++;
-		if (i < methods.size())
-		{
-			if (methods[i] == "GET")
-				return (check_index_files(request, it, slashPos, dotPos, status_code));
-			else if (methods[i] == "POST")
-				return (fetch_post_path(request, it, slashPos, status_code));
-		}
-		status_code = 405; return ("");
-	}
+    if (request.path.length() > 1)
+        slashPos = request.path.find('/', 1);
+    dotPos = request.path.find('.');
+    if (dotPos != NPOS)
+    {
+        file_path = file_request_case(slashPos, dotPos, request, config, status_code);
+        if (status_code != 200 || !file_path.empty()) return (file_path);
+    }
+    for (it = locations.begin(); it != locEnd; it++)
+    {
+        locRoute = it->first;
+        if (locRoute == request.path.substr(0, slashPos))
+        {
+            if (!(it->second.get_redir().empty()))
+            { status_code = 301; return (it->second.get_redir()); }
+            break;
+        }
+    }
+    if (it == locEnd && locations.begin() != locEnd)
+    { status_code = 404; return (""); }
+    else
+    {
+        std::vector<std::string> methods = it->second.get_methods_allowed();
+        while (i < methods.size() && methods[i] != request.method)
+            i++;
+        if (i < methods.size())
+        {
+            if (methods[i] == "GET")
+                return (check_index_files(request, it, slashPos, dotPos, status_code));
+            else if (methods[i] == "POST")
+                return (fetch_post_path(request, it, slashPos, status_code));
+        }
+        status_code = 405; return ("");
+    }
 }
-
 std::string	get_directory_listing(std::string & file_path, HttpRequest const &request,
 		Config &config) {
 	DIR *dir;
