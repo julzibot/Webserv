@@ -60,6 +60,17 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 	return (headers);
 }
 
+std::string	ResponseFormatting::parse_cgi_headers(std::string http_version, int content_length)
+{
+	std::string	headers;
+
+	headers = http_version + "  200 OK"+ "\n";
+	headers += "Content-Type: text/plain\n";
+	headers += "Content-Length: " + std::to_string(content_length) + "\n";
+
+	return (headers);
+}
+
 std::string	ResponseFormatting::parse_body(std::string file_path, int const &status_code)
 {
 	std::ifstream	inputFile(file_path);

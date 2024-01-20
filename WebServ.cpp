@@ -178,8 +178,10 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 		{
 			std::string python3 = "python3";
 			CGI *cgi = new CGI(this->envp, python3);
-			std::string response = cgi->execute_cgi(request, cgi);
-			std::cout << "response from CGI is " << response << std::endl;
+			std::string body = cgi->execute_cgi(request, cgi);
+			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length());
+			std::string response = headers + "\r\n" + body;
+			delete cgi;
 			return (response);
 		}
 	}

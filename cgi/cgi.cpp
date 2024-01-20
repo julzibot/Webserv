@@ -6,7 +6,7 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/15 18:49:50 by toshsharma        #+#    #+#             */
-/*   Updated: 2024/01/19 17:26:39 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/20 16:16:49 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,10 +85,10 @@ CGI::CGI(char ** cgi_env, std::string & executable)
 
 CGI::~CGI()
 {
-	for (unsigned int i = 0; i < this->cgi_args.size(); ++i)
-		delete this->cgi_args[i];
-	for (unsigned int i = 0; i < this->cgi_envp.size(); ++i)
-		delete this->cgi_envp[i];
+	// for (unsigned int i = 0; i < this->cgi_args.size(); ++i)
+	// 	delete this->cgi_args[i];
+	// for (unsigned int i = 0; i < this->cgi_envp.size(); ++i)
+	// 	delete this->cgi_envp[i];
 }
 
 char ** CGI::get_envp()

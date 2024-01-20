@@ -74,21 +74,19 @@ private:
 	// Init
 	void	initSockets( const std::vector<int>& portNums );
 	void	bindAndListen( const std::vector<int>& servsock, const std::vector<int>& portnums,
-		const std::vector<sockaddr_in>& saddr, const unsigned int& arrsize );
+	const	std::vector<sockaddr_in>& saddr, const unsigned int& arrsize );
 	void	initSelectFDs( const unsigned int& size );
 
 	void	checkClientTimeout(const struct timeval& currentTime,
-		const int& keepAliveTimeout, const int& clientSock );
+	const int& keepAliveTimeout, const int& clientSock );
 	bool	isServSock(const std::vector<int>& servsock, const int& sock);
 	void	acceptNewConnection( const int& servSock );
 	void	receiveFromExistingClient( const int& sockClient );
 	std::string	get_response(std::string &filepath, int &status, HttpRequest &request, Config &config);
 
 public:
-
 	WebServ( const std::string& confFilenamePath, char **envp);
 	~WebServ( void ) {};
 
 	void	startServer( void );
-
 };
