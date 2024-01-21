@@ -1,4 +1,5 @@
 #include "ResponseFormatting.hpp"
+#include "conf_parsing/DirectiveParsing.h"
 
 std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string const &error_path)
 {
@@ -13,6 +14,7 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 404:	status_infos.push_back(error_path + "/404.html"); status_infos.push_back("Not Found"); 	break;
 		case 405:	status_infos.push_back(error_path + "/405.html"); status_infos.push_back("Method Not Allowed"); break;
 		case 408:	status_infos.push_back(error_path + "/408.html"); status_infos.push_back("Request Timeout"); break;
+		case 409:	status_infos.push_back(error_path + "/409.html"); status_infos.push_back("Conflict"); break;
 		case 413:	status_infos.push_back(error_path + "/413.html"); status_infos.push_back("Payload Too Large"); break;
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
 		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
@@ -76,15 +78,19 @@ std::string	ResponseFormatting::parse_body(std::string file_path, int const &sta
 	return output;
 }
 
-std::string	ResponseFormatting::format_response(HttpRequest const &request, int &status_code,
+std::string	ResponseFormatting::format_response(HttpRequest &request, int &status_code, \
 		std::string &file_path, Config &config)
 {
 	std::string	output;
 	std::string	body;
 	std::string	headers;
 	std::string p = request.path.substr(0, request.path.find('/', 1));
+	std::string	reqHost = request.headers["Host"];
+	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+
 	std::deque<std::string> status_infos = get_status_infos(status_code,
-			file_path, config.getServMain(request.port_number, p, true)["error_pages"]);
+			file_path, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
 
 	if (status_code == 1001)
 	{
@@ -96,7 +102,7 @@ std::string	ResponseFormatting::format_response(HttpRequest const &request, int 
 		} catch (const std::ios_base::failure& e) {
 			status_code = 403;
 			status_infos = get_status_infos(status_code,
-				file_path, config.getServMain(request.port_number, p, true)["error_pages"]);
+				file_path, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
 			body = parse_body(status_infos[0], status_code);
 		}
 	}

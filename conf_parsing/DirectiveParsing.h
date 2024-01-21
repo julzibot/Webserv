@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   DirectiveParsing.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:39:48 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/15 17:37:01 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/21 15:13:48 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ void	dirParseTypes(Config& config, std::string line, std::string directive);
 void	dirParseEvents(Config& config, std::string line, std::string directive);
 void	dirParseServer(Config& config, std::string line, std::string directive);
 void	dirParseLocation(std::string line, Config &config, std::string directive);
-std::string	get_directory_listing(std::string & file_path, HttpRequest const &request,
+std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
 				Config& config);
 
 /* Helper functions */
@@ -33,3 +33,4 @@ void		auth_except(LocationDir& ld, std::string line);
 bool		isValidErrCode( const std::string& errCode );
 bool		validErrorHtmlFile( std::string filename );
 void		assign_autoindex(LocationDir& ld, std::string value);
+bool		is_valid_IP(std::string const &str);

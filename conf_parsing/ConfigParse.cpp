@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/11 16:57:38 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/21 16:27:46 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,9 +214,9 @@ Config	parse_config_file( std::string path )
 	}
 
 	// TESTING PARSING OUTPUT
-	// for (i = 0; i < dir_index.size(); i++)
-	// 	std::cout << "key: " << dir_index.at(i) << " value: " \
-	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	for (i = 0; i < dir_index.size(); i++)
+		std::cout << "key: " << dir_index.at(i) << " value: " \
+			<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
 	// strstrMap infos;
 	// std::vector<int> ports = config.get_portnums();
 	// for (i = 0; i < ports.size(); i++)
@@ -229,9 +229,12 @@ Config	parse_config_file( std::string path )
 	return (config);
 }
 
-LocationDir& get_Location_for_Path(HttpRequest const &request, Config &config)
+LocationDir& get_Location_for_Path(HttpRequest &request, Config &config)
 {
-	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
+	std::string	reqHost = request.headers["Host"];
+	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+	std::map<std::string, LocationDir>	&locations = config.getLocMap(reqHost, request.port_number);
 	std::map<std::string, LocationDir>::iterator	it = locations.begin();
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
 	std::string	locRoute;
@@ -248,13 +251,17 @@ LocationDir& get_Location_for_Path(HttpRequest const &request, Config &config)
 
 std::string	file_request_case(size_t const &slashPos, size_t &dotPos, HttpRequest &request, Config &config, int &status_code)
 {
+	std::string	reqHost = request.headers["Host"];
+	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
 	std::string file_path;
 	int	acss;
 
 	if (dotPos < slashPos)
 	{
 		std::string p = request.path.substr(0, slashPos);
-		file_path = config.getServMain(request.port_number, p, true)["root"] + request.path;
+		// while (config.getServMain(request.port_number, p, true)["host"])
+		file_path = config.getServMain(reqHost, request.port_number, p, true)["root"] + request.path;
 		acss = access(file_path.c_str(), F_OK);
 		if (!acss && !access(file_path.c_str(), R_OK))
 			return (file_path);
@@ -313,36 +320,140 @@ std::string	check_index_files(HttpRequest &request, std::map<std::string, Locati
 		return (it->second.get_root());
 	}
 	status_code = 404;
-		return ("");
+	return ("");
 }
 
-std::string	fetch_post_path(HttpRequest &request, std::map<std::string, LocationDir>::iterator it, size_t const &slashPos, int &status_code)
-{
-	std::string	filepath;
+// std::map<std::string, LocationDir>	&get_hostport_locations(HttpRequest &request, Config &config, int &status_code)
+// {
+// 	std::string	reqHost = request.headers["Host"];
+// 	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+// 	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+// 	std::cout << "REQHOST: " << reqHost << std::endl;
+// 	// CHECK reqHost is IP
+// 	std::map<std::string, LocationDir>	&locations = config.getLocMap(reqHost, request.port_number);
+// 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+// 	if (locations.begin() == locEnd)
+// 	{
+// 		reqHost = "";
+// 		locations = config.getLocMap(reqHost, request.port_number);
+// 		if (locations.begin() == locations.end())
+// 			{ status_code = 404; return (""); }
+// 	}
+// }
 
-	(void) status_code;
-	filepath = it->second.get_root();
-	if (filepath[filepath.length() - 1] != '/')
-		filepath += '/';
-	if (request.path.length() > slashPos)
-		filepath += request.path.substr(slashPos + 1);
-	if (filepath[filepath.length() - 1] != '/')
-		filepath += '/';
+std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &request, std::map<std::string, LocationDir>	&locations, Config &config)
+{
+	std::vector<bool>			matching_host;
+	std::string					servername;
+	std::string					hostname;
+	std::string					reqHost = request.headers["Host"];
 	
-	return (filepath);
+	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+	std::map<std::string, LocationDir>::iterator	it;
+	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+	strstrMap hostMap = config.get_hostMap();
+	strstrMap::iterator h;
+	strstrMap::iterator	hEnd = hostMap.end();
+
+	for (h = hostMap.begin(); h != hEnd; h++)
+	{
+		if (reqHost == h->first || reqHost == h->second)
+		{
+			hostname = h->first;
+			for (it = locations.begin(); it != locEnd; it++)
+			{
+				servername = config.getServMain(tempHost, request.port_number, it->first, true)["server_name"];
+				std::cout << "HOSTNAME: |" << hostname << "| SERVNAME: |" << servername << "|" << std::endl;
+				if (hostname == servername || servername.empty())
+				{
+					matching_host.push_back(true);
+					matching_host.insert(matching_host.begin(), true);
+				}
+				else
+					matching_host.push_back(false);
+			}
+			if (matching_host[0] == true)
+				break;
+			else
+				matching_host.clear();
+		}
+	}
+	if (h == hEnd)
+		matching_host.push_back(false);
+	return (matching_host);
+}
+
+void	request_ip_check(std::string &reqHost, Config &config, int &status_code)
+{
+	strstrMap	hostMap = config.get_hostMap();
+	strstrMap::iterator it;
+	strstrMap::iterator	mapEnd = hostMap.end();
+
+	for (it = hostMap.begin(); it != mapEnd; it++)
+	{
+		if (reqHost == it->second)
+			break;
+	}
+	if (it == mapEnd)
+	{
+		for (it = hostMap.begin(); it != mapEnd; it++)
+		{
+			if (reqHost == it->first)
+			{
+				reqHost = it->second;
+				break;
+			}
+		}
+		if (it == mapEnd)
+			status_code = 403;
+	}
 }
 
 std::string get_file_path(HttpRequest &request, Config &config, int &status_code)
 {
 	std::string file_path;
 	unsigned int	i = 0;
-	std::map<std::string, LocationDir>	&locations = config.getLocMap(request.port_number);
-	std::map<std::string, LocationDir>::iterator	it;
+	std::string	reqHost = request.headers["Host"];
+	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+	std::cout << "REQHOST: |" << reqHost << "|" << std::endl;
+	request_ip_check(reqHost, config, status_code);
+	if (status_code == 403)
+		return ("");
+	std::string tempHost = reqHost;
+	std::map<std::string, LocationDir>	&locations = config.getLocMap(reqHost, request.port_number);
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+	if (locations.begin() == locEnd)
+	{
+		tempHost = "";
+		locations = config.getLocMap("", request.port_number);
+		if (locations.begin() == locations.end())
+			{ status_code = 404; return (""); }
+	}
+	std::map<std::string, LocationDir>::iterator	it;
 	std::string	locRoute;
 	size_t	slashPos = 1;
 	size_t dotPos = NPOS;
 
+	// CHECK THAT hostname:port CORRESPOND
+	std::vector<bool>			matching_host;
+	matching_host = get_match_vect(tempHost, request, locations, config);
+	if (matching_host[0] == false)
+	{
+		if (tempHost != "")
+		{
+			tempHost = "";
+			locations = config.getLocMap("", request.port_number);
+			if (locations.begin() == locations.end())
+			{ status_code = 404; return (""); }
+			matching_host = get_match_vect(tempHost, request, locations, config);
+			if (matching_host[0] == false)
+			{ status_code = 404; return (""); }
+		}
+		else
+		{ status_code = 404; return (""); }
+	}
 	if (request.path.length() > 1)
 		slashPos = request.path.find('/', 1);
 	dotPos = request.path.find('.');
@@ -351,15 +462,17 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		file_path = file_request_case(slashPos, dotPos, request, config, status_code);
 		if (status_code != 200 || !file_path.empty()) return (file_path);
 	}
+	unsigned int	host_index = 0;
 	for (it = locations.begin(); it != locEnd; it++)
 	{
 		locRoute = it->first;
-		if (locRoute == request.path.substr(0, slashPos))
+		if (matching_host[host_index + 1] == true && locRoute == request.path.substr(0, slashPos))
 		{
 			if (!(it->second.get_redir().empty()))
 			{ status_code = 301; return (it->second.get_redir()); }
 			break;
 		}
+		host_index++;
 	}
 	if (it == locEnd && locations.begin() != locEnd)
 	{ status_code = 404; return (""); }
@@ -369,18 +482,14 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		while (i < methods.size() && methods[i] != request.method)
 			i++;
 		if (i < methods.size())
-		{
-			if (methods[i] == "GET")
-				return (check_index_files(request, it, slashPos, dotPos, status_code));
-			else if (methods[i] == "POST")
-				return (fetch_post_path(request, it, slashPos, status_code));
-		}
+			return (check_index_files(request, it, slashPos, dotPos, status_code));
 		status_code = 405; return ("");
 	}
 }
 
-std::string	get_directory_listing(std::string & file_path, HttpRequest const &request,
-		Config &config) {
+std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
+		Config &config)
+{
 	DIR *dir;
 	struct dirent *en;
 	std::vector<std::string> list;
