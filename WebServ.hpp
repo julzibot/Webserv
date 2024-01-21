@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:35:25 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 15:18:29 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/21 18:00:32 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,6 +122,9 @@ private:
 	void	receiveBinary( const int& sockClient, const std::string& endBoundary );
 	void	receiveFileOnly(const int& sockClient, const std::string& fileType,
 				const std::string& root);
+
+	// DELETE method
+	void	deleteResource( const std::string& resource );
 	
 public:
 

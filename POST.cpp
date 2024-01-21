@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/21 16:03:52 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 16:10:34 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/21 18:05:38 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,8 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 		tmpLine.erase(tmpLine.find("\r"));
 		formHeaders.push_back(tmpLine);
 	}
+	formStream.clear();
+	formHeaderData.clear();
 
 	// Parse body form info
 	std::string	inputName;
@@ -122,17 +124,15 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 		newFile.open(root, std::ios::binary);
 		for (std::vector<char>::iterator it = _binaryBody.begin(); it != _binaryBody.end(); ++it)
 			newFile << *it;
-		newFile.close();
-		_binaryBody.clear();
 	}
 	catch (const std::ofstream::failure& e) {
-		newFile.close();
-		_binaryBody.clear();
 		std::cerr << RED << "Caught exception: receiveMultiForm(): '" << e.what()
 			<< "' while receiving file on port: " << _request.port_number << RESETCLR << std::endl;
 		_status = 500;
-		return;
 	}
+	newFile.close();
+	_binaryBody.clear();
+	return;
 
 	// // Create timestamp
 	// struct timeval	currentTime;

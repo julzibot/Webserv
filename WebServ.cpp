@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 16:12:36 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/21 18:14:18 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -238,11 +238,11 @@ void	WebServ::receiveFromExistingClient(const int& sockClient ) {
 	_recvsize = recv(sockClient, _buff, 1, 0);
 	totalBuff.append(_buff);
 
-	if (_recvsize < 0 && errno != EWOULDBLOCK) {
-		printErrno(RECV, NO_EXIT);
-		std::cerr << BOLD << "[SERVER] Error encountered while receiving message" << RESETCLR << std::endl;
-	}
-	else if (_recvsize == 0 && errno != EWOULDBLOCK) {
+	// if (_recvsize < 0 && errno != EWOULDBLOCK) {
+	// 	printErrno(RECV, NO_EXIT);
+	// 	std::cerr << BOLD << "[SERVER] Error encountered while receiving message" << RESETCLR << std::endl;
+	// }
+	if (_recvsize == 0) { // && errno != EWOULDBLOCK
 		std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Client disconnected" << RESETCLR << std::endl;
 		close(sockClient);
 		if (sockClient == _maxFD)
@@ -269,7 +269,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient ) {
 		}
 		else if (_isDeleteMethod) {
 		 	_isDeleteMethod = false;
-			// Process DELETE Request
+			deleteResource(_request.path);
 		}
 		_output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
 		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
