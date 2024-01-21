@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 16:27:46 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/21 17:49:42 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -436,7 +436,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	size_t	slashPos = 1;
 	size_t dotPos = NPOS;
 
-	// CHECK THAT hostname:port CORRESPOND
+	// CHECK THAT server_name CORRESPONDS
 	std::vector<bool>			matching_host;
 	matching_host = get_match_vect(tempHost, request, locations, config);
 	if (matching_host[0] == false)
@@ -475,7 +475,43 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		host_index++;
 	}
 	if (it == locEnd && locations.begin() != locEnd)
-	{ status_code = 404; return (""); }
+	{
+		if (tempHost != "")
+		{
+			tempHost = "";
+			locations = config.getLocMap("", request.port_number);
+			if (locations.begin() == locations.end())
+			{ status_code = 404; return (""); }
+			matching_host = get_match_vect(tempHost, request, locations, config);
+			if (matching_host[0] == false)
+			{ status_code = 404; return (""); }
+			host_index = 0;
+			for (it = locations.begin(); it != locEnd; it++)
+			{
+				locRoute = it->first;
+				if (matching_host[host_index + 1] == true && locRoute == request.path.substr(0, slashPos))
+				{
+					if (!(it->second.get_redir().empty()))
+					{ status_code = 301; return (it->second.get_redir()); }
+					break;
+				}
+				host_index++;
+			}
+			if (it == locEnd && locations.begin() != locEnd)
+			{ status_code = 404; return (""); }
+			else
+			{
+				std::vector<std::string> methods = it->second.get_methods_allowed();
+				while (i < methods.size() && methods[i] != request.method)
+					i++;
+				if (i < methods.size())
+					return (check_index_files(request, it, slashPos, dotPos, status_code));
+				status_code = 405; return ("");
+			}
+		}
+		else
+		{ status_code = 404; return (""); }
+	}
 	else
 	{
 		std::vector<std::string> methods = it->second.get_methods_allowed();
