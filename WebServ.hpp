@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:35:25 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/18 20:03:01 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/21 15:18:29 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,6 +91,9 @@ private:
 	unsigned int		_maxBodySize;
 	std::string			_contentType;
 	std::vector<char>	_binaryBody;
+
+	//DELETE Method
+	bool			_isDeleteMethod;
 
 	// Timeout management
 	std::map<int, struct timeval>	_socketTimeoutMap;
