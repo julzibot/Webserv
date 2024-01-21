@@ -6,20 +6,20 @@
 /*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/15 18:49:50 by toshsharma        #+#    #+#             */
-/*   Updated: 2024/01/20 16:16:49 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/01/21 22:11:40 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "cgi.hpp"
 
-std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi)
+std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath)
 {
 	std::string	output;
 	int			fd[2];
 	pid_t		pid;
 
-	std::string file_to_exec = "/Users/toshsharma/Documents/42cursus/Webserv/server_files/cgi-bin/cgi_executer.py";
-	cgi->insert_arg(file_to_exec);
+	// std::string file_to_exec = "/Users/toshsharma/Documents/42cursus/Webserv/server_files/cgi-bin/cgi_executer.py";
+	cgi->insert_arg(filepath);
 	// Insert request details into CGI arguments
 	cgi->insert_arg(request.method);
 	for (std::map<std::string, std::string>::const_iterator it = request.headers.begin();

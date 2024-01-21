@@ -43,15 +43,8 @@ HttpRequest HttpRequestParse::parse(std::string const &req_str, int portnum)
 	// PARSING HEADERS
 	HttpRequestParse::parse_headers(requestStream, request);
 	// PARSING BODY IF NECESSARY
-	while (std::getline(requestStream, line))
-	{
-		if (!line.empty())
-		{
-			request.body += line;
-			request.body += '\n';
-		}
-		else
-			break;
+	while (std::getline(requestStream, line) && !line.empty()) {
+		request.body += line += '\n';
 	}
     return (request);
 }

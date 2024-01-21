@@ -178,7 +178,7 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 		{
 			std::string python3 = "python3";
 			CGI *cgi = new CGI(this->envp, python3);
-			std::string body = cgi->execute_cgi(request, cgi);
+			std::string body = cgi->execute_cgi(request, cgi, filepath);
 			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length());
 			std::string response = headers + "\r\n" + body;
 			delete cgi;
@@ -226,7 +226,9 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		std::cout << std::string(_buff) << std::endl;
 		_request = HttpRequestParse::parse(std::string(_buff), _sockPortMap[sockClient]);
 		_filepath = get_file_path(_request, _config, _status);
-		_filepath = "/Users/toshsharma/Documents/42cursus/Webserv/server_files/cgi-bin/cgi_executer.py";
+		// std::cout << "Filepath is			: " << _filepath << std::endl;
+		// _filepath = "/Users/toshsharma/Documents/42cursus/Webserv/server_files/cgi-bin/cgi_executer.py";
+		// std::cout << "Updated Filepath is	: " << _filepath << std::endl;
 		// _output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
 		_output = WebServ::get_response(_filepath, _status, _request, _config);
 		std::cout << _output.c_str() << std::endl;
