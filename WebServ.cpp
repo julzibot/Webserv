@@ -3,15 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   WebServ.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/11 09:25:56 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/21 18:14:18 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "WebServ.hpp"
-
 
 // Function to run when CTRL-C is pressed
 volatile sig_atomic_t    isTrue = 1;
@@ -60,7 +59,9 @@ void    printErrno(int func, bool ex)
 }
 
 WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
-	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)), _socketTimeoutValue(90) {
+	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)),
+	_isPostMethod(false), _contentLength(-1), _maxBodySize(UINT_MAX),
+	_isDeleteMethod(false), _socketTimeoutValue(90) {
 
 	try {
 		_config = parse_config_file(confFilenamePath);
@@ -75,7 +76,7 @@ WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
 	startServer();
 }
 
-/* METHODS */
+/*** METHODS ***/
 
 void	WebServ::initSockets( const std::vector<int>& portNums ) {
 
@@ -178,43 +179,70 @@ void	WebServ::acceptNewConnection( const int& servSock ) {
 	}
 }
 
-// std::string	get_response(std::string &filepath, int &status, HttpRequest const &request, Config &config)
-// {
-// 	if (!filepath.empty())
+// void	process_method(std::string &filepath, int &status, HttpRequest &request, Config &config) {
+	
+// 	std::string extension;
+
+// 	if (!filepath.empty()) {
 // 		std::string	extension = filepath.substr(filepath.find_last_of(".") + 1);
 // 		std::string cgiExecPath = config.get_cgi_type(extension);
 // 		if (cgiExecPath != "")
-// 			return (/* TOSH'S CGI HANDLING + CGI RESPONSE BUILDING HERE */);
-// 	return (ResponseFormatting::format_response(request, status, filepath, config));
+// 			request.cgi = true;
+// 	}
+// 	if (request.method == "POST" && request.cgi == false)
+// 		// MILAN AND JULES
+// 	else if (request.method == "GET" && request.cgi == true)
+// 		// TOSH
+// 	else if (request.method == "POST" && request.cgi == true)
+// 		// TOSH
+// 	else if (request.method == "DELETE")
+// 		// cgi true OR false
 // }
 
-void	WebServ::receiveFromExistingClient(const int& sockClient )
-{
+void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string& headers ) {
+
+	// POST:
+	// if Content-Length > limit_max_body_size send 413 Content Too Large
+	// create a file with type specified in Content-Type
+	// if \r\n\r\n (CRLF) encountered, headers end, body begins
+	while (chunkSize > 0) {
+		if (headers.find("POST") != NPOS && headers.find("\r\n\r\n") != NPOS) {
+			_isPostMethod = true;
+			break;
+		}
+		else if (headers.find("DELETE") != NPOS && headers.find("\r\n\r\n") != NPOS) {
+			_isDeleteMethod = true;
+			break;
+		}
+		memset(_buff, 0, 2);
+		chunkSize = recv(sockClient, _buff, 1, 0);
+		if (chunkSize == 0)
+			break;
+		_recvsize += chunkSize;
+		headers.append(_buff);
+	}
+}
+
+void	WebServ::receiveFromExistingClient(const int& sockClient ) {
+
 	struct timeval	timeoutUpdate;
 	if (gettimeofday(&timeoutUpdate, NULL) < 0)
 		printErrno(GETTIMEOFDAY, EXIT);
 	_socketTimeoutMap[sockClient] = timeoutUpdate;
 
+	std::string	totalBuff;
+	int			chunkSize = 1;
+	
 	std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Receiving from existing client" << RESETCLR << std::endl;
-	memset(_buff, 0, 4096);
-	_recvsize = recv(sockClient, _buff, 4096, 0);
+	memset(_buff, 0, 2);
+	_recvsize = recv(sockClient, _buff, 1, 0);
+	totalBuff.append(_buff);
 
-	// int	chunkSize;
-	// std::string	totalBuff;
-	// while (1) {
-	// 	memset(_buff, 0, 4096);
-	// 	chunkSize = recv(sockClient, _buff, 4096, 0);
-	// 	if (chunkSize == 0)
-	// 		break;
-	// 	_recvsize += chunkSize;
-	// 	totalBuff.append(_buff);
+	// if (_recvsize < 0 && errno != EWOULDBLOCK) {
+	// 	printErrno(RECV, NO_EXIT);
+	// 	std::cerr << BOLD << "[SERVER] Error encountered while receiving message" << RESETCLR << std::endl;
 	// }
-
-	if (_recvsize < 0 && errno != EWOULDBLOCK) {
-		printErrno(RECV, NO_EXIT);
-		std::cerr << BOLD << "[SERVER] Error encountered while receiving message" << RESETCLR << std::endl;
-	}
-	else if (_recvsize == 0 && errno != EWOULDBLOCK) {
+	if (_recvsize == 0) { // && errno != EWOULDBLOCK
 		std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Client disconnected" << RESETCLR << std::endl;
 		close(sockClient);
 		if (sockClient == _maxFD)
@@ -222,13 +250,29 @@ void	WebServ::receiveFromExistingClient(const int& sockClient )
 		FD_CLR(sockClient, &_currentSockets);
 	}
 	else if (_recvsize > 0) {
+		receiveRequest(sockClient, chunkSize, totalBuff);
 		std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Receiving request:" << RESETCLR << std::endl;
-		std::cout << std::string(_buff) << std::endl;
-		_request = HttpRequestParse::parse(std::string(_buff), _sockPortMap[sockClient]);
+		std::cout << totalBuff << std::endl;
+		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
+		totalBuff.clear();
 		_filepath = get_file_path(_request, _config, _status);
+		if (_isPostMethod) { // POST
+			_isPostMethod = false;
+			strstrMap::iterator	headerIt = _request.headers.find("Content-Length");
+			if (headerIt != _request.headers.end()) {
+				_contentLength = std::atoi(headerIt->second.c_str());
+			}
+			if (_contentLength > _maxBodySize)
+				_status = 413;
+			else
+				receiveBody(sockClient);
+		}
+		else if (_isDeleteMethod) {
+		 	_isDeleteMethod = false;
+			deleteResource(_request.path);
+		}
 		_output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
-		// @TOSH UNCOMMENT THIS:
-		// _output = get_response(_filepath, _status, _request, _config);
+		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
 		std::cout << _output.c_str() << std::endl;
 		send(sockClient, _output.c_str(), _output.length(), 0);
 	}
@@ -248,7 +292,7 @@ void	WebServ::startServer( void ) {
 		{
 			if (isServSock(_servsock, i) && FD_ISSET(i, &_readySockets)) // Accepting new connection
 				acceptNewConnection(i);
-			else if (FD_ISSET(i, &_readySockets)) // Existing client
+			else if (FD_ISSET(i, &_readySockets))
 				receiveFromExistingClient(i);
 			else if (FD_ISSET(i, &_currentSockets) && !isServSock(_servsock, i)) { // Check keep-alive timeout
 				if (gettimeofday(&_currentTime, NULL) < 0)
@@ -268,4 +312,3 @@ void	WebServ::startServer( void ) {
 		close(_servsock[i]);
 	}
 }
-

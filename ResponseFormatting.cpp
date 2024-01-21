@@ -6,16 +6,20 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 	switch (status_code)
 	{
 		case 200:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
-		case 1001:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
+		case 204:	status_infos.push_back(error_path + "/204.html"); status_infos.push_back("No Content"); 	break;
 		case 301:	status_infos.push_back(file_path); status_infos.push_back("Moved Permanently"); 	break;
 		case 400:	status_infos.push_back(error_path + "/400.html"); status_infos.push_back("Bad Request"); 	break;
 		case 403:	status_infos.push_back(error_path + "/403.html"); status_infos.push_back("Forbidden"); 	break;
 		case 404:	status_infos.push_back(error_path + "/404.html"); status_infos.push_back("Not Found"); 	break;
 		case 405:	status_infos.push_back(error_path + "/405.html"); status_infos.push_back("Method Not Allowed"); break;
 		case 408:	status_infos.push_back(error_path + "/408.html"); status_infos.push_back("Request Timeout"); break;
+		case 409:	status_infos.push_back(error_path + "/409.html"); status_infos.push_back("Conflict"); break;
 		case 413:	status_infos.push_back(error_path + "/413.html"); status_infos.push_back("Payload Too Large"); break;
+		case 415:	status_infos.push_back(error_path + "/415.html"); status_infos.push_back("Unsupported Media Type"); break;
+		case 422:	status_infos.push_back(error_path + "/422.html"); status_infos.push_back("Unprocessable Content"); break;
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
 		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
+		case 1001:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
 		// case 201:	status_infos.push_back(error_path); status_infos.push_back("Created"); 	break;
 		// case 302:	status_infos.push_back(error_path); status_infos.push_back("Found"); 	break;
 		// case 303:	status_infos.push_back(error_path); status_infos.push_back("See Other"); 	break;
