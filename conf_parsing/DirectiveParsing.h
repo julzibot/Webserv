@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   DirectiveParsing.h                                 :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/24 15:39:48 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/15 17:37:01 by toshsharma       ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #pragma once
 #include "Config.hpp"
 #include <dirent.h>
@@ -24,7 +12,7 @@ void	dirParseTypes(Config& config, std::string line, std::string directive);
 void	dirParseEvents(Config& config, std::string line, std::string directive);
 void	dirParseServer(Config& config, std::string line, std::string directive);
 void	dirParseLocation(std::string line, Config &config, std::string directive);
-std::string	get_directory_listing(std::string & file_path, HttpRequest const &request,
+std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
 				Config& config);
 
 /* Helper functions */
