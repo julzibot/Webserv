@@ -29,5 +29,5 @@ if __name__ == "__main__":
 		print ("solving for default: 8 queens")
 		print("\n")
 		l = [0] * (8)
-		print("Result : ",solve(l,0,0,8))	
+		print("Result : ",solve(l,0,0,8))
 	exit()

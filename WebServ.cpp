@@ -1,16 +1,5 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   WebServ.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 18:14:18 by mstojilj         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "WebServ.hpp"
+#include "cgi/cgi.hpp"
 
 // Function to run when CTRL-C is pressed
 volatile sig_atomic_t    isTrue = 1;
@@ -58,7 +47,7 @@ void    printErrno(int func, bool ex)
         exit(errno);
 }
 
-WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
+WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(200),
 	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)),
 	_isPostMethod(false), _contentLength(-1), _maxBodySize(UINT_MAX),
 	_isDeleteMethod(false), _socketTimeoutValue(90) {
@@ -70,6 +59,7 @@ WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
 		std::cerr << "Error: " << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	this->envp = envp;
 	initSockets(_config.get_portnums());
 	bindAndListen(_servsock, _config.get_portnums(), _saddr, _arrsize);
 	initSelectFDs(_servsock.size());
@@ -128,8 +118,8 @@ void	WebServ::initSelectFDs( const unsigned int& size ) {
 }
 
 void	WebServ::checkClientTimeout(const struct timeval& currentTime,
-	const int& keepAliveTimeout, const int& clientSock ) {
-
+	const int& keepAliveTimeout, const int& clientSock )
+{
 	// std::cout << "[socket: " << _clientsock << "] - " << currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec << "s" << std::endl;
 	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout) {
 		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to " << _socketTimeoutValue << "s)" << RESETCLR << std::endl;
@@ -179,26 +169,6 @@ void	WebServ::acceptNewConnection( const int& servSock ) {
 	}
 }
 
-// void	process_method(std::string &filepath, int &status, HttpRequest &request, Config &config) {
-	
-// 	std::string extension;
-
-// 	if (!filepath.empty()) {
-// 		std::string	extension = filepath.substr(filepath.find_last_of(".") + 1);
-// 		std::string cgiExecPath = config.get_cgi_type(extension);
-// 		if (cgiExecPath != "")
-// 			request.cgi = true;
-// 	}
-// 	if (request.method == "POST" && request.cgi == false)
-// 		// MILAN AND JULES
-// 	else if (request.method == "GET" && request.cgi == true)
-// 		// TOSH
-// 	else if (request.method == "POST" && request.cgi == true)
-// 		// TOSH
-// 	else if (request.method == "DELETE")
-// 		// cgi true OR false
-// }
-
 void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string& headers ) {
 
 	// POST:
@@ -223,8 +193,29 @@ void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string&
 	}
 }
 
-void	WebServ::receiveFromExistingClient(const int& sockClient ) {
+std::string	WebServ::get_response(std::string &filepath, int &status,
+	HttpRequest &request, Config &config)
+{
+	if (!filepath.empty())
+	{
+		std::string	extension = filepath.substr(filepath.find_last_of(".") + 1);
+		std::string cgiExecPath = config.get_cgi_type(extension);
+		if (extension == "py")
+		{
+			std::string python3 = "python3";
+			CGI *cgi = new CGI(this->envp, python3);
+			std::string body = cgi->execute_cgi(request, cgi, filepath);
+			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length());
+			std::string response = headers + "\r\n" + body;
+			delete cgi;
+			return (response);
+		}
+	}
+	return (ResponseFormatting::format_response(request, status, filepath, config));
+}
 
+void	WebServ::receiveFromExistingClient(const int& sockClient)
+{
 	struct timeval	timeoutUpdate;
 	if (gettimeofday(&timeoutUpdate, NULL) < 0)
 		printErrno(GETTIMEOFDAY, EXIT);
@@ -271,7 +262,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient ) {
 		 	_isDeleteMethod = false;
 			deleteResource(_request.path);
 		}
-		_output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
+		_output = WebServ::get_response(_filepath, _status, _request, _config);
 		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
 		std::cout << _output.c_str() << std::endl;
 		send(sockClient, _output.c_str(), _output.length(), 0);

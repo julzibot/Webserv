@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/22 15:19:09 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/18 17:17:06 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv, char **envp) {
 
 	if (argc > 2) {
 		std::cout << "Error: Bad number of arguments. Only '.config' file is accepted.";
@@ -27,9 +27,9 @@ int main(int argc, char **argv) {
 	}
 
 	if (argc == 2)
-		WebServ	server(argv[1]);
+		WebServ	server(argv[1], envp);
 	else
-		WebServ	server("server_files/webserv.conf");
+		WebServ	server("server_files/webserv.conf", envp);
 
     return (0);
 }

@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ConfigParse.cpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/13 17:12:47 by mstojilj         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Config.hpp"
 #include "DirectiveParsing.h"
 
@@ -376,7 +364,8 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
         status_code = 405; return ("");
     }
 }
-std::string	get_directory_listing(std::string & file_path, HttpRequest const &request,
+
+std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
 		Config &config) {
 	DIR *dir;
 	struct dirent *en;
@@ -386,6 +375,9 @@ std::string	get_directory_listing(std::string & file_path, HttpRequest const &re
 	LocationDir	&loc = get_Location_for_Path(request, config);
 
 	dir = opendir(file_path.c_str());
+	std::string reqHost = request.headers["Host"];
+    reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), ' '), reqHost.end());
 	if (dir) {
 		while ((en = readdir(dir)) != NULL) {
 			list.push_back(en->d_name);
@@ -395,8 +387,7 @@ std::string	get_directory_listing(std::string & file_path, HttpRequest const &re
 		output += "<h1>Directory listing</h1>";
 		output += "<ul>";
 		for (it = list.begin(); it != list.end(); ++it) {
-			output += "<li><a href=\"http://localhost:" + std::to_string(request.port_number)
-			+ loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
+			output += "<li><a href=\"http://" + reqHost + loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
 		}
 		output += "</ul>";
 		output += END_OF_LIST;

@@ -49,9 +49,16 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 {
 	std::string	headers;
 
-	headers = http_version + " " + std::to_string(status_code) + " "
-		+ status_infos[1] + "\n";
-	if (status_code != 301 && status_code != 408)
+	if (status_code == 1001) 
+		headers = http_version + " 200 " + status_infos[1] + "\n";
+	else
+		headers = http_version + " " + std::to_string(status_code) + " " + status_infos[1] + "\n";	
+
+	if (status_code == 1001)
+	{
+		headers += "Content-Type: text/html\n";
+		headers += "Content-Length: " + std::to_string(content_length) + "\n";
+	} else if (status_code != 301 && status_code != 408)
 	{
 		headers += "Content-Type: " + get_content_type(status_infos[0], config) + "\n";
 		headers += "Content-Length: " + std::to_string(content_length) + "\n";
@@ -60,6 +67,17 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 		headers += "Location: " + status_infos[0] + "\nContent-Length: 0";
 	else
 		headers += "Connection: close";
+
+	return (headers);
+}
+
+std::string	ResponseFormatting::parse_cgi_headers(std::string http_version, int content_length)
+{
+	std::string	headers;
+
+	headers = http_version + "  200 OK"+ "\n";
+	headers += "Content-Type: text/plain\n";
+	headers += "Content-Length: " + std::to_string(content_length) + "\n";
 
 	return (headers);
 }
@@ -80,7 +98,7 @@ std::string	ResponseFormatting::parse_body(std::string file_path, int const &sta
 	return output;
 }
 
-std::string	ResponseFormatting::format_response(HttpRequest const &request, int &status_code,
+std::string	ResponseFormatting::format_response(HttpRequest &request, int &status_code,
 		std::string &file_path, Config &config)
 {
 	std::string	output;
@@ -94,7 +112,6 @@ std::string	ResponseFormatting::format_response(HttpRequest const &request, int 
 	{
 		try {
 			body = get_directory_listing(file_path, request, config);
-			status_code = 200;
 			headers = parse_headers(status_infos, request.http_version, status_code,
 						config, body.length());
 		} catch (const std::ios_base::failure& e) {

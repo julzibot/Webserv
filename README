@@ -2,6 +2,21 @@
 RFCs used for reference : 7230, 7231
 NGINX config file path : /usr/local/etc/nginx
 
+First steps
+1. Parsing the required data for the CGI routes into the config file.
+2. Identifying which request is a CGI request and routing it to the wrapper function.
+3. Ensuring that the wrapper function is able to handle the request and return the response.
+4. POST and GET routes to upload images
+5. Are we doing separate output formatting?
+
+1. --> Can provide direct path to the executable, no need for roundabout execution.
+2. --> Inside the first request you get, you read until the `Content-Length` is satisfied
+3. --> Using the `nc localhost 9999` command, you can send a request in broken pieces
+And the user should be able to handle it until it is sorted out
+4. `Transfer-encoding` is used to identify a chunked request.
+	You have to go through the entire chunked request (Or the whole size of the data)
+5. `Multi-part form/data` is used to send images over in our request
+Figure out syntax for multipart handling... Or use content-length maybe
 Tests to run:
 
 0. Arguments test, bad .config file

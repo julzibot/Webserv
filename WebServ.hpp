@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   WebServ.hpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/12/17 19:35:25 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 18:00:32 by mstojilj         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #pragma once
 
 #include <sys/socket.h>
@@ -73,6 +61,7 @@ private:
     std::string			_prevReqPath;
     std::ifstream		_fs;
     ResponseFormatting	_formatter;
+	char				**envp;
 
 	// CLIENT
     struct sockaddr_in	_caddr;
@@ -109,10 +98,11 @@ private:
 	void	initSelectFDs( const unsigned int& size );
 
 	void	checkClientTimeout(const struct timeval& currentTime,
-		const int& keepAliveTimeout, const int& clientSock );
+	const int& keepAliveTimeout, const int& clientSock );
 	bool	isServSock(const std::vector<int>& servsock, const int& sock);
 	void	acceptNewConnection( const int& servSock );
 	void	receiveFromExistingClient( const int& sockClient );
+	std::string	get_response(std::string &filepath, int &status, HttpRequest &request, Config &config);
 	
 	// POST method
 	void	receiveRequest( const int& sockClient,
@@ -125,12 +115,10 @@ private:
 
 	// DELETE method
 	void	deleteResource( const std::string& resource );
-	
-public:
 
-	WebServ( const std::string& confFilenamePath );
+public:
+	WebServ( const std::string& confFilenamePath, char **envp);
 	~WebServ( void ) {};
 
 	void	startServer( void );
-
 };

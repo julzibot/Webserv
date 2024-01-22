@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   RequestParsing.cpp                                 :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/24 22:37:50 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/17 15:52:38 by mstojilj         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "RequestParsing.hpp"
 #include "WebServ.hpp"
 #include "conf_parsing/Config.hpp"
@@ -58,6 +46,9 @@ HttpRequest	HttpRequestParse::parse(std::string const &req_str, int portnum)
 	// std::cout << request.method << request.path << request.http_version << std::endl;
 	// PARSING HEADERS
 	HttpRequestParse::parse_headers(requestStream, request);
-
+	// PARSING BODY IF NECESSARY
+	while (std::getline(requestStream, line) && !line.empty()) {
+		request.body += line += '\n';
+	}
     return (request);
 }
