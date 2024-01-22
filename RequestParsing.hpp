@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/10 22:04:52 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/11 16:29:17 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ class HttpRequest
         std::string							body;
         std::string                         prio_file;
 		int									port_number;
+        bool                                cgi;
 
         HttpRequest();
         HttpRequest(HttpRequest const &req);

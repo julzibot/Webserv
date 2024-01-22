@@ -2,6 +2,7 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -14,6 +15,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <map>
+#include <list>
 #include "conf_parsing/Config.hpp"
 #include "RequestParsing.hpp"
 #include "ResponseFormatting.hpp"
@@ -32,6 +34,12 @@
 #define RESETCLR "\033[0m"
 #define BOLD "\033[1m"
 #define RED "\033[31m"
+#define GREEN "\033[32m"
+#define YELLOW "\033[33m"
+#define BLUE "\033[34m"
+#define MAGENTA "\033[35m"
+#define CYAN "\033[36m"
+#define WHITE "\033[37m"
 
 class WebServ {
 
@@ -46,7 +54,7 @@ private:
 	std::map<int, int>			_sockPortMap; // Socket and its associated port number
 
 	// Socket loop 
-	char   				_buff[4096];
+	char   				_buff[2];
     std::string			_output;
     std::string			_filepath;
     std::string			_line;
@@ -61,10 +69,20 @@ private:
     int					_clientsock;
     int					_recvsize;
 
-	fd_set            _currentSockets;
-    fd_set            _readySockets;
-    int               _maxFD;
-    struct timeval    _timeoutSelect;
+	fd_set				_currentSockets;
+    fd_set				_readySockets;
+    int					_maxFD;
+    struct timeval		_timeoutSelect;
+
+	// POST Method
+	bool				_isPostMethod;
+	unsigned int		_contentLength;
+	unsigned int		_maxBodySize;
+	std::string			_contentType;
+	std::vector<char>	_binaryBody;
+
+	//DELETE Method
+	bool			_isDeleteMethod;
 
 	// Timeout management
 	std::map<int, struct timeval>	_socketTimeoutMap;
@@ -73,8 +91,10 @@ private:
 
 	// Init
 	void	initSockets( const std::vector<int>& portNums );
-	void	bindAndListen( const std::vector<int>& servsock, const std::vector<int>& portnums,
-	const	std::vector<sockaddr_in>& saddr, const unsigned int& arrsize );
+	void	bindAndListen( const std::vector<int>& servsock,
+				const std::vector<int>& portnums,
+				const std::vector<sockaddr_in>& saddr,
+				const unsigned int& arrsize );
 	void	initSelectFDs( const unsigned int& size );
 
 	void	checkClientTimeout(const struct timeval& currentTime,
@@ -83,6 +103,18 @@ private:
 	void	acceptNewConnection( const int& servSock );
 	void	receiveFromExistingClient( const int& sockClient );
 	std::string	get_response(std::string &filepath, int &status, HttpRequest &request, Config &config);
+	
+	// POST method
+	void	receiveRequest( const int& sockClient,
+				int& chunkSize, std::string& totalBuff );
+	void	receiveBody( const int& sockClient );
+	void	receiveMultiForm( const int& sockClient, std::string root, std::string boundary );
+	void	receiveBinary( const int& sockClient, const std::string& endBoundary );
+	void	receiveFileOnly(const int& sockClient, const std::string& fileType,
+				const std::string& root);
+
+	// DELETE method
+	void	deleteResource( const std::string& resource );
 
 public:
 	WebServ( const std::string& confFilenamePath, char **envp);
