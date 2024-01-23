@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   WebServ.cpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/01/22 17:51:55 by mstojilj          #+#    #+#             */
+/*   Updated: 2024/01/22 21:24:53 by mstojilj         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "WebServ.hpp"
 #include "cgi/cgi.hpp"
 
@@ -14,7 +26,7 @@ void    printErrno(int func, bool ex)
         break;
         case LISTEN: std::cerr << "listen(): ";
         break;
-        case RECV: std::cerr << "recv(): ";
+        case RECV: std::cerr << "recv (): ";
         break;
         case SELECT: std::cerr << "select(): ";
         break;
@@ -49,8 +61,7 @@ void    printErrno(int func, bool ex)
 
 WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(200),
 	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)),
-	_isPostMethod(false), _contentLength(-1), _maxBodySize(UINT_MAX),
-	_isDeleteMethod(false), _socketTimeoutValue(90) {
+	_maxBodySize(UINT_MAX), _socketTimeoutValue(90) {
 
 	try {
 		_config = parse_config_file(confFilenamePath);
@@ -128,6 +139,7 @@ void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 		std::string	emptyStr = "";
 		_status = 408;
 		_output = _formatter.format_response(_request, _status, emptyStr, _config);
+		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
 		std::cout << _output.c_str() << std::endl;
 		send(clientSock, _output.c_str(), _output.length(), 0);
 		close(clientSock);
@@ -176,14 +188,8 @@ void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string&
 	// create a file with type specified in Content-Type
 	// if \r\n\r\n (CRLF) encountered, headers end, body begins
 	while (chunkSize > 0) {
-		if (headers.find("POST") != NPOS && headers.find("\r\n\r\n") != NPOS) {
-			_isPostMethod = true;
+		if (headers.find("\r\n\r\n") != NPOS)
 			break;
-		}
-		else if (headers.find("DELETE") != NPOS && headers.find("\r\n\r\n") != NPOS) {
-			_isDeleteMethod = true;
-			break;
-		}
 		memset(_buff, 0, 2);
 		chunkSize = recv(sockClient, _buff, 1, 0);
 		if (chunkSize == 0)
@@ -229,11 +235,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	_recvsize = recv(sockClient, _buff, 1, 0);
 	totalBuff.append(_buff);
 
-	// if (_recvsize < 0 && errno != EWOULDBLOCK) {
-	// 	printErrno(RECV, NO_EXIT);
-	// 	std::cerr << BOLD << "[SERVER] Error encountered while receiving message" << RESETCLR << std::endl;
-	// }
-	if (_recvsize == 0) { // && errno != EWOULDBLOCK
+	if (_recvsize == 0) {
 		std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Client disconnected" << RESETCLR << std::endl;
 		close(sockClient);
 		if (sockClient == _maxFD)
@@ -247,25 +249,24 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
 		totalBuff.clear();
 		_filepath = get_file_path(_request, _config, _status);
-		if (_isPostMethod) { // POST
-			_isPostMethod = false;
-			strstrMap::iterator	headerIt = _request.headers.find("Content-Length");
-			if (headerIt != _request.headers.end()) {
-				_contentLength = std::atoi(headerIt->second.c_str());
-			}
-			if (_contentLength > _maxBodySize)
+		if (_request.method == "POST") {
+			if (_request.content_length > _maxBodySize)
 				_status = 413;
 			else
 				receiveBody(sockClient);
 		}
-		else if (_isDeleteMethod) {
-		 	_isDeleteMethod = false;
+		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
-		}
 		_output = WebServ::get_response(_filepath, _status, _request, _config);
 		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
 		std::cout << _output.c_str() << std::endl;
 		send(sockClient, _output.c_str(), _output.length(), 0);
+		if (!_request.keepalive) {
+			close(sockClient);
+			if (sockClient == _maxFD)
+				_maxFD -= 1;
+			FD_CLR(sockClient, &_currentSockets);
+		}
 	}
 }
 
@@ -303,3 +304,17 @@ void	WebServ::startServer( void ) {
 		close(_servsock[i]);
 	}
 }
+// siege -c 1 -b http://127.0.0.1:9999
+
+// Transactions:		       16363 hits
+// Availability:		       94.11 %
+// Elapsed time:		       12.88 secs
+// Data transferred:	        2.04 MB
+// Response time:		        0.00 secs
+// Transaction rate:	     1270.42 trans/sec
+// Throughput:		        0.16 MB/sec
+// Concurrency:		        0.87
+// Successful transactions:       16363
+// Failed transactions:	        1024
+// Longest transaction:	        0.02
+// Shortest transaction:	        0.00

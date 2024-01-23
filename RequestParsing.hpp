@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestParsing.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/11 16:29:17 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/23 14:29:40 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,11 @@ class HttpRequest
         std::string							body;
         std::string                         prio_file;
 		int									port_number;
+		unsigned int						content_length;
         bool                                cgi;
+		bool								keepalive;
+		std::vector<char>					_binaryBody;
+		std::string							_bodyString;
 
         HttpRequest();
         HttpRequest(HttpRequest const &req);
