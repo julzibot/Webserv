@@ -75,14 +75,7 @@ private:
     struct timeval		_timeoutSelect;
 
 	// POST Method
-	bool				_isPostMethod;
-	unsigned int		_contentLength;
 	unsigned int		_maxBodySize;
-	std::string			_contentType;
-	std::vector<char>	_binaryBody;
-
-	//DELETE Method
-	bool			_isDeleteMethod;
 
 	// Timeout management
 	std::map<int, struct timeval>	_socketTimeoutMap;
@@ -110,7 +103,7 @@ private:
 	void	receiveBody( const int& sockClient );
 	void	receiveMultiForm( const int& sockClient, std::string root, std::string boundary );
 	void	receiveBinary( const int& sockClient, const std::string& endBoundary );
-	void	receiveFileOnly(const int& sockClient, const std::string& fileType,
+	void	receiveFile(const int& sockClient, const std::string& fileType, const std::string& filename,
 				const std::string& root);
 
 	// DELETE method
