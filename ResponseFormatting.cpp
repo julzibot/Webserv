@@ -1,5 +1,13 @@
 #include "ResponseFormatting.hpp"
 
+std::string	to_string(int number)
+{
+	std::stringstream ss;
+	ss << number;
+	std::string result = ss.str();
+	return result;
+}
+
 std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string const &error_path)
 {
 	std::deque<std::string>	status_infos;
@@ -52,16 +60,16 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 	if (status_code == 1001) 
 		headers = http_version + " 200 " + status_infos[1] + "\n";
 	else
-		headers = http_version + " " + std::to_string(status_code) + " " + status_infos[1] + "\n";	
+		headers = http_version + " " + to_string(status_code) + " " + status_infos[1] + "\n";	
 
 	if (status_code == 1001)
 	{
 		headers += "Content-Type: text/html\n";
-		headers += "Content-Length: " + std::to_string(content_length) + "\n";
+		headers += "Content-Length: " + to_string(content_length) + "\n";
 	} else if (status_code != 301 && status_code != 408)
 	{
 		headers += "Content-Type: " + get_content_type(status_infos[0], config) + "\n";
-		headers += "Content-Length: " + std::to_string(content_length) + "\n";
+		headers += "Content-Length: " + to_string(content_length) + "\n";
 	}
 	else if (status_code == 301)
 		headers += "Location: " + status_infos[0] + "\nContent-Length: 0";
@@ -77,7 +85,7 @@ std::string	ResponseFormatting::parse_cgi_headers(std::string http_version, int 
 
 	headers = http_version + "  200 OK"+ "\n";
 	headers += "Content-Type: text/plain\n";
-	headers += "Content-Length: " + std::to_string(content_length) + "\n";
+	headers += "Content-Length: " + to_string(content_length) + "\n";
 
 	return (headers);
 }

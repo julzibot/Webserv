@@ -80,6 +80,7 @@ void	WebServ::initSockets( const std::vector<int>& portNums ) {
 	for (unsigned int i = 0; i < _arrsize; ++i) {
 		_servsock.push_back(socket(AF_INET, SOCK_STREAM, 0));
 		fcntl(_servsock[i], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+		
 		if (_servsock[i] == -1)
 			printErrno(SOCKET, EXIT);
 	}
@@ -200,10 +201,9 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 	{
 		std::string	extension = filepath.substr(filepath.find_last_of(".") + 1);
 		std::string cgiExecPath = config.get_cgi_type(extension);
-		if (extension == "py")
+		if (extension == "py" || extension == "php")
 		{
-			std::string python3 = "python3";
-			CGI *cgi = new CGI(this->envp, python3);
+			CGI *cgi = new CGI(this->envp, cgiExecPath);
 			std::string body = cgi->execute_cgi(request, cgi, filepath);
 			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length());
 			std::string response = headers + "\r\n" + body;

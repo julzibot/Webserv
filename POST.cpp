@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   POST.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/01/21 16:03:52 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 18:05:38 by mstojilj         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "WebServ.hpp"
 
 std::string	extractBetweenChars(std::string str, char c) {
@@ -188,7 +176,6 @@ void	WebServ::receiveFileOnly(const int& sockClient, const std::string& fileType
 }
 
 void	WebServ::receiveBody( const int& sockClient ) {
-
 	std::string p = _request.path.substr(0, _request.path.find('/', 1));
 	std::string	root = _config.getServMain(_request.port_number, p, true)["root"];
 	if (root.empty()) {
@@ -201,7 +188,6 @@ void	WebServ::receiveBody( const int& sockClient ) {
 	std::string			fileName;
 	strstrMap::iterator contentTypeIt = _request.headers.find("Content-Type");
 	if (contentTypeIt == _request.headers.end()) {
-
 		std::cerr << "Error: Cannot process POST request: No 'Content-Type' in request headers" << std::endl;
 		_status = 422; // Unprocessable Content
 		return;
@@ -209,7 +195,6 @@ void	WebServ::receiveBody( const int& sockClient ) {
 	// if File or Form (Content-Type)
 	fileType = contentTypeIt->second;
 	if (fileType.find("multipart/form-data") != NPOS) {
-
 		std::string	boundary;
 		try {
 			boundary.append(fileType.substr(fileType.find("boundary=") + 9, fileType.length() - 1));
