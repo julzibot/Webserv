@@ -23,19 +23,60 @@ std::string	extractBetweenChars(std::string str, char c) {
 void	WebServ::receiveBinary(const int& sockClient, const std::string& endBoundary) {
 
 	int		chunkSize = 1;
-	char	binChar[30];
-	
+	char	binChar[2];
+
 	while (chunkSize > 0) {
 		memset(binChar, 0, 2);
 		chunkSize = recv(sockClient, binChar, 1, 0);
 		if (chunkSize == 0)
 			break;
-		_binaryBody.push_back(binChar[0]);
+		_request._binaryBody.push_back(binChar[0]);
 	}
-	std::vector<char>::iterator	boundIt = std::search(_binaryBody.begin(),
-		_binaryBody.end(), endBoundary.begin(), endBoundary.end());
-	if (boundIt != _binaryBody.end())
-		_binaryBody.erase(boundIt, _binaryBody.end());
+
+	if (endBoundary != "") {
+		std::vector<char>::iterator	boundIt = std::search(_request._binaryBody.begin(),
+			_request._binaryBody.end(), endBoundary.begin(), endBoundary.end());
+		if (boundIt != _request._binaryBody.end())
+			_request._binaryBody.erase(boundIt, _request._binaryBody.end());
+	}
+	_request._bodyString.assign(_request._binaryBody.begin(), _request._binaryBody.end());
+}
+
+void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, const std::string& filename,
+	const std::string& root) {
+
+	std::ofstream	newFile;
+	std::string		filePath;
+
+	if (fileType == "image/jpeg")
+		filePath = root + "/" + filename + ".jpg";
+	else if (fileType == "image/png")
+		filePath = root + "/" + filename + ".png";
+	else
+		filePath = root + "/" + "unknown_file";
+	receiveBinary(sockClient, "");
+
+	newFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+	try {
+
+		struct stat	fileInfos;
+		if (stat(filePath.c_str(), &fileInfos) != -1) {
+			_status = 409; // Conflict
+			_request._binaryBody.clear();
+			return;
+		}
+		newFile.open(filePath, std::ios::binary);
+		for (std::vector<char>::iterator it = _request._binaryBody.begin(); it != _request._binaryBody.end(); ++it)
+			newFile << *it;
+	}
+	catch (const std::ofstream::failure& e) {
+		std::cerr << RED << "Caught exception: receiveFileOnly() or receiveMultiFormData(): '" << e.what()
+			<< "' while receiving file on port: " << _request.port_number << RESETCLR << std::endl;
+		_status = 500; // Internal Server Error
+	}
+	newFile.close();
+	_request._binaryBody.clear();
+	return;
 }
 
 void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::string boundary ) {
@@ -57,12 +98,9 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 		}
 	}
 
-	// parse form data:
-	// - supported body type
-	// - filename
-	std::vector<std::string>	formHeaders;
 	std::istringstream			formStream(formHeaderData);
 	std::string					tmpLine;
+	std::vector<std::string>	formHeaders;
 	
 	while (std::getline(formStream, tmpLine)) {
 		tmpLine.erase(tmpLine.find("\r"));
@@ -71,7 +109,6 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 	formStream.clear();
 	formHeaderData.clear();
 
-	// Parse body form info
 	std::string	inputName;
 	std::string	fileExt;
 	std::string	fileType;
@@ -93,85 +130,7 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 			}
 		}
 	}
-	std::string	filename = "/" + inputName;
-	if (fileType == "image/jpeg")
-		filename += ".jpg";
-	else if (fileType == "image/png")
-		filename += ".png";
-	root += filename;
-	std::ofstream	newFile;
-	newFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-	try {
-		// Check if file exists
-		struct stat	fileInfos;
-		if (stat(root.c_str(), &fileInfos) != -1) {
-			_status = 409; // Conflict
-			return;
-		}
-		
-		newFile.open(root, std::ios::binary);
-		for (std::vector<char>::iterator it = _binaryBody.begin(); it != _binaryBody.end(); ++it)
-			newFile << *it;
-	}
-	catch (const std::ofstream::failure& e) {
-		std::cerr << RED << "Caught exception: receiveMultiForm(): '" << e.what()
-			<< "' while receiving file on port: " << _request.port_number << RESETCLR << std::endl;
-		_status = 500;
-	}
-	newFile.close();
-	_binaryBody.clear();
-	return;
-
-	// // Create timestamp
-	// struct timeval	currentTime;
-	// if (gettimeofday(&currentTime, NULL) < 0)
-	// 	printErrno(GETTIMEOFDAY, EXIT);
-
-	// time_t		now = currentTime.tv_sec;
-    // struct tm	*tm_now = localtime(&now);
-    // char		date_buffer[20];
-
-    // strftime(date_buffer, sizeof(date_buffer), "%Y-%m-%d %H:%M:%S", tm_now);
-
-}
-
-void	WebServ::receiveFileOnly(const int& sockClient, const std::string& fileType,
-	const std::string& root) {
-
-	char		binChar[2];
-	int			chunkSize = 1;
-	std::string	fileName;
-
-	if (fileType == "image/jpeg")
-		fileName = root + "/unknown_name.jpg";
-	else if (fileType == "image/png")
-		fileName = root + "/unknown_name.png";
-
-	while (chunkSize > 0) {
-		memset(binChar, 0, 2);
-		chunkSize = recv(sockClient, binChar, 1, 0);
-		if (chunkSize == 0)
-			break;
-		_binaryBody.push_back(binChar[0]);
-	}
-	std::ofstream	newFile;
-	newFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-
-	try {
-		newFile.open(fileName, std::ios::binary);
-
-		// if file exists, status code = 409 Conflict
-		for (std::vector<char>::iterator it = _binaryBody.begin(); it != _binaryBody.end(); ++it)
-			newFile << *it;
-		newFile.close();
-	}
-	catch (const std::ofstream::failure& e) {
-		newFile.close();
-		std::cerr << RED << "Caught exception: receiveFileOnly(): '" << e.what()
-			<< "' while receiving file on port: " << _request.port_number << RESETCLR << std::endl;
-		_status = 500; // Internal Server Error
-	}
-	_binaryBody.clear();
+	receiveFile(sockClient, fileType, inputName, root);
 	return;
 }
 
@@ -192,7 +151,6 @@ void	WebServ::receiveBody( const int& sockClient ) {
 		_status = 422; // Unprocessable Content
 		return;
 	}
-	// if File or Form (Content-Type)
 	fileType = contentTypeIt->second;
 	if (fileType.find("multipart/form-data") != NPOS) {
 		std::string	boundary;
@@ -207,5 +165,5 @@ void	WebServ::receiveBody( const int& sockClient ) {
 		receiveMultiForm(sockClient, root, boundary);
 	}
 	else
-		receiveFileOnly(sockClient, fileType, root);
+		receiveFile(sockClient, fileType, "unknown_name", root);
 }

@@ -2,7 +2,7 @@
 #include "WebServ.hpp"
 #include "conf_parsing/Config.hpp"
 
-HttpRequest::HttpRequest() : cgi(false) {}
+HttpRequest::HttpRequest() : content_length(UINT_MAX), cgi(false), keepalive(true) {}
 
 HttpRequest::HttpRequest(HttpRequest const &req) : headers(req.headers),
 	method(req.method), path(req.path), http_version(req.http_version),
@@ -21,11 +21,11 @@ void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &req
 			std::string headervalue = line.substr(sepPos + 2);
 			headervalue.erase(std::find(headervalue.begin(), headervalue.end(), '\r'));
 			request.headers[headername] = headervalue;
+			// std::cout << YELLOW << "|" << headername << "| |" << headervalue << "|" << RESETCLR << std::endl;
 		}
 		else
 			break;
 	}
-
 }
 
 HttpRequest	HttpRequestParse::parse(std::string const &req_str, int portnum)
@@ -46,9 +46,12 @@ HttpRequest	HttpRequestParse::parse(std::string const &req_str, int portnum)
 	// std::cout << request.method << request.path << request.http_version << std::endl;
 	// PARSING HEADERS
 	HttpRequestParse::parse_headers(requestStream, request);
-	// PARSING BODY IF NECESSARY
-	while (std::getline(requestStream, line) && !line.empty()) {
-		request.body += line += '\n';
-	}
+	strstrMap::iterator	headerIt = request.headers.find("Content-Length");
+	if (headerIt != request.headers.end())
+		request.content_length = std::atoi(headerIt->second.c_str());
+	headerIt = request.headers.find("Connection");
+	if (headerIt != request.headers.end() && headerIt->second == "close")
+		request.keepalive = false;
+
     return (request);
 }
