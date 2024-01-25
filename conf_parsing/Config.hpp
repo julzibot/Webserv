@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 15:18:04 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/22 18:53:53 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,6 @@
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
-#include <forward_list>
 #include "../RequestParsing.hpp"
 
 class Config;
@@ -93,6 +92,12 @@ class Config
 							{ return (this->server_locs[hostIP + ":" + std::to_string(port)][route]); };
 		std::map<std::string, LocationDir>&	getLocMap(std::string const &hostIP, int port)
 							{ return (this->server_locs[hostIP + ":" + std::to_string(port)]); };
+		bool				checkNullID(std::string const &tempHost, int const &port) {
+								for (servLocMap::iterator it = this->server_locs.begin(); it != this->server_locs.end(); it++)
+									if (it->first == tempHost + ":" + std::to_string(port))
+										return (true);
+									return (false);
+							}
 		strstrMap			&getServMain(std::string const &hostIP, int port, std::string const &route, bool const &init);
 
         void	set_workproc(int value) { this->worker_processes = value; };

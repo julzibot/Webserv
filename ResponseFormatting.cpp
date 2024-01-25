@@ -1,8 +1,10 @@
 #include "ResponseFormatting.hpp"
 #include "conf_parsing/DirectiveParsing.h"
 
-std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string const &error_path)
+std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string &error_path)
 {
+	if (error_path.empty())
+		error_path = "./server_files/error_pages";
 	std::deque<std::string>	status_infos;
 	switch (status_code)
 	{
@@ -17,7 +19,7 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 409:	status_infos.push_back(error_path + "/409.html"); status_infos.push_back("Conflict"); break;
 		case 413:	status_infos.push_back(error_path + "/413.html"); status_infos.push_back("Payload Too Large"); break;
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
-		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
+		// case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
 		// case 201:	status_infos.push_back(error_path); status_infos.push_back("Created"); 	break;
 		// case 302:	status_infos.push_back(error_path); status_infos.push_back("Found"); 	break;
 		// case 303:	status_infos.push_back(error_path); status_infos.push_back("See Other"); 	break;
@@ -88,6 +90,7 @@ std::string	ResponseFormatting::format_response(HttpRequest &request, int &statu
 	std::string	reqHost = request.headers["Host"];
 	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+	request_ip_check(reqHost, config, status_code);
 
 	std::deque<std::string> status_infos = get_status_infos(status_code,
 			file_path, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);

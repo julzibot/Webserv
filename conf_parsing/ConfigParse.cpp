@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 17:49:42 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/22 18:23:27 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -254,6 +254,7 @@ std::string	file_request_case(size_t const &slashPos, size_t &dotPos, HttpReques
 	std::string	reqHost = request.headers["Host"];
 	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+	request_ip_check(reqHost, config, status_code);
 	std::string file_path;
 	int	acss;
 
@@ -363,6 +364,7 @@ std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &reque
 			hostname = h->first;
 			for (it = locations.begin(); it != locEnd; it++)
 			{
+				// std::cout << "TEMPHOST: " << tempHost << std::endl;
 				servername = config.getServMain(tempHost, request.port_number, it->first, true)["server_name"];
 				std::cout << "HOSTNAME: |" << hostname << "| SERVNAME: |" << servername << "|" << std::endl;
 				if (hostname == servername || servername.empty())
@@ -417,25 +419,29 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	std::string	reqHost = request.headers["Host"];
 	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
-	std::cout << "REQHOST: |" << reqHost << "|" << std::endl;
 	request_ip_check(reqHost, config, status_code);
 	if (status_code == 403)
 		return ("");
-	std::string tempHost = reqHost;
-	std::map<std::string, LocationDir>	&locations = config.getLocMap(reqHost, request.port_number);
+	std::string tempHost = std::string(reqHost);
+	std::map<std::string, LocationDir>	&locations = config.getLocMap(tempHost, request.port_number);
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
+	// std::cout << "LOCATIONS: " << locations.begin()->first << std::endl;
 	if (locations.begin() == locEnd)
 	{
-		tempHost = "";
-		locations = config.getLocMap("", request.port_number);
-		if (locations.begin() == locations.end())
-			{ status_code = 404; return (""); }
+		if	(config.checkNullID("", request.port_number))
+		{
+			tempHost = "";
+			locations = config.getLocMap(tempHost, request.port_number);
+		}
+		else
+		{ status_code = 404; return (""); }
 	}
 	std::map<std::string, LocationDir>::iterator	it;
+	for (it = locations.begin(); it != locEnd; it ++)
+		std::cout << "loc: " << it->first << " root: " << it->second.get_root() << std::endl;
 	std::string	locRoute;
 	size_t	slashPos = 1;
 	size_t dotPos = NPOS;
-
 	// CHECK THAT server_name CORRESPONDS
 	std::vector<bool>			matching_host;
 	matching_host = get_match_vect(tempHost, request, locations, config);
@@ -443,9 +449,12 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	{
 		if (tempHost != "")
 		{
-			tempHost = "";
-			locations = config.getLocMap("", request.port_number);
-			if (locations.begin() == locations.end())
+			if	(config.checkNullID("", request.port_number))
+			{
+				tempHost = "";
+				locations = config.getLocMap(tempHost, request.port_number);
+			}
+			else
 			{ status_code = 404; return (""); }
 			matching_host = get_match_vect(tempHost, request, locations, config);
 			if (matching_host[0] == false)
@@ -474,13 +483,17 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		}
 		host_index++;
 	}
+	std::cout << "TEMPHOST: " << tempHost << std::endl;
 	if (it == locEnd && locations.begin() != locEnd)
 	{
 		if (tempHost != "")
 		{
-			tempHost = "";
-			locations = config.getLocMap("", request.port_number);
-			if (locations.begin() == locations.end())
+			if	(config.checkNullID("", request.port_number))
+			{
+				tempHost = "";
+				locations = config.getLocMap(tempHost, request.port_number);
+			}
+			else
 			{ status_code = 404; return (""); }
 			matching_host = get_match_vect(tempHost, request, locations, config);
 			if (matching_host[0] == false)

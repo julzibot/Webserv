@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 14:54:46 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/25 08:37:55 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,6 +117,36 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 		throw (std::invalid_argument("\"" + varName + "\": Unknown parameter in 'server' directive"));
 }
 
+bool	loc_assign(std::string const &keyword, std::string const &value, LocationDir &ld, std::string const &tempRoute)
+{
+	std::istringstream locdirs("index root methods_except autoindex redirect");
+	std::string buff;
+
+	// std::vector<std::string> tamere = ld.get_index();
+	// std::cout << "ROUTE " << tempRoute << " GETROOT: " << ld.get_root() << std::endl;
+	// std::cout << "SIZE: " << tamere.size() << ", INDEX ";
+	// for (unsigned int i = 0; i < tamere.size(); i++)
+	// 	std::cout << tamere[i] << "; ";
+	// std::cout << std::endl;
+	(void)tempRoute;
+	while (locdirs >> buff)
+		if (buff == keyword) break;
+	if (buff.empty())
+		throw (std::invalid_argument("\"" + keyword + "\": Unknown parameter in 'location' directive"));
+	else if (keyword == "index" && ld.get_index().size() == 0)
+		{ ld.setindex(value); return (true); }
+	else if (keyword == "root" && ld.get_root().empty())
+		{ ld.setRoot(value); return (true); }
+	else if (keyword == "methods_except")
+		{ auth_except(ld, value); return (true); }
+	else if (keyword == "autoindex" && ld.get_autoindex() == false)
+		{ assign_autoindex(ld, value); return (true); }
+	else if (keyword == "redirect" && ld.get_redir().empty())
+		{ ld.setRedir(value); return (true); }
+	else
+		return (false);
+}
+
 void	dirParseLocation(Config &config, std::string line, std::string directive)
 {
 	std::string	portStr;
@@ -136,15 +166,29 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
     std::istringstream	linestream(line);
     std::string			keyword;
     std::string			value;
+	std::string			tempRoute;
 
 
 	linestream >> keyword;
 	if (line.length() == keyword.length())
 		throw (std::invalid_argument("\"" + keyword + "\": Bad line in 'location' directive"));
 	value = line.substr(line.find(keyword) + keyword.length() + 1);
+	std::cout << "WUT" << std::endl;
 	for (unsigned int i = 0; i < ports.size(); i++)
 	{
-		strstrMap &ServerMain = config.getServMain(hostIP, ports[i], route, false);
+		tempRoute = route;
+		LocationDir	&ld = config.getLocRef(hostIP, ports[i], tempRoute);
+		if (ld.get_route().empty())
+			ld.setRoute(tempRoute);
+		std::cout << "LOC: " << tempRoute << std::endl;
+		std::cout << "VARS: " << keyword << " " << value << " " << std::endl;
+			
+		if	(loc_assign(keyword, value, ld, tempRoute) == false)
+			return;
+		// ld = config.getLocRef(hostIP, ports[i], route);
+		// std::cout << "WTF " << config.getLocMap(hostIP, ports[i]).size() << " " << ld.get_root() << std::endl;
+		// std::cout << "AFTER--- ROUTE: " << tempRoute << " ROOT: " << ld.get_root() << std::endl;
+		strstrMap &ServerMain = config.getServMain(hostIP, ports[i], tempRoute, false);
 		if (ServerMain.empty())
 		{
 			strstrMap &to_assign = config.getServMain(hostIP, ports[i], "", false);
@@ -154,22 +198,6 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 			ServerMain["server_name"] = to_assign["server_name"];
 			ServerMain["error_pages"] = to_assign["error_pages"];
 		}
-		std::cout << "DIRPARSE HOSTIP: " << hostIP << std::endl;
-		LocationDir	&ld = config.getLocRef(hostIP, ports[i], route);
-		ld.setRoute(route);
-		
-		if (keyword == "index")
-			ld.setindex(value);
-		else if (keyword == "root")
-			ld.setRoot(value);
-		else if (keyword == "methods_except")
-			auth_except(ld, value);
-		else if (keyword == "autoindex")
-			assign_autoindex(ld, value);
-		else if (keyword == "redirect")
-			ld.setRedir(value);
-		else
-			throw (std::invalid_argument("\"" + keyword + "\": Unknown parameter in 'location' directive"));
 	}
 }
 

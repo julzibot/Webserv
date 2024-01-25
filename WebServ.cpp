@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 11:28:16 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/22 16:12:58 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -196,18 +196,6 @@ void	WebServ::receiveFromExistingClient(const int& sockClient )
 	std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Receiving from existing client" << RESETCLR << std::endl;
 	memset(_buff, 0, 4096);
 	_recvsize = recv(sockClient, _buff, 4096, 0);
-
-	// int	chunkSize;
-	// std::string	totalBuff;
-	// while (1) {
-	// 	memset(_buff, 0, 4096);
-	// 	chunkSize = recv(sockClient, _buff, 4096, 0);
-	// 	if (chunkSize == 0)
-	// 		break;
-	// 	_recvsize += chunkSize;
-	// 	totalBuff.append(_buff);
-	// }
-
 	if (_recvsize < 0 && errno != EWOULDBLOCK) {
 		printErrno(RECV, NO_EXIT);
 		std::cerr << BOLD << "[SERVER] Error encountered while receiving message" << RESETCLR << std::endl;
@@ -224,10 +212,6 @@ void	WebServ::receiveFromExistingClient(const int& sockClient )
 		std::cout << std::string(_buff) << std::endl;
 		_request = HttpRequestParse::parse(std::string(_buff), _sockPortMap[sockClient]);
 		_filepath = get_file_path(_request, _config, _status);
-		// process_method(_filepath, _status, _request, _config);
-		// if (_request.cgi == true)
-		// 	// TOSH HERE: _output =
-		// else
 		_output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
 		std::cout << _output.c_str() << std::endl;
 		send(sockClient, _output.c_str(), _output.length(), 0);

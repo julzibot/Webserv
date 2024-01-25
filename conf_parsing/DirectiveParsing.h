@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:39:48 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 15:13:48 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/21 18:36:26 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,3 +34,4 @@ bool		isValidErrCode( const std::string& errCode );
 bool		validErrorHtmlFile( std::string filename );
 void		assign_autoindex(LocationDir& ld, std::string value);
 bool		is_valid_IP(std::string const &str);
+void	request_ip_check(std::string &reqHost, Config &config, int &status_code);

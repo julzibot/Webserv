@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:43:37 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/20 13:45:56 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/22 22:22:33 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,12 +57,12 @@ std::string	Config::get_cgi_type(std::string file_ext)
 
 strstrMap		&Config::getServMain(std::string const &hostIP, int port, std::string const  &route, bool const &init)
 {
+	// std::cout << "HOSTIP: " << hostIP << std::endl;
 	std::map<std::string, strstrMap> &servers = this->server_main[hostIP + ":" + std::to_string(port)];
 	if (init && servers.begin() == servers.end())
 	{
 		servers = this->server_main[":" + std::to_string(port)];
-		if (servers.begin() == servers.end())
-			throw	std::invalid_argument("Unauthorized IP address in request");
+		return (servers["main"]);
 	}
 	std::map<std::string, strstrMap>::iterator it;
 
