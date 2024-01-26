@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/25 08:37:55 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/26 10:15:45 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,10 +152,15 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 	std::string	portStr;
 	std::string hostIP = "";
 	std::string	route;
+	std::string	dupStr = "";
 	std::vector<int>	ports;
 	std::istringstream dirStream(directive);
 	dirStream >> route >> route;
 	dirStream >> portStr;
+
+	if (directive[directive.length() - 1] == '_')
+		dupStr = directive.substr(directive.find('_'));
+	
 	if (is_valid_IP(portStr) == true)
 		hostIP = portStr;
 	else
@@ -177,17 +182,17 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 	for (unsigned int i = 0; i < ports.size(); i++)
 	{
 		tempRoute = route;
+		for (unsigned int k = 0; k < dupStr.length(); k++)
+			tempRoute += " ";
+		std::cout << "TEMPROUTE: |" << tempRoute << "|" << std::endl;
 		LocationDir	&ld = config.getLocRef(hostIP, ports[i], tempRoute);
 		if (ld.get_route().empty())
 			ld.setRoute(tempRoute);
-		std::cout << "LOC: " << tempRoute << std::endl;
-		std::cout << "VARS: " << keyword << " " << value << " " << std::endl;
+		std::cout << "LOC: |" << tempRoute << "|" << std::endl;
+		std::cout << "VARS: " << keyword << " " << value << std::endl;
 			
 		if	(loc_assign(keyword, value, ld, tempRoute) == false)
 			return;
-		// ld = config.getLocRef(hostIP, ports[i], route);
-		// std::cout << "WTF " << config.getLocMap(hostIP, ports[i]).size() << " " << ld.get_root() << std::endl;
-		// std::cout << "AFTER--- ROUTE: " << tempRoute << " ROOT: " << ld.get_root() << std::endl;
 		strstrMap &ServerMain = config.getServMain(hostIP, ports[i], tempRoute, false);
 		if (ServerMain.empty())
 		{

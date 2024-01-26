@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/22 18:53:53 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/25 18:16:58 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@ class Config;
 class LocationDir;
 
 #include "DirectiveParsing.h"
-
 # define NPOS std::string::npos
 
 typedef std::map<std::string, std::string> strstrMap;
