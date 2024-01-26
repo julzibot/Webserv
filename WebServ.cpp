@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 17:51:55 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/22 21:24:53 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/23 14:47:46 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -304,17 +304,3 @@ void	WebServ::startServer( void ) {
 		close(_servsock[i]);
 	}
 }
-// siege -c 1 -b http://127.0.0.1:9999
-
-// Transactions:		       16363 hits
-// Availability:		       94.11 %
-// Elapsed time:		       12.88 secs
-// Data transferred:	        2.04 MB
-// Response time:		        0.00 secs
-// Transaction rate:	     1270.42 trans/sec
-// Throughput:		        0.16 MB/sec
-// Concurrency:		        0.87
-// Successful transactions:       16363
-// Failed transactions:	        1024
-// Longest transaction:	        0.02
-// Shortest transaction:	        0.00

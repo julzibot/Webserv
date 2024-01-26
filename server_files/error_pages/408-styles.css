@@ -1,0 +1,26 @@
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+    perspective: 1000px; /* Needed for 3D rotation effect */
+}
+
+.error-message {
+    font-size: 60px;
+    font-weight: bold;
+    color: red;
+    animation: flipY 6s infinite linear;
+}
+
+@keyframes flipY {
+    0%, 100% { 
+        transform: rotateY(-80deg);
+    }
+    50% { 
+        transform: rotateY(80deg);
+    }
+}
