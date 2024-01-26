@@ -1,19 +1,8 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   WebServ.hpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/12/17 19:35:25 by mstojilj          #+#    #+#             */
-/*   Updated: 2023/12/18 19:29:27 by mstojilj         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #pragma once
 
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -26,6 +15,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <map>
+#include <list>
 #include "conf_parsing/Config.hpp"
 #include "RequestParsing.hpp"
 #include "ResponseFormatting.hpp"
@@ -44,6 +34,12 @@
 #define RESETCLR "\033[0m"
 #define BOLD "\033[1m"
 #define RED "\033[31m"
+#define GREEN "\033[32m"
+#define YELLOW "\033[33m"
+#define BLUE "\033[34m"
+#define MAGENTA "\033[35m"
+#define CYAN "\033[36m"
+#define WHITE "\033[37m"
 
 class WebServ {
 
@@ -58,13 +54,14 @@ private:
 	std::map<int, int>			_sockPortMap; // Socket and its associated port number
 
 	// Socket loop 
-	char   				_buff[4096];
+	char   				_buff[2];
     std::string			_output;
     std::string			_filepath;
     std::string			_line;
     std::string			_prevReqPath;
     std::ifstream		_fs;
     ResponseFormatting	_formatter;
+	char				**envp;
 
 	// CLIENT
     struct sockaddr_in	_caddr;
@@ -72,10 +69,13 @@ private:
     int					_clientsock;
     int					_recvsize;
 
-	fd_set            _currentSockets;
-    fd_set            _readySockets;
-    int               _maxFD;
-    struct timeval    _timeoutSelect;
+	fd_set				_currentSockets;
+    fd_set				_readySockets;
+    int					_maxFD;
+    struct timeval		_timeoutSelect;
+
+	// POST Method
+	unsigned int		_maxBodySize;
 
 	// Timeout management
 	std::map<int, struct timeval>	_socketTimeoutMap;
@@ -84,21 +84,34 @@ private:
 
 	// Init
 	void	initSockets( const std::vector<int>& portNums );
-	void	bindAndListen( const std::vector<int>& servsock, const std::vector<int>& portnums,
-		const std::vector<sockaddr_in>& saddr, const unsigned int& arrsize );
+	void	bindAndListen( const std::vector<int>& servsock,
+				const std::vector<int>& portnums,
+				const std::vector<sockaddr_in>& saddr,
+				const unsigned int& arrsize );
 	void	initSelectFDs( const unsigned int& size );
 
 	void	checkClientTimeout(const struct timeval& currentTime,
-		const int& keepAliveTimeout, const int& clientSock );
+	const int& keepAliveTimeout, const int& clientSock );
 	bool	isServSock(const std::vector<int>& servsock, const int& sock);
 	void	acceptNewConnection( const int& servSock );
 	void	receiveFromExistingClient( const int& sockClient );
+	std::string	get_response(std::string &filepath, int &status, HttpRequest &request, Config &config);
 	
-public:
+	// POST method
+	void	receiveRequest( const int& sockClient,
+				int& chunkSize, std::string& totalBuff );
+	void	receiveBody( const int& sockClient );
+	void	receiveMultiForm( const int& sockClient, std::string root, std::string boundary );
+	void	receiveBinary( const int& sockClient, const std::string& endBoundary );
+	void	receiveFile(const int& sockClient, const std::string& fileType, const std::string& filename,
+				const std::string& root);
 
-	WebServ( const std::string& confFilenamePath );
+	// DELETE method
+	void	deleteResource( const std::string& resource );
+
+public:
+	WebServ( const std::string& confFilenamePath, char **envp);
 	~WebServ( void ) {};
 
 	void	startServer( void );
-
 };

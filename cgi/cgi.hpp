@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   cgi.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/15 18:41:58 by toshsharma        #+#    #+#             */
-/*   Updated: 2024/01/07 13:44:59 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/21 22:15:10 by toshsharma       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ class CGI {
 		std::vector<char *>	cgi_envp;
 		std::string			root;
 	public:
-		CGI(char ** cgi_env, std::string &executable, std::string & root);
+		CGI(char ** cgi_env, std::string &executable);
 		~CGI();
 		std::string		get_cgi_path();
 		char **	get_cgi_args();
@@ -35,6 +35,5 @@ class CGI {
 		void			insert_arg(std::string & arg);
 		std::string&	get_root();
 		void		set_root(std::string & root);
+		std::string	execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath);
 };
-
-std::string	execute_cgi(HttpRequest &request, CGI &cgi);

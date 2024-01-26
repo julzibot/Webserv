@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ConfigParse.cpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 11:25:37 by julzibot         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Config.hpp"
 #include "DirectiveParsing.h"
 
@@ -231,9 +219,7 @@ Config	parse_config_file( std::string path )
 
 LocationDir& get_Location_for_Path(HttpRequest &request, Config &config)
 {
-	std::string	reqHost = request.headers["Host"];
-	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
-	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+	std::string	reqHost = request.hostIP;
 	std::map<std::string, LocationDir>	&locations = config.getLocMap(reqHost, request.port_number);
 	std::map<std::string, LocationDir>::iterator	it = locations.begin();
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
@@ -251,10 +237,7 @@ LocationDir& get_Location_for_Path(HttpRequest &request, Config &config)
 
 std::string	file_request_case(size_t const &slashPos, size_t &dotPos, HttpRequest &request, Config &config, int &status_code)
 {
-	std::string	reqHost = request.headers["Host"];
-	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
-	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
-	request_ip_check(reqHost, config, status_code);
+	std::string	reqHost = request.hostIP;
 	std::string file_path;
 	int	acss;
 
@@ -287,7 +270,6 @@ std::string	check_index_files(HttpRequest &request, std::map<std::string, Locati
 	std::string	file_path;
 	int acss;
 
-	std::cout << "INSIDE CHECKFILES" << std::endl;
 	ind = it->second.get_index();
 	if (!request.prio_file.empty())
 		ind.insert(ind.begin(), request.prio_file);
@@ -349,10 +331,7 @@ std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &reque
 	std::vector<bool>			matching_host;
 	std::string					servername;
 	std::string					hostname;
-	std::string					reqHost = request.headers["Host"];
-	
-	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
-	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+	std::string					reqHost = request.hostIP;
 	std::map<std::string, LocationDir>::iterator	it;
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
 	strstrMap hostMap = config.get_hostMap();
@@ -396,6 +375,8 @@ void	request_ip_check(std::string &reqHost, Config &config, int &status_code)
 
 	for (it = hostMap.begin(); it != mapEnd; it++)
 	{
+		std::cout << "test reqHost: " << reqHost << std::endl;
+		std::cout << "KEY: " << it->first << " | VALUE " << it->second << std::endl;
 		if (reqHost == it->second)
 			break;
 	}
@@ -410,7 +391,10 @@ void	request_ip_check(std::string &reqHost, Config &config, int &status_code)
 			}
 		}
 		if (it == mapEnd)
+		{
+			std::cout << "ERROR HERE" << std::endl;
 			status_code = 403;
+		}
 	}
 }
 
@@ -420,8 +404,10 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	unsigned int	i = 0;
 	std::string	reqHost = request.headers["Host"];
 	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
-	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
+	reqHost = reqHost.substr(0,reqHost.find(':'));
+	// std::cout << " IN: REQHOST = " << reqHost << std::endl;
 	request_ip_check(reqHost, config, status_code);
+	// std::cout << " OUT: REQHOST = " << reqHost << std::endl;
 	if (status_code == 403)
 		return ("");
 	std::string tempHost = std::string(reqHost);
@@ -541,8 +527,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 }
 
 std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
-		Config &config)
-{
+		Config &config) {
 	DIR *dir;
 	struct dirent *en;
 	std::vector<std::string> list;
@@ -551,6 +536,9 @@ std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
 	LocationDir	&loc = get_Location_for_Path(request, config);
 
 	dir = opendir(file_path.c_str());
+	std::string reqHost = request.headers["Host"];
+    reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), ' '), reqHost.end());
 	if (dir) {
 		while ((en = readdir(dir)) != NULL) {
 			list.push_back(en->d_name);
@@ -560,8 +548,7 @@ std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
 		output += "<h1>Directory listing</h1>";
 		output += "<ul>";
 		for (it = list.begin(); it != list.end(); ++it) {
-			output += "<li><a href=\"http://localhost:" + std::to_string(request.port_number)
-			+ loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
+			output += "<li><a href=\"http://" + reqHost + loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
 		}
 		output += "</ul>";
 		output += END_OF_LIST;

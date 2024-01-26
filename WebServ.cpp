@@ -6,12 +6,12 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 11:16:34 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/26 12:45:46 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "WebServ.hpp"
-
+#include "cgi/cgi.hpp"
 
 // Function to run when CTRL-C is pressed
 volatile sig_atomic_t    isTrue = 1;
@@ -26,7 +26,7 @@ void    printErrno(int func, bool ex)
         break;
         case LISTEN: std::cerr << "listen(): ";
         break;
-        case RECV: std::cerr << "recv(): ";
+        case RECV: std::cerr << "recv (): ";
         break;
         case SELECT: std::cerr << "select(): ";
         break;
@@ -75,8 +75,9 @@ void	WebServ::initSelectFDs( const unsigned int& size ) {
 	}
 }
 
-WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
-	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)), _socketTimeoutValue(90) {
+WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(200),
+	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)),
+	_maxBodySize(UINT_MAX), _socketTimeoutValue(90) {
 
 	try {
 		_config = parse_config_file(confFilenamePath);
@@ -85,6 +86,7 @@ WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
 		std::cerr << "Error: " << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	this->envp = envp;
 	initSockets(_config.get_portnums());
 	std::cout << "1" << std::endl;
 	bindAndListen(_servsock, _config.get_portnums(), _saddr, _arrsize);
@@ -94,7 +96,7 @@ WebServ::WebServ( const std::string& confFilenamePath ) : _status(200),
 	startServer();
 }
 
-/* METHODS */
+/*** METHODS ***/
 
 void	WebServ::initSockets( const std::vector<int>& portNums ) {
 
@@ -135,8 +137,8 @@ void	WebServ::bindAndListen( const std::vector<int>& servsock, const std::vector
 }
 
 void	WebServ::checkClientTimeout(const struct timeval& currentTime,
-	const int& keepAliveTimeout, const int& clientSock ) {
-
+	const int& keepAliveTimeout, const int& clientSock )
+{
 	// std::cout << "[socket: " << _clientsock << "] - " << currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec << "s" << std::endl;
 	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout) {
 		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to " << _socketTimeoutValue << "s)" << RESETCLR << std::endl;
@@ -145,6 +147,7 @@ void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 		std::string	emptyStr = "";
 		_status = 408;
 		_output = _formatter.format_response(_request, _status, emptyStr, _config);
+		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
 		std::cout << _output.c_str() << std::endl;
 		send(clientSock, _output.c_str(), _output.length(), 0);
 		close(clientSock);
@@ -186,21 +189,61 @@ void	WebServ::acceptNewConnection( const int& servSock ) {
 	}
 }
 
-void	WebServ::receiveFromExistingClient(const int& sockClient )
+void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string& headers ) {
+
+	// POST:
+	// if Content-Length > limit_max_body_size send 413 Content Too Large
+	// create a file with type specified in Content-Type
+	// if \r\n\r\n (CRLF) encountered, headers end, body begins
+	while (chunkSize > 0) {
+		if (headers.find("\r\n\r\n") != NPOS)
+			break;
+		memset(_buff, 0, 2);
+		chunkSize = recv(sockClient, _buff, 1, 0);
+		if (chunkSize == 0)
+			break;
+		_recvsize += chunkSize;
+		headers.append(_buff);
+	}
+}
+
+std::string	WebServ::get_response(std::string &filepath, int &status,
+	HttpRequest &request, Config &config)
+{
+	if (!filepath.empty())
+	{
+		std::string	extension = filepath.substr(filepath.find_last_of(".") + 1);
+		std::string cgiExecPath = config.get_cgi_type(extension);
+		if (extension == "py")
+		{
+			std::string python3 = "python3";
+			CGI *cgi = new CGI(this->envp, python3);
+			std::string body = cgi->execute_cgi(request, cgi, filepath);
+			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length());
+			std::string response = headers + "\r\n" + body;
+			delete cgi;
+			return (response);
+		}
+	}
+	return (ResponseFormatting::format_response(request, status, filepath, config));
+}
+
+void	WebServ::receiveFromExistingClient(const int& sockClient)
 {
 	struct timeval	timeoutUpdate;
 	if (gettimeofday(&timeoutUpdate, NULL) < 0)
 		printErrno(GETTIMEOFDAY, EXIT);
 	_socketTimeoutMap[sockClient] = timeoutUpdate;
 
+	std::string	totalBuff;
+	int			chunkSize = 1;
+	
 	std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Receiving from existing client" << RESETCLR << std::endl;
-	memset(_buff, 0, 4096);
-	_recvsize = recv(sockClient, _buff, 4096, 0);
-	if (_recvsize < 0 && errno != EWOULDBLOCK) {
-		printErrno(RECV, NO_EXIT);
-		std::cerr << BOLD << "[SERVER] Error encountered while receiving message" << RESETCLR << std::endl;
-	}
-	else if (_recvsize == 0 && errno != EWOULDBLOCK) {
+	memset(_buff, 0, 2);
+	_recvsize = recv(sockClient, _buff, 1, 0);
+	totalBuff.append(_buff);
+
+	if (_recvsize == 0) {
 		std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Client disconnected" << RESETCLR << std::endl;
 		close(sockClient);
 		if (sockClient == _maxFD)
@@ -208,14 +251,39 @@ void	WebServ::receiveFromExistingClient(const int& sockClient )
 		FD_CLR(sockClient, &_currentSockets);
 	}
 	else if (_recvsize > 0) {
+		receiveRequest(sockClient, chunkSize, totalBuff);
 		std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Receiving request:" << RESETCLR << std::endl;
-		std::cout << std::string(_buff) << std::endl;
-		_request = HttpRequestParse::parse(std::string(_buff), _sockPortMap[sockClient]);
+		std::cout << totalBuff << std::endl;
+		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
+
+		std::string reqHost = _request.headers["Host"];
+		reqHost = reqHost.substr(0,reqHost.find(':'));
+		// std::cout << "REQHOST IN MAIN " << reqHost << std::endl;
+		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+		request_ip_check(reqHost, _config, _status);
+		_request.hostIP = reqHost;
+		// std::cout << "HERE IS THE IPHOST FROM REQUEST: " << _request.hostIP << std::endl;
+
+		totalBuff.clear();
 		_filepath = get_file_path(_request, _config, _status);
-		std::cout << "FILEPATH: " << _filepath << std::endl;
-		_output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
+		if (_request.method == "POST") {
+			if (_request.content_length > _maxBodySize)
+				_status = 413;
+			else
+				receiveBody(sockClient);
+		}
+		else if (_request.method == "DELETE")
+			deleteResource(_request.path);
+		_output = WebServ::get_response(_filepath, _status, _request, _config);
+		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
 		std::cout << _output.c_str() << std::endl;
 		send(sockClient, _output.c_str(), _output.length(), 0);
+		if (!_request.keepalive) {
+			close(sockClient);
+			if (sockClient == _maxFD)
+				_maxFD -= 1;
+			FD_CLR(sockClient, &_currentSockets);
+		}
 	}
 }
 
@@ -233,7 +301,7 @@ void	WebServ::startServer( void ) {
 		{
 			if (isServSock(_servsock, i) && FD_ISSET(i, &_readySockets)) // Accepting new connection
 				acceptNewConnection(i);
-			else if (FD_ISSET(i, &_readySockets)) // Existing client
+			else if (FD_ISSET(i, &_readySockets))
 				receiveFromExistingClient(i);
 			else if (FD_ISSET(i, &_currentSockets) && !isServSock(_servsock, i)) { // Check keep-alive timeout
 				if (gettimeofday(&_currentTime, NULL) < 0)
@@ -253,4 +321,17 @@ void	WebServ::startServer( void ) {
 		close(_servsock[i]);
 	}
 }
+// siege -c 1 -b http://127.0.0.1:9999
 
+// Transactions:		       16363 hits
+// Availability:		       94.11 %
+// Elapsed time:		       12.88 secs
+// Data transferred:	        2.04 MB
+// Response time:		        0.00 secs
+// Transaction rate:	     1270.42 trans/sec
+// Throughput:		        0.16 MB/sec
+// Concurrency:		        0.87
+// Successful transactions:       16363
+// Failed transactions:	        1024
+// Longest transaction:	        0.02
+// Shortest transaction:	        0.00
