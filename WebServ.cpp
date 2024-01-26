@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/22 16:12:58 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/26 11:16:34 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -212,6 +212,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient )
 		std::cout << std::string(_buff) << std::endl;
 		_request = HttpRequestParse::parse(std::string(_buff), _sockPortMap[sockClient]);
 		_filepath = get_file_path(_request, _config, _status);
+		std::cout << "FILEPATH: " << _filepath << std::endl;
 		_output = ResponseFormatting::format_response(_request, _status, _filepath, _config);
 		std::cout << _output.c_str() << std::endl;
 		send(sockClient, _output.c_str(), _output.length(), 0);

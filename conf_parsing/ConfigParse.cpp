@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 15:27:12 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 10:36:53 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/26 11:25:37 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -287,6 +287,7 @@ std::string	check_index_files(HttpRequest &request, std::map<std::string, Locati
 	std::string	file_path;
 	int acss;
 
+	std::cout << "INSIDE CHECKFILES" << std::endl;
 	ind = it->second.get_index();
 	if (!request.prio_file.empty())
 		ind.insert(ind.begin(), request.prio_file);
@@ -299,6 +300,7 @@ std::string	check_index_files(HttpRequest &request, std::map<std::string, Locati
 		file_path += '/';
 	for (unsigned int j = 0; j < ind.size(); j++)
 	{
+		std::cout << "filename: " << file_path << std::endl;
 		acss = access((file_path + ind[j]).c_str(), F_OK);
 		if (!acss && !access((file_path + ind[j]).c_str(), R_OK))
 		{
