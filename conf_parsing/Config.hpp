@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/11 00:25:42 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/26 11:41:14 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,19 +19,17 @@
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
-#include <forward_list>
 #include "../RequestParsing.hpp"
 
 class Config;
 class LocationDir;
 
 #include "DirectiveParsing.h"
-
 # define NPOS std::string::npos
 
 typedef std::map<std::string, std::string> strstrMap;
-typedef std::map<int, std::map<std::string, LocationDir> > servLocMap; //IS GOOD
-typedef std::map<int, std::map<std::string, strstrMap> > servInfos;
+typedef std::map<std::string, std::map<std::string, LocationDir> > servLocMap;
+typedef std::map<std::string, std::map<std::string, strstrMap> > servInfos;
 
 class LocationDir
 {
@@ -75,6 +73,7 @@ class Config
         int					worker_connections;
         strstrMap			types;
 		strstrMap			cgi;
+		strstrMap			hosts;
         servLocMap			server_locs;
         servInfos			server_main;
 		std::vector<int>	servPortNums;
@@ -87,15 +86,24 @@ class Config
 		servLocMap			getServ() const { return (this->server_locs); };
         std::string			get_type(std::string file_ext);
         std::string			get_cgi_type(std::string file_ext);
-        LocationDir			&getLocRef(int port, std::string route) { return (this->server_locs[port][route]); };
-		strstrMap			&getServMain(int port, std::string const &route, bool init);
-		// servErrorPath&	getErrorMap( void ) { return (this->error_page_map); };
-		std::map<std::string, LocationDir>&	getLocMap(int port) { return (this->server_locs[port]); };
+        strstrMap			get_hostMap(void) { return(this->hosts); };
+        LocationDir			&getLocRef(std::string const &hostIP, int port, std::string route)
+							{ return (this->server_locs[hostIP + ":" + std::to_string(port)][route]); };
+		std::map<std::string, LocationDir>&	getLocMap(std::string const &hostIP, int port)
+							{ return (this->server_locs[hostIP + ":" + std::to_string(port)]); };
+		bool				checkNullID(std::string const &tempHost, int const &port) {
+								for (servLocMap::iterator it = this->server_locs.begin(); it != this->server_locs.end(); it++)
+									if (it->first == tempHost + ":" + std::to_string(port))
+										return (true);
+									return (false);
+							}
+		strstrMap			&getServMain(std::string const &hostIP, int port, std::string const &route, bool const &init);
 
         void	set_workproc(int value) { this->worker_processes = value; };
         void	set_workco(int value) { this->worker_connections = value; };
         void	add_type(std::string extension, std::string path) { this->types[extension] += path; };
         void	add_cgi(std::string extension, std::string path) { this->cgi[extension] += path; };
+        void	add_hosts(std::string hostname, std::string ip) { this->hosts[hostname] += ip; };
         void    add_portnum(int portnum) { this->servPortNums.push_back(portnum); };
 
 		void	printAll( void );

@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 17:51:55 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/23 14:47:46 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/27 09:54:56 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,22 @@ void    printErrno(int func, bool ex)
         exit(errno);
 }
 
+void	WebServ::initSelectFDs( const unsigned int& size ) {
+
+	_timeoutSelect.tv_usec = 20;
+	_timeoutSelect.tv_sec = 0;
+	std::cout << "ONE" << std::endl;
+	_maxFD = _servsock[0];
+	std::cout << "TWO" << std::endl;
+
+    FD_ZERO(&_currentSockets);
+	for (unsigned int i = 0; i < size; ++i) {
+  		FD_SET(_servsock[i], &_currentSockets);
+		if (_servsock[i] > _maxFD)
+			_maxFD = _servsock[i];
+	}
+}
+
 WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(200),
 	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)),
 	_maxBodySize(UINT_MAX), _socketTimeoutValue(90) {
@@ -72,8 +88,11 @@ WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(2
 	}
 	this->envp = envp;
 	initSockets(_config.get_portnums());
+	std::cout << "1" << std::endl;
 	bindAndListen(_servsock, _config.get_portnums(), _saddr, _arrsize);
+	std::cout << "2" << std::endl;
 	initSelectFDs(_servsock.size());
+	std::cout << "3" << std::endl;
 	startServer();
 }
 
@@ -94,6 +113,9 @@ void	WebServ::initSockets( const std::vector<int>& portNums ) {
 		if (_servsock[i] == -1)
 			printErrno(SOCKET, EXIT);
 	}
+	for (size_t i = 0; i < _servsock.size(); ++i) {
+		std::cout << "servsock[" << i << "] : " << _servsock[i] << std::endl;
+	}
 }
 
 void	WebServ::bindAndListen( const std::vector<int>& servsock, const std::vector<int>& portnums,
@@ -112,20 +134,6 @@ void	WebServ::bindAndListen( const std::vector<int>& servsock, const std::vector
 	std::map<int, int>::const_iterator	it;
 	for (it = _sockPortMap.cbegin(); it != _sockPortMap.cend(); ++it)
 		std::cout << "[" << it->first << "] = " << it->second << std::endl;
-}
-
-void	WebServ::initSelectFDs( const unsigned int& size ) {
-
-	_timeoutSelect.tv_usec = 20;
-	_timeoutSelect.tv_sec = 0;
-	_maxFD = _servsock[0];
-
-    FD_ZERO(&_currentSockets);
-	for (unsigned int i = 0; i < size; ++i) {
-  		FD_SET(_servsock[i], &_currentSockets);
-		if (_servsock[i] > _maxFD)
-			_maxFD = _servsock[i];
-	}
 }
 
 void	WebServ::checkClientTimeout(const struct timeval& currentTime,
@@ -247,6 +255,15 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Receiving request:" << RESETCLR << std::endl;
 		std::cout << totalBuff << std::endl;
 		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
+
+		std::string reqHost = _request.headers["Host"];
+		reqHost = reqHost.substr(0,reqHost.find(':'));
+		// std::cout << "REQHOST IN MAIN " << reqHost << std::endl;
+		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+		request_ip_check(reqHost, _config, _status);
+		_request.hostIP = reqHost;
+		// std::cout << "HERE IS THE IPHOST FROM REQUEST: " << _request.hostIP << std::endl;
+
 		totalBuff.clear();
 		_filepath = get_file_path(_request, _config, _status);
 		if (_request.method == "POST") {

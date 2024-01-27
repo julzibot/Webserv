@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   DELETE.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/21 16:16:58 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/21 18:00:49 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/26 12:40:23 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,8 @@
 void	WebServ::deleteResource( const std::string& resource ) {
 
 	std::string p = _request.path.substr(0, _request.path.find('/', 1));
-	std::string	root = _config.getServMain(_request.port_number, p, true)["root"];
+	std::string	reqHost = _request.hostIP;
+	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];
 	if (root.empty()) {
 		std::cerr << "deleteResource: 'root' not found" << std::endl;
 		_status = 500; // 500 Internal Server Error

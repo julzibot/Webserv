@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestParsing.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/23 14:29:40 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/26 12:21:57 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,14 @@
 #include <sstream>
 #include <string>
 #include <map>
+#include <vector>
 
 // parsing input on the server side
 class HttpRequest
 {
     public:
         std::map<std::string, std::string>	headers;
+        std::string                         hostIP;
         std::string							method;
         std::string							path;
         std::string							http_version;

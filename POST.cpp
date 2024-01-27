@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   POST.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
+/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/21 16:03:52 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/23 14:39:27 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/26 12:40:11 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,10 +146,11 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 	return;
 }
 
-void	WebServ::receiveBody( const int& sockClient ) {
+void	WebServ::receiveBody( const int& sockClient) {
 
 	std::string p = _request.path.substr(0, _request.path.find('/', 1));
-	std::string	root = _config.getServMain(_request.port_number, p, true)["root"];
+	std::string	reqHost = _request.hostIP;
+	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];
 	if (root.empty()) {
 		std::cerr << "receiveBody: 'root' not found" << std::endl;
 		_status = 500; // 500 Internal Server Error
