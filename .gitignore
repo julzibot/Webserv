@@ -8,3 +8,4 @@ a.out
 *.o
 */*.o
 webserv
+server_files/webserv.conf
