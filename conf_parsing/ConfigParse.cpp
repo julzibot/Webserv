@@ -102,9 +102,10 @@ size_t	isBrace(char brace, std::string line)
 }
 
 template <typename T>
-void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, std::string> &directives, std::vector<std::string> &dir_index)
+void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, std::string> &directives, std::vector<std::string> &dir_index, std::vector<std::string> &stringPorts, unsigned int	&add_underscore)
 {
 	bool		add_portnum = 0;
+	bool		dupPorts = false;
 	int			open_braces = 1;
 	bool		can_write = true;
 	std::string	line;
@@ -122,13 +123,15 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 			portnum = "";
 			portline.str(line); portline >> portbuff;
 			while (portline >> portbuff)
-				portnum += " " + portbuff;
-			it = std::find(dir_index.begin(), dir_index.end(), dir_key + portnum);
-			while (it != dir_index.end())
 			{
-				portnum += "_";
-				it = std::find(dir_index.begin(), dir_index.end(), dir_key + portnum);
+				portnum += " " + portbuff;
+				if (std::find(stringPorts.begin(), stringPorts.end(), portbuff) == stringPorts.end())
+					stringPorts.push_back(portbuff);
+				else if (dupPorts == false)
+					{ add_underscore += 1; dupPorts = true; }
 			}
+			for (unsigned int j = 0; j < add_underscore; j++)
+				portnum += "_";
 			dir_index.push_back(dir_key + portnum);
 			portline.clear();
 			add_portnum = 0;
@@ -165,6 +168,7 @@ Config	parse_config_file( std::string path )
 
     Config						config;
 	unsigned int				i = 0;
+	unsigned int				add_underscore = 0;
     size_t						bracepos;
     std::istringstream			ls;
 	strstrMap					directives;
@@ -172,6 +176,7 @@ Config	parse_config_file( std::string path )
 	std::string					buffer;
     std::string					directive = "main";
 	std::vector<std::string>	dir_index;
+	std::vector<std::string>	stringPorts;
     std::ifstream				conf_file(path);
 	
 	if (!conf_file.good())
@@ -196,7 +201,7 @@ Config	parse_config_file( std::string path )
             expandInclude(line, ls);
 		bracepos = isBrace('{', line);
 		if (bracepos != NPOS)
-			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index);
+			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index, stringPorts, add_underscore);
 		// std::cout << line << std::endl;
 		parseDirective(line, directive, config);
 	}
@@ -332,7 +337,6 @@ std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &reque
 			hostname = h->first;
 			for (it = locations.begin(); it != locEnd; it++)
 			{
-				// std::cout << "TEMPHOST: " << tempHost << std::endl;
 				servername = config.getServMain(tempHost, request.port_number, it->first, true)["server_name"];
 				std::cout << "HOSTNAME: |" << hostname << "| SERVNAME: |" << servername << "|" << std::endl;
 				if (hostname == servername || servername.empty())
