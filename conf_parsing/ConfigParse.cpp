@@ -308,30 +308,16 @@ std::string	check_index_files(HttpRequest &request, std::map<std::string, Locati
 	return ("");
 }
 
-// std::map<std::string, LocationDir>	&get_hostport_locations(HttpRequest &request, Config &config, int &status_code)
-// {
-// 	std::string	reqHost = request.headers["Host"];
-// 	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
-// 	reqHost = reqHost.substr(1,reqHost.find(':') - 1);
-// 	std::cout << "REQHOST: " << reqHost << std::endl;
-// 	// CHECK reqHost is IP
-// 	std::map<std::string, LocationDir>	&locations = config.getLocMap(reqHost, request.port_number);
-// 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
-// 	if (locations.begin() == locEnd)
-// 	{
-// 		reqHost = "";
-// 		locations = config.getLocMap(reqHost, request.port_number);
-// 		if (locations.begin() == locations.end())
-// 			{ status_code = 404; return (""); }
-// 	}
-// }
-
 std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &request, std::map<std::string, LocationDir>	&locations, Config &config)
 {
 	std::vector<bool>			matching_host;
 	std::string					servername;
 	std::string					hostname;
-	std::string					reqHost = request.hostIP;
+
+	std::string reqHost = request.headers["Host"];
+	reqHost = reqHost.substr(0,reqHost.find(':'));
+	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+
 	std::map<std::string, LocationDir>::iterator	it;
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
 	strstrMap hostMap = config.get_hostMap();
@@ -340,6 +326,7 @@ std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &reque
 
 	for (h = hostMap.begin(); h != hEnd; h++)
 	{
+		std::cout << "REQHOST: " << reqHost << " H: " << h->first << " -> " << h->second << std::endl;
 		if (reqHost == h->first || reqHost == h->second)
 		{
 			hostname = h->first;
@@ -351,7 +338,8 @@ std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &reque
 				if (hostname == servername || servername.empty())
 				{
 					matching_host.push_back(true);
-					matching_host.insert(matching_host.begin(), true);
+					if (matching_host[0] != true || matching_host.size() == 1)
+						matching_host.insert(matching_host.begin(), true);
 				}
 				else
 					matching_host.push_back(false);
@@ -375,8 +363,8 @@ void	request_ip_check(std::string &reqHost, Config &config, int &status_code)
 
 	for (it = hostMap.begin(); it != mapEnd; it++)
 	{
-		std::cout << "test reqHost: " << reqHost << std::endl;
-		std::cout << "KEY: " << it->first << " | VALUE " << it->second << std::endl;
+		// std::cout << "test reqHost: " << reqHost << std::endl;
+		// std::cout << "KEY: " << it->first << " | VALUE " << it->second << std::endl;
 		if (reqHost == it->second)
 			break;
 	}
@@ -392,7 +380,7 @@ void	request_ip_check(std::string &reqHost, Config &config, int &status_code)
 		}
 		if (it == mapEnd)
 		{
-			std::cout << "ERROR HERE" << std::endl;
+			// std::cout << "ERROR HERE" << std::endl;
 			status_code = 403;
 		}
 	}
@@ -407,7 +395,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	reqHost = reqHost.substr(0,reqHost.find(':'));
 	// std::cout << " IN: REQHOST = " << reqHost << std::endl;
 	request_ip_check(reqHost, config, status_code);
-	// std::cout << " OUT: REQHOST = " << reqHost << std::endl;
+	std::cout << " OUT: REQHOST = " << reqHost << std::endl;
 	if (status_code == 403)
 		return ("");
 	std::string tempHost = std::string(reqHost);
@@ -433,6 +421,9 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	// CHECK THAT server_name CORRESPONDS
 	std::vector<bool>			matching_host;
 	matching_host = get_match_vect(tempHost, request, locations, config);
+	std::cout << "MATCHING_HOST: ";
+	for (unsigned int k = 0; k < matching_host.size(); k++)
+		std::cout << matching_host[k] << "; ";
 	if (matching_host[0] == false)
 	{
 		if (tempHost != "")

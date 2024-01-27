@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 12:13:59 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/26 19:18:12 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,12 +122,6 @@ bool	loc_assign(std::string const &keyword, std::string const &value, LocationDi
 	std::istringstream locdirs("index root methods_except autoindex redirect");
 	std::string buff;
 
-	// std::vector<std::string> tamere = ld.get_index();
-	// std::cout << "ROUTE " << tempRoute << " GETROOT: " << ld.get_root() << std::endl;
-	// std::cout << "SIZE: " << tamere.size() << ", INDEX ";
-	// for (unsigned int i = 0; i < tamere.size(); i++)
-	// 	std::cout << tamere[i] << "; ";
-	// std::cout << std::endl;
 	(void)tempRoute;
 	while (locdirs >> buff)
 		if (buff == keyword) break;
