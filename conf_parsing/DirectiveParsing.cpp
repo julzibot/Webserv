@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 19:18:12 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/27 12:16:41 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,6 +178,7 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 		tempRoute = route;
 		for (unsigned int k = 0; k < dupStr.length(); k++)
 			tempRoute += " ";
+		
 		// std::cout << "TEMPROUTE: |" << tempRoute << "|" << std::endl;
 		LocationDir	&ld = config.getLocRef(hostIP, ports[i], tempRoute);
 		if (ld.get_route().empty())
