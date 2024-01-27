@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   DELETE.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/21 16:16:58 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 12:40:23 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/27 14:10:43 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,10 @@ void	WebServ::deleteResource( const std::string& resource ) {
 		return;
 	}
 
+	if (resource.find("/..") != NPOS || resource.find("./") != NPOS) {
+		_status = 400; // Bad request
+		return;
+	}
 	std::string	pathToResource = root + resource;
 	struct stat	fileInfos;
 	if (stat(pathToResource.c_str(), &fileInfos) < 0) {
