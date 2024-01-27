@@ -21,3 +21,5 @@ void		auth_except(LocationDir& ld, std::string line);
 bool		isValidErrCode( const std::string& errCode );
 bool		validErrorHtmlFile( std::string filename );
 void		assign_autoindex(LocationDir& ld, std::string value);
+bool		is_valid_IP(std::string const &str);
+void	request_ip_check(std::string &reqHost, Config &config, int &status_code);

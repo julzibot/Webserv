@@ -1,7 +1,10 @@
 #include "ResponseFormatting.hpp"
+#include "conf_parsing/DirectiveParsing.h"
 
-std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string const &error_path)
+std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string &error_path)
 {
+	if (error_path.empty())
+		error_path = "./server_files/error_pages";
 	std::deque<std::string>	status_infos;
 	switch (status_code)
 	{
@@ -105,8 +108,10 @@ std::string	ResponseFormatting::format_response(HttpRequest &request, int &statu
 	std::string	body;
 	std::string	headers;
 	std::string p = request.path.substr(0, request.path.find('/', 1));
+	std::string	reqHost = request.hostIP;
+
 	std::deque<std::string> status_infos = get_status_infos(status_code,
-			file_path, config.getServMain(request.port_number, p, true)["error_pages"]);
+			file_path, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
 
 	if (status_code == 1001)
 	{
@@ -117,7 +122,7 @@ std::string	ResponseFormatting::format_response(HttpRequest &request, int &statu
 		} catch (const std::ios_base::failure& e) {
 			status_code = 403;
 			status_infos = get_status_infos(status_code,
-				file_path, config.getServMain(request.port_number, p, true)["error_pages"]);
+				file_path, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
 			body = parse_body(status_infos[0], status_code);
 		}
 	}
