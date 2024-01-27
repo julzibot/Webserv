@@ -6,7 +6,6 @@ std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepat
 	int			fd[2];
 	pid_t		pid;
 
-	// std::string file_to_exec = "/Users/toshsharma/Documents/42cursus/Webserv/server_files/cgi-bin/cgi_executer.py";
 	cgi->insert_arg(filepath);
 	// Insert request details into CGI arguments
 	cgi->insert_arg(request.method);
@@ -57,10 +56,7 @@ CGI::CGI(char ** cgi_env, std::string & executable)
 		this->cgi_envp.push_back(cgi_env[i]);
 		++i;
 	}
-	if (executable == "python3")
-		this->cgi_path = "/usr/bin/python3";
-	else
-		this->cgi_path = "/usr/bin/python3";
+	this->cgi_path = executable;
 	this->insert_arg(this->cgi_path);
 }
 

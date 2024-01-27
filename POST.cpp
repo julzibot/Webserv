@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   POST.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/01/21 16:03:52 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 12:40:11 by julzibot         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "WebServ.hpp"
 
 std::string	extractBetweenChars(std::string str, char c) {
@@ -146,8 +134,7 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 	return;
 }
 
-void	WebServ::receiveBody( const int& sockClient) {
-
+void	WebServ::receiveBody( const int& sockClient ) {
 	std::string p = _request.path.substr(0, _request.path.find('/', 1));
 	std::string	reqHost = _request.hostIP;
 	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];
@@ -161,14 +148,12 @@ void	WebServ::receiveBody( const int& sockClient) {
 	std::string			fileName;
 	strstrMap::iterator contentTypeIt = _request.headers.find("Content-Type");
 	if (contentTypeIt == _request.headers.end()) {
-
 		std::cerr << "Error: Cannot process POST request: No 'Content-Type' in request headers" << std::endl;
 		_status = 422; // Unprocessable Content
 		return;
 	}
 	fileType = contentTypeIt->second;
 	if (fileType.find("multipart/form-data") != NPOS) {
-
 		std::string	boundary;
 		try {
 			boundary.append(fileType.substr(fileType.find("boundary=") + 9, fileType.length() - 1));
