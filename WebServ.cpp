@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/28 09:35:13 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/28 16:04:09 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,7 +213,7 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 		if (extension == "py" || extension == "php")
 		{
 			CGI *cgi = new CGI(this->envp, cgiExecPath);
-			std::string body = cgi->execute_cgi(request, cgi, filepath);
+			std::string body = cgi->execute_cgi(request, cgi, filepath, _status);
 			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length());
 			std::string response = headers + "\r\n" + body;
 			delete cgi;
