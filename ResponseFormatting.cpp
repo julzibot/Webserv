@@ -9,7 +9,7 @@ std::string	to_string(int number)
 	return result;
 }
 
-std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string &error_path)
+std::deque<std::string>	ResponseFormatting::get_status_infos(int status_code, std::string &file_path, std::string &error_path)
 {
 	if (error_path.empty())
 		error_path = "./server_files/error_pages";
@@ -31,13 +31,6 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
 		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
 		case 1001:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
-		// case 201:	status_infos.push_back(error_path); status_infos.push_back("Created"); 	break;
-		// case 302:	status_infos.push_back(error_path); status_infos.push_back("Found"); 	break;
-		// case 303:	status_infos.push_back(error_path); status_infos.push_back("See Other"); 	break;
-		// case 401:	status_infos.push_back(error_path); status_infos.push_back("Unauthorized"); 	break;
-		// case 501:	status_infos.push_back(error_path + "/501.html"); status_infos.push_back("Not Implemented"); 	break;
-		// case 502:	status_infos.push_back(error_path); status_infos.push_back("Bad Gateway"); 	break;
-		// case 503:	status_infos.push_back(error_path); status_infos.push_back("Service Unavailable"); 	break;
 	}
 	return (status_infos);
 }
@@ -82,31 +75,61 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 	return (headers);
 }
 
-std::string	ResponseFormatting::parse_cgi_headers(std::string http_version, int content_length)
+std::string	ResponseFormatting::parse_cgi_headers(std::string http_version, 
+		int content_length, int &status_code, std::deque<std::string> status_infos)
 {
 	std::string	headers;
 
-	headers = http_version + "  200 OK"+ "\n";
-	headers += "Content-Type: text/plain\n";
-	headers += "Content-Length: " + to_string(content_length) + "\n";
-
+	if (status_code == 200) {
+		headers = http_version + " 200 OK" + "\n";
+		headers += "Content-Type: text/plain\n";
+		headers += "Content-Length: " + to_string(content_length) + "\n";
+	}
+	else {
+		headers = http_version + " " + to_string(status_code) + " " + status_infos[1] + "\n";
+		headers += "Content-Type: text/html\n";
+		headers += "Content-Length: " + to_string(content_length) + "\n";
+	}
 	return (headers);
 }
 
+// std::string	ResponseFormatting::parse_body(std::string file_path, int const &status_code)
+// {
+// 	std::ifstream	inputFile(file_path, std::ios::binary);
+// 	std::string		output;
+// 	std::string		line;
+
+// 	if (status_code == 301) //  || status_code == 408)
+// 		return (output);
+// 	if (!inputFile.is_open())
+// 		return output;
+
+//     std::vector<char> buffer(std::istreambuf_iterator<char>(inputFile), std::istreambuf_iterator<char>());
+//     return std::string(buffer.begin(), buffer.end());
+// }
+
 std::string	ResponseFormatting::parse_body(std::string file_path, int const &status_code)
 {
-	std::ifstream	inputFile(file_path);
-	std::string		output;
-	std::string		line;
+    std::ifstream	inputFile(file_path.c_str(), std::ios::binary);
+    std::string		output;
+    std::string		line;
 
-	if (status_code == 301 || status_code == 408)
-		return (output);
-	if (!inputFile.is_open())
-		return output;
-	while (std::getline(inputFile, line))
-		output += line + '\n';
-	inputFile.close();
-	return output;
+    if (status_code == 301) //  || status_code == 408)
+        return (output);
+    if (!inputFile.is_open())
+        return output;
+
+    inputFile.seekg(0, std::ios::end);
+    std::streamsize size = inputFile.tellg();
+    inputFile.seekg(0, std::ios::beg);
+
+    if (size > 0)
+    {
+        output.resize(size);
+        inputFile.read(&output[0], size);
+    }
+
+    return output;
 }
 
 std::string	ResponseFormatting::format_response(HttpRequest &request, int &status_code,

@@ -63,7 +63,6 @@ void    expandInclude(std::string &line, T &s)
 	toParse >> command >> filename;
 	if (command != "include")
 		return;
-	std::cout << filename << std::endl;
     std::ifstream    fs("./conf_parsing/" + filename);
     if (fs.fail())
         throw (std::invalid_argument("Config file: Bad include filename."));
@@ -202,23 +201,8 @@ Config	parse_config_file( std::string path )
 		bracepos = isBrace('{', line);
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index, stringPorts, add_underscore);
-		// std::cout << line << std::endl;
 		parseDirective(line, directive, config);
 	}
-
-	// TESTING PARSING OUTPUT
-	for (i = 0; i < dir_index.size(); i++)
-		std::cout << "key: " << dir_index.at(i) << " value: " \
-			<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
-	// strstrMap infos;
-	// std::vector<int> ports = config.get_portnums();
-	// for (i = 0; i < ports.size(); i++)
-	// {
-	// 	std::cout << "PORT NUMBER " << ports[i] << std::endl;
-	// 	infos = config.getServMain(ports[i]);
-	// 	std::cout << "name: " << infos["server_name"] << " | root: "\
-	// 		<< infos["root"] << " | error path: " << infos["error_pages"] << std::endl << "----------" << std::endl;
-	// }
 	return (config);
 }
 
@@ -287,7 +271,6 @@ std::string	check_index_files(HttpRequest &request, std::map<std::string, Locati
 		file_path += '/';
 	for (unsigned int j = 0; j < ind.size(); j++)
 	{
-		std::cout << "filename: " << file_path << std::endl;
 		acss = access((file_path + ind[j]).c_str(), F_OK);
 		if (!acss && !access((file_path + ind[j]).c_str(), R_OK))
 		{
@@ -331,14 +314,12 @@ std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &reque
 
 	for (h = hostMap.begin(); h != hEnd; h++)
 	{
-		std::cout << "REQHOST: " << reqHost << " H: " << h->first << " -> " << h->second << std::endl;
 		if (reqHost == h->first || reqHost == h->second)
 		{
 			hostname = h->first;
 			for (it = locations.begin(); it != locEnd; it++)
 			{
 				servername = config.getServMain(tempHost, request.port_number, it->first, true)["server_name"];
-				std::cout << "HOSTNAME: |" << hostname << "| SERVNAME: |" << servername << "|" << std::endl;
 				if (hostname == servername || servername.empty())
 				{
 					matching_host.push_back(true);
@@ -367,8 +348,6 @@ void	request_ip_check(std::string &reqHost, Config &config, int &status_code)
 
 	for (it = hostMap.begin(); it != mapEnd; it++)
 	{
-		// std::cout << "test reqHost: " << reqHost << std::endl;
-		// std::cout << "KEY: " << it->first << " | VALUE " << it->second << std::endl;
 		if (reqHost == it->second)
 			break;
 	}
@@ -384,7 +363,6 @@ void	request_ip_check(std::string &reqHost, Config &config, int &status_code)
 		}
 		if (it == mapEnd)
 		{
-			// std::cout << "ERROR HERE" << std::endl;
 			status_code = 403;
 		}
 	}
@@ -397,15 +375,12 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	std::string	reqHost = request.headers["Host"];
 	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 	reqHost = reqHost.substr(0,reqHost.find(':'));
-	// std::cout << " IN: REQHOST = " << reqHost << std::endl;
 	request_ip_check(reqHost, config, status_code);
-	std::cout << " OUT: REQHOST = " << reqHost << std::endl;
 	if (status_code == 403)
 		return ("");
 	std::string tempHost = std::string(reqHost);
 	std::map<std::string, LocationDir>	&locations = config.getLocMap(tempHost, request.port_number);
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
-	// std::cout << "LOCATIONS: " << locations.begin()->first << std::endl;
 	if (locations.begin() == locEnd)
 	{
 		if	(config.checkNullID("", request.port_number))

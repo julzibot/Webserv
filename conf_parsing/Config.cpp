@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Config.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/24 15:43:37 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 19:22:52 by julzibot         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Config.hpp"
 
 LocationDir::LocationDir( void )
@@ -57,7 +45,6 @@ std::string	Config::get_cgi_type(std::string file_ext)
 
 strstrMap		&Config::getServMain(std::string const &hostIP, int port, std::string const  &route, bool const &init)
 {
-	// std::cout << "HOSTIP: " << hostIP << std::endl;
 	std::map<std::string, strstrMap> &servers = this->server_main[hostIP + ":" + std::to_string(port)];
 	if (init && servers.begin() == servers.end())
 	{
