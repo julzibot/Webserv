@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/17 19:37:42 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 12:45:46 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/28 16:04:09 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,9 +63,7 @@ void	WebServ::initSelectFDs( const unsigned int& size ) {
 
 	_timeoutSelect.tv_usec = 20;
 	_timeoutSelect.tv_sec = 0;
-	std::cout << "ONE" << std::endl;
 	_maxFD = _servsock[0];
-	std::cout << "TWO" << std::endl;
 
     FD_ZERO(&_currentSockets);
 	for (unsigned int i = 0; i < size; ++i) {
@@ -88,11 +86,8 @@ WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(2
 	}
 	this->envp = envp;
 	initSockets(_config.get_portnums());
-	std::cout << "1" << std::endl;
 	bindAndListen(_servsock, _config.get_portnums(), _saddr, _arrsize);
-	std::cout << "2" << std::endl;
 	initSelectFDs(_servsock.size());
-	std::cout << "3" << std::endl;
 	startServer();
 }
 
@@ -218,7 +213,7 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 		if (extension == "py" || extension == "php")
 		{
 			CGI *cgi = new CGI(this->envp, cgiExecPath);
-			std::string body = cgi->execute_cgi(request, cgi, filepath);
+			std::string body = cgi->execute_cgi(request, cgi, filepath, _status);
 			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length());
 			std::string response = headers + "\r\n" + body;
 			delete cgi;
@@ -266,6 +261,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 
 		totalBuff.clear();
 		_filepath = get_file_path(_request, _config, _status);
+		std::cout << "FILEPATH: " << _filepath << " STATUS: " << _status << std::endl;
 		if (_request.method == "POST") {
 			if (_request.content_length > _maxBodySize)
 				_status = 413;
