@@ -23,14 +23,17 @@ std::string	extractBetweenChars(std::string str, char c) {
 void	WebServ::receiveBinary(const int& sockClient, const std::string& endBoundary) {
 
 	int		chunkSize = 1;
-	char	binChar[2];
+	char	binChar[4096];
 
 	while (chunkSize > 0) {
-		memset(binChar, 0, 2);
-		chunkSize = recv(sockClient, binChar, 1, 0);
+		memset(binChar, 0, 4096);
+		chunkSize = recv(sockClient, binChar, 4095, 0);
 		if (chunkSize == 0)
 			break;
-		_request._binaryBody.push_back(binChar[0]);
+		// if (select(_maxFD + 1, &_readySockets, NULL, NULL, NULL) < 0)
+		// 	printErrno(SELECT, EXIT);
+		for (int i = 0; i < chunkSize + 1; ++i)
+			_request._binaryBody.push_back(binChar[i]);
 	}
 
 	if (endBoundary != "") {
@@ -90,7 +93,8 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 		chunkSize = recv(sockClient, formDataBody, 1, 0);
 		if (chunkSize == 0)
 			break;
-
+		// if (select(_maxFD + 1, &_readySockets, NULL, NULL, &_timeoutSelect) < 0)
+		// 	printErrno(SELECT, EXIT);
 		formHeaderData.append(formDataBody);
 		if (formHeaderData.find("\r\n\r\n") != NPOS) {
 			receiveBinary(sockClient, "--" + boundary + "--");
