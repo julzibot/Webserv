@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/26 11:41:14 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/28 12:12:58 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,21 +68,18 @@ class LocationDir
 class Config
 {
     private:
-
-        int					worker_processes;
-        int					worker_connections;
         strstrMap			types;
 		strstrMap			cgi;
 		strstrMap			hosts;
         servLocMap			server_locs;
         servInfos			server_main;
 		std::vector<int>	servPortNums;
+		unsigned int		max_bodysize;
 
     public:
 		/* Accessors */
-        int					get_workproc() const { return (this->worker_processes); };
-        int					get_workco() const { return (this->worker_connections); };
         std::vector<int>    get_portnums() const { return (this->servPortNums); };
+		unsigned int		get_max_body() const { return (this->max_bodysize); };
 		servLocMap			getServ() const { return (this->server_locs); };
         std::string			get_type(std::string file_ext);
         std::string			get_cgi_type(std::string file_ext);
@@ -99,9 +96,8 @@ class Config
 							}
 		strstrMap			&getServMain(std::string const &hostIP, int port, std::string const &route, bool const &init);
 
-        void	set_workproc(int value) { this->worker_processes = value; };
-        void	set_workco(int value) { this->worker_connections = value; };
         void	add_type(std::string extension, std::string path) { this->types[extension] += path; };
+        void	set_bodysize( unsigned int bsize) { this->max_bodysize = bsize; };
         void	add_cgi(std::string extension, std::string path) { this->cgi[extension] += path; };
         void	add_hosts(std::string hostname, std::string ip) { this->hosts[hostname] += ip; };
         void    add_portnum(int portnum) { this->servPortNums.push_back(portnum); };
