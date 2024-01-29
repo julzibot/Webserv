@@ -4,7 +4,8 @@
 #include <fcntl.h>
 #include <signal.h>
 
-std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath, int &status_code)
+std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
+	int &status_code)
 {
 	std::string	output;
 	int			fd[2];
@@ -15,6 +16,9 @@ std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepat
 	cgi->insert_arg(request._bodyString);
 	if (pipe(fd) == -1)
 		throw std::exception();
+	fcntl(fd[0], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+    fcntl(fd[1], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+
 	pid = fork();
 	if (pid == -1)
 		throw std::exception();
@@ -33,7 +37,6 @@ std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepat
 	{
     	close(fd[1]);
 		int status;
-    	fcntl(fd[0], F_SETFL, O_NONBLOCK); // Set the read end of the pipe to non-blocking mode
 
 		fd_set set;
 		FD_ZERO(&set);
@@ -43,23 +46,28 @@ std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepat
 		timeout.tv_sec = CLIENT_TIMEOUT_CGI;
 		timeout.tv_usec = 0;
 
-		int result = select(0, &set, NULL, NULL, &timeout);
-		std::cout << "Result is " << result << std::endl;
+		int result = select(fd[0] + 1, &set, NULL, NULL, &timeout);
 		if (result > 0)
 		{
 			waitpid(pid, &status, 0);
-			std::cout << "Status is " << status << std::endl;
 			if (WIFEXITED(status))
-				std::cout << "Child exited with status " << WEXITSTATUS(status) << std::endl;
-			char buffer[1024];
-			int bytes_read;
-			bytes_read = read(fd[0], buffer, 1024);
-			output.append(buffer, bytes_read);
-			while ((bytes_read = read(fd[0], buffer, 1024)) > 0)
 			{
-				output.append(buffer, bytes_read);
+				if (WEXITSTATUS(status) != 0)
+				{
+					status_code = 500;
+					output = "";
+				}
+				else
+				{
+					status_code = 200;
+					char buffer[1024];
+					int bytes_read;
+					bytes_read = read(fd[0], buffer, 1024);
+					output.append(buffer, bytes_read);
+					while ((bytes_read = read(fd[0], buffer, 1024)) > 0)
+						output.append(buffer, bytes_read);
+				}
 			}
-			status_code = 200;
 		}
 		else if (result == 0)
 		{
