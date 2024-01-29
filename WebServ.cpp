@@ -201,7 +201,6 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 			std::deque<std::string> status_infos = ResponseFormatting::get_status_infos(status,
 				body, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
 			if (status != 200) {
-				std::ifstream inputFile(status_infos[0]);
 				body = ResponseFormatting::parse_body(status_infos[0], status);
 			}
 			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length(),
@@ -246,6 +245,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 
 		totalBuff.clear();
 		_filepath = get_file_path(_request, _config, _status);
+		std::cout << "FILEPATH: " << _filepath << " STATUS: " << _status << std::endl;
 		if (_request.method == "POST") {
 			if (_request.content_length > _maxBodySize)
 				_status = 413;

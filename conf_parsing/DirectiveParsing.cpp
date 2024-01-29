@@ -175,30 +175,12 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 		{
 			strstrMap &to_assign = config.getServMain(hostIP, ports[i], "", false);
 			if (to_assign["root"].empty() || to_assign["error_pages"].empty())
-				throw std::invalid_argument("Config file: 'root' or 'server_pages' missing in server settings");
+				throw std::invalid_argument("Config file: 'root' or 'error_pages' missing in server settings");
 			ServerMain["root"] = to_assign["root"];
 			ServerMain["server_name"] = to_assign["server_name"];
 			ServerMain["error_pages"] = to_assign["error_pages"];
 		}
 	}
-}
-
-void	dirParseEvents(Config& config, std::string line, std::string directive)
-{
-	(void)directive;
-	if (line.empty())
-		return;
-	line = removeSpaces(line);
-
-	std::istringstream	stream(line);
-	std::string			var;
-	std::string			value;
-
-	stream >> var >> value;
-	if (var == "worker_connections")
-		config.set_workco(std::atoi(value.c_str()));
-	else
-		throw (std::invalid_argument("\"" + var + "\": Unknown parameter in 'events' directive."));
 }
 
 void	dirParseTypes(Config& config, std::string line, std::string directive)
@@ -253,8 +235,10 @@ void	dirParseMain(Config& config, std::string line, std::string directive)
 	std::string			value;
 
 	stream >> var >> value;
-	if (var == "worker_processes")
-		config.set_workproc(std::atoi(value.c_str()));
+	if (var == "max_bodysize")
+		config.set_bodysize(std::atoi(value.c_str()));
+	// else
+	// 	throw std::invalid_argument("Unknown main directive found");
 }
 
 void	parseDirective(std::string line, std::string directive, Config& config) 
@@ -269,7 +253,6 @@ void	parseDirective(std::string line, std::string directive, Config& config)
 		return;
 	dirCase["location"] = &dirParseLocation;
 	dirCase["server"] = &dirParseServer;
-	dirCase["events"] = &dirParseEvents;
 	dirCase["types"] = &dirParseTypes;
 	dirCase["hosts"] = &dirParseHosts;
 	dirCase["main"] = &dirParseMain;
@@ -281,5 +264,5 @@ void	parseDirective(std::string line, std::string directive, Config& config)
 	if (dirCase.find(dirKey) != dirCase.end())
 		dirCase[dirKey](config, line, directive);
 	else if (dirKey != "http")
-		throw ("Unknown main directive found.");
+		throw std::invalid_argument("Unknown main directive found");
 }

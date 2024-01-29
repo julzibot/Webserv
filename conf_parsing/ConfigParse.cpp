@@ -103,11 +103,12 @@ size_t	isBrace(char brace, std::string line)
 template <typename T>
 void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, std::string> &directives, std::vector<std::string> &dir_index, std::vector<std::string> &stringPorts, unsigned int	&add_underscore)
 {
-	bool		add_portnum = 0;
+	bool		add_portnum = false;
 	bool		dupPorts = false;
 	int			open_braces = 1;
 	bool		can_write = true;
 	std::string	line;
+	std::string testline;
 	std::istringstream	portline;
 	std::string portbuff;
 	std::string	portnum = "";
@@ -117,6 +118,8 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 	while (open_braces && std::getline(stream, line))
 	{
 		line = parse_comments(line);
+		testline = line;
+		testline.erase(std::remove(testline.begin(), testline.end(), ' '), testline.end());
 		if (add_portnum && line.find("listen") != NPOS)
 		{
 			portnum = "";
@@ -135,11 +138,13 @@ void	get_braces_content(std::string dir_key, T &stream, std::map<std::string, st
 			portline.clear();
 			add_portnum = 0;
 		}
-		else if (add_portnum && line.find("listen") == NPOS)
+		else if (add_portnum && !testline.empty() && line.find("listen") == NPOS)
 			throw std::invalid_argument("Config file: directive following server is not 'listen'");
-		else if (!add_portnum && line.find("listen") != NPOS)
+		else if (!add_portnum && !testline.empty() && line.find("listen") != NPOS)
 			throw std::invalid_argument("Config file: 'listen' directive at wrong line");
-		if (isBrace('{', line) != NPOS)
+		if (testline.empty())
+			;
+		else if (isBrace('{', line) != NPOS)
 		{
 			open_braces++;
 			can_write = true;
@@ -196,13 +201,29 @@ Config	parse_config_file( std::string path )
 			i++;
 		}
 		line = parse_comments(line);
-		if (line.find("include") != NPOS)
+		if (line.find("include ") != NPOS)
             expandInclude(line, ls);
 		bracepos = isBrace('{', line);
 		if (bracepos != NPOS)
 			get_braces_content<std::istringstream>(line.substr(0, bracepos), ls, directives, dir_index, stringPorts, add_underscore);
 		parseDirective(line, directive, config);
 	}
+
+	// TESTING PARSING OUTPUT
+	// for (i = 0; i < dir_index.size(); i++)
+	// 	std::cout << "key: " << dir_index.at(i) << " value: " \
+	// 		<< directives[dir_index.at(i)] << std::endl << "----------" << std::endl;
+	// strstrMap infos;
+	// std::vector<int> ports = config.get_portnums();
+	// for (i = 0; i < ports.size(); i++)
+	// {
+	// 	std::cout << "PORT NUMBER " << ports[i] << std::endl;
+	// 	infos = config.getServMain(ports[i]);
+	// 	std::cout << "name: " << infos["server_name"] << " | root: "\
+	// 		<< infos["root"] << " | error path: " << infos["error_pages"] << std::endl << "----------" << std::endl;
+	// }
+	if (config.get_hostMap().empty() || config.getServ().empty())
+		throw	std::invalid_argument("Not enough information in config file");
 	return (config);
 }
 
@@ -224,26 +245,19 @@ LocationDir& get_Location_for_Path(HttpRequest &request, Config &config)
 	return (it->second);
 }
 
-std::string	file_request_case(size_t const &slashPos, size_t &dotPos, HttpRequest &request, Config &config, int &status_code)
+std::string	file_request_case(size_t &dotPos, HttpRequest &request, Config &config, int &status_code)
 {
 	std::string	reqHost = request.hostIP;
 	std::string file_path;
 	int	acss;
 
-	if (dotPos < slashPos)
-	{
-		std::string p = request.path.substr(0, slashPos);
-		// while (config.getServMain(request.port_number, p, true)["host"])
-		file_path = config.getServMain(reqHost, request.port_number, p, true)["root"] + request.path;
-		acss = access(file_path.c_str(), F_OK);
-		if (!acss && !access(file_path.c_str(), R_OK))
-			return (file_path);
-		else if (!acss)
-			status_code = 403;
-		else
-			status_code = 404;
-		return ("");
-	}
+	std::string p = request.path;
+	file_path = config.getServMain(reqHost, request.port_number, p, true)["root"] + p;
+	acss = access(file_path.c_str(), F_OK);
+	if (!acss && !access(file_path.c_str(), R_OK))
+		return (file_path);
+	else if (!acss)
+	{ status_code = 403; return ("");}
 	else
 	{
 		while (request.path[--dotPos] != '/') ;
@@ -257,12 +271,21 @@ std::string	check_index_files(HttpRequest &request, std::map<std::string, Locati
 {
 	std::vector<std::string> ind;
 	std::string	file_path;
+	std::string test_path;
 	int acss;
 
 	ind = it->second.get_index();
 	if (!request.prio_file.empty())
 		ind.insert(ind.begin(), request.prio_file);
 	file_path = it->second.get_root();
+	test_path = file_path;
+	if (file_path[file_path.length() - 1] == '/')
+		test_path = file_path.substr(0, file_path.length() - 1);
+	if (access(test_path.c_str(), F_OK) == -1)
+	{
+		status_code = 404;
+		return ("");
+	}
 	if (file_path[file_path.length() - 1] != '/')
 		file_path += '/';
 	if (request.path.length() > slashPos)
@@ -362,9 +385,7 @@ void	request_ip_check(std::string &reqHost, Config &config, int &status_code)
 			}
 		}
 		if (it == mapEnd)
-		{
 			status_code = 403;
-		}
 	}
 }
 
@@ -397,12 +418,8 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	std::string	locRoute;
 	size_t	slashPos = 1;
 	size_t dotPos = NPOS;
-	// CHECK THAT server_name CORRESPONDS
 	std::vector<bool>			matching_host;
 	matching_host = get_match_vect(tempHost, request, locations, config);
-	std::cout << "MATCHING_HOST: ";
-	for (unsigned int k = 0; k < matching_host.size(); k++)
-		std::cout << matching_host[k] << "; ";
 	if (matching_host[0] == false)
 	{
 		if (tempHost != "")
@@ -426,7 +443,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	dotPos = request.path.find('.');
 	if (dotPos != NPOS)
 	{
-		file_path = file_request_case(slashPos, dotPos, request, config, status_code);
+		file_path = file_request_case(dotPos, request, config, status_code);
 		if (status_code != 200 || !file_path.empty()) return (file_path);
 	}
 	unsigned int	host_index = 0;
@@ -442,7 +459,6 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 		}
 		host_index++;
 	}
-	std::cout << "TEMPHOST: " << tempHost << std::endl;
 	if (it == locEnd && locations.begin() != locEnd)
 	{
 		if (tempHost != "")
