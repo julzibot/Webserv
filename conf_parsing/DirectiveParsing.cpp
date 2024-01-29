@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   DirectiveParsing.cpp                               :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/28 20:31:11 by mstojilj         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Config.hpp"
 
 std::string	removeSpaces( std::string line ) {
@@ -91,8 +79,6 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 	ls >> varName;
 	if (varName == "listen")
 	{
-		std::cout << "PORTS SIZE: " << ports.size() << std::endl;
-		// std::vector<int> portnums = config.get_portnums();
 		for (unsigned int i = 0; i < ports.size(); i++)
 		{
 			std::vector<int> portnums = config.get_portnums();
@@ -178,12 +164,9 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 		for (unsigned int k = 0; k < dupStr.length(); k++)
 			tempRoute += " ";
 		
-		// std::cout << "TEMPROUTE: |" << tempRoute << "|" << std::endl;
 		LocationDir	&ld = config.getLocRef(hostIP, ports[i], tempRoute);
 		if (ld.get_route().empty())
 			ld.setRoute(tempRoute);
-		// std::cout << "LOC: |" << tempRoute << "|" << std::endl;
-		// std::cout << "VARS: " << keyword << " " << value << std::endl;
 			
 		if	(loc_assign(keyword, value, ld, tempRoute) == false)
 			return;

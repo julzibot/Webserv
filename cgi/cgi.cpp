@@ -1,73 +1,80 @@
 #include "cgi.hpp"
+#include "../WebServ.hpp"
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
 
-std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath, int &status_code)
+std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
+	int &status_code)
 {
 	std::string	output;
 	int			fd[2];
 	pid_t		pid;
 
 	cgi->insert_arg(filepath);
-	// Insert request details into CGI arguments
 	cgi->insert_arg(request.method);
 	cgi->insert_arg(request._bodyString);
 	if (pipe(fd) == -1)
 		throw std::exception();
+	fcntl(fd[0], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+    fcntl(fd[1], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+
 	pid = fork();
 	if (pid == -1)
 		throw std::exception();
-	fcntl(fd[0], F_SETFL, O_NONBLOCK, FD_CLOEXEC); // Set the read end of the pipe to non-blocking mode
-	fd_set set;
-	FD_ZERO(&set);
-	FD_SET(fd[0], &set);
 	if (pid == 0)
 	{
-		close(fd[1]);
-		dup2(fd[0], STDOUT_FILENO);
 		close(fd[0]);
+		dup2(fd[1], STDOUT_FILENO);
+		close(fd[1]);
 		if (execve(cgi->get_cgi_path().c_str(), cgi->get_cgi_args(), cgi->get_envp()) == -1)
 		{
+			std::cout << "The code crashed" << std::endl;
 			throw std::exception();
 		}
 	}
 	else
 	{
-    	close(fd[0]);
+    	close(fd[1]);
 		int status;
-		// TODO: Both should be unblocked
-		usleep(10);
 
+		fd_set set;
+		FD_ZERO(&set);
+		FD_SET(fd[0], &set);
 
 		struct timeval timeout;
-		timeout.tv_sec = 5; // 5 seconds
+		timeout.tv_sec = CLIENT_TIMEOUT_CGI;
 		timeout.tv_usec = 0;
-		int result = select(0, &set, NULL, NULL, &timeout);
+
+		int result = select(fd[0] + 1, &set, NULL, NULL, &timeout);
 		if (result > 0)
 		{
 			waitpid(pid, &status, 0);
 			if (WIFEXITED(status))
-				std::cout << "Child exited with status " << WEXITSTATUS(status) << std::endl;
-			if (WIFSIGNALED(status))
-				std::cout << "CHILD CRASHED " << WEXITSTATUS(status) << std::endl;
-			char buffer[1024];
-			int bytes_read;
-			bytes_read = read(fd[0], buffer, 1024);
-			output.append(buffer, bytes_read);
-			while ((bytes_read = read(fd[0], buffer, 1024)) > 0)
 			{
-				output.append(buffer, bytes_read);
+				if (WEXITSTATUS(status) != 0)
+				{
+					status_code = 500;
+					output = "";
+				}
+				else
+				{
+					status_code = 200;
+					char buffer[1024];
+					int bytes_read;
+					bytes_read = read(fd[0], buffer, 1024);
+					output.append(buffer, bytes_read);
+					while ((bytes_read = read(fd[0], buffer, 1024)) > 0)
+						output.append(buffer, bytes_read);
+				}
 			}
-			status_code = 200;
 		}
 		else if (result == 0)
 		{
-			std::cout << "CGI script took too long to execute" << std::endl;
-			output = "";
 			status_code = 408;
+			output = "";
 		}
-		close(fd[1]);
+		close(fd[0]);
 	}
 	return (output);
 }

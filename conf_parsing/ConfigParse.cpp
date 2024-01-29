@@ -63,7 +63,6 @@ void    expandInclude(std::string &line, T &s)
 	toParse >> command >> filename;
 	if (command != "include")
 		return;
-	std::cout << filename << std::endl;
     std::ifstream    fs("./conf_parsing/" + filename);
     if (fs.fail())
         throw (std::invalid_argument("Config file: Bad include filename."));
@@ -397,14 +396,12 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	std::string	reqHost = request.headers["Host"];
 	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 	reqHost = reqHost.substr(0,reqHost.find(':'));
-	// std::cout << " IN: REQHOST = " << reqHost << std::endl;
 	request_ip_check(reqHost, config, status_code);
 	if (status_code == 403)
 		return ("");
 	std::string tempHost = std::string(reqHost);
 	std::map<std::string, LocationDir>	&locations = config.getLocMap(tempHost, request.port_number);
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
-	// std::cout << "LOCATIONS: " << locations.begin()->first << std::endl;
 	if (locations.begin() == locEnd)
 	{
 		if	(config.checkNullID("", request.port_number))

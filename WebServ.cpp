@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   WebServ.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/01/22 17:51:55 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/29 22:06:22 by mstojilj         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "WebServ.hpp"
 #include "cgi/cgi.hpp"
 
@@ -75,7 +63,7 @@ void	WebServ::initSelectFDs( const unsigned int& size ) {
 
 WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(200),
 	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)),
-	_maxBodySize(UINT_MAX), _socketTimeoutValue(90) {
+	_maxBodySize(UINT_MAX), _socketTimeoutValue(CLIENT_TIMEOUT) {
 
 	try {
 		_config = parse_config_file(confFilenamePath);
@@ -84,6 +72,7 @@ WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(2
 		std::cerr << "Error: " << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	_maxBodySize = _config.get_max_body();
 	this->envp = envp;
 	initSockets(_config.get_portnums());
 	bindAndListen(_servsock, _config.get_portnums(), _saddr, _arrsize);
@@ -109,9 +98,6 @@ void	WebServ::initSockets( const std::vector<int>& portNums ) {
 		if (_servsock[i] == -1)
 			printErrno(SOCKET, EXIT);
 	}
-	for (size_t i = 0; i < _servsock.size(); ++i) {
-		std::cout << "servsock[" << i << "] : " << _servsock[i] << std::endl;
-	}
 }
 
 void	WebServ::bindAndListen( const std::vector<int>& servsock, const std::vector<int>& portnums,
@@ -135,7 +121,6 @@ void	WebServ::bindAndListen( const std::vector<int>& servsock, const std::vector
 void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 	const int& keepAliveTimeout, const int& clientSock )
 {
-	// std::cout << "[socket: " << _clientsock << "] - " << currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec << "s" << std::endl;
 	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout) {
 		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to " << _socketTimeoutValue << "s)" << RESETCLR << std::endl;
 		_request.http_version = "HTTP/1.1";
@@ -163,8 +148,7 @@ bool	WebServ::isServSock(const std::vector<int>& servsock, const int& sock) {
 	return (false);
 }
 
-void	WebServ::acceptNewConnection( const int& servSock ) {
-	
+void	WebServ::acceptNewConnection( const int& servSock ) {	
 	_clientsock = accept(servSock, (struct sockaddr*)&_caddr, (socklen_t*)&_caddrsize);
 	if (_clientsock < 0 && errno != EWOULDBLOCK) {
 		printErrno(ACCEPT, NO_EXIT);
@@ -187,7 +171,6 @@ void	WebServ::acceptNewConnection( const int& servSock ) {
 }
 
 void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string& headers ) {
-
 	// POST:
 	// if Content-Length > limit_max_body_size send 413 Content Too Large
 	// create a file with type specified in Content-Type
@@ -211,11 +194,21 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 	{
 		std::string	extension = filepath.substr(filepath.find_last_of(".") + 1);
 		std::string cgiExecPath = config.get_cgi_type(extension);
+		std::string reqHost = request.hostIP;
+		std::string p = request.path.substr(0, request.path.find('/', 1));
+
+		int	status;
 		if (extension == "py" || extension == "php")
 		{
 			CGI *cgi = new CGI(this->envp, cgiExecPath);
-			std::string body = cgi->execute_cgi(request, cgi, filepath, _status);
-			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length());
+			std::string body = cgi->execute_cgi(request, cgi, filepath, status);
+			std::deque<std::string> status_infos = ResponseFormatting::get_status_infos(status,
+				body, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
+			if (status != 200) {
+				body = ResponseFormatting::parse_body(status_infos[0], status);
+			}
+			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length(),
+					status, status_infos);
 			std::string response = headers + "\r\n" + body;
 			delete cgi;
 			return (response);
@@ -261,13 +254,11 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	std::string	totalBuff;
 	int			chunkSize = 1;
 	
-	std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Receiving from existing client" << RESETCLR << std::endl;
 	memset(_buff, 0, 2);
 	_recvsize = recv(sockClient, _buff, 1, 0);
 	totalBuff.append(_buff);
 
 	if (_recvsize == 0) {
-		std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Client disconnected" << RESETCLR << std::endl;
 		close(sockClient);
 		if (sockClient == _maxFD)
 			_maxFD -= 1;
@@ -275,10 +266,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	}
 	else if (_recvsize > 0) {
 		receiveRequest(sockClient, chunkSize, totalBuff);
-		std::cout << BOLD << "[SERVER] [socket: " << sockClient << "] Receiving request:" << RESETCLR << std::endl;
-		std::cout << totalBuff << std::endl;
 		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
-
 		std::string reqHost = _request.headers["Host"];
 		reqHost = reqHost.substr(0,reqHost.find(':'));
 		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
@@ -286,8 +274,10 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		_request.hostIP = reqHost;
 
 		totalBuff.clear();
-		_filepath = get_file_path(_request, _config, _status);
-
+		if (_status == 200) {
+			_filepath = get_file_path(_request, _config, _status);
+		}
+		std::cout << "FILEPATH: " << _filepath << " STATUS: " << _status << std::endl;
 		if (_request.method == "POST") {
 			std::cout << CYAN << "IS POST" << RESETCLR << std::endl;
 			if (_request.content_length > _config.get_max_body())
@@ -336,13 +326,10 @@ void	WebServ::startServer( void ) {
 			}
     	}
 	}
-	std::cout << BOLD << RED << "Closing all sockets:" << RESETCLR;
 	for (int i = 0; i < _maxFD + 1; ++i) {
-		std::cout << " " << i;
 		close(i);
 		FD_CLR(i, &_currentSockets);
 	}
-	std::cout << std::endl;
 	for (unsigned int i = 0; i < _servsock.size(); ++i) {
 		close(_servsock[i]);
 	}
