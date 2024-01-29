@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/22 17:51:55 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/28 20:22:45 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/29 22:06:22 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,9 +140,10 @@ void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to " << _socketTimeoutValue << "s)" << RESETCLR << std::endl;
 		_request.http_version = "HTTP/1.1";
 		_request.port_number = _sockPortMap[clientSock];
-		std::string	emptyStr = "";
+		std::string			emptyStr = "";
+		std::vector<char>	emptyVec;
 		_status = 408;
-		_output = _formatter.format_response(_request, _status, emptyStr, _config);
+		_output = _formatter.format_response(_request, _status, emptyStr, _config, emptyVec);
 		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
 		std::cout << _output.c_str() << std::endl;
 		send(clientSock, _output.c_str(), _output.length(), 0);
@@ -204,7 +205,7 @@ void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string&
 }
 
 std::string	WebServ::get_response(std::string &filepath, int &status,
-	HttpRequest &request, Config &config)
+	HttpRequest &request, Config &config, std::vector<char>& body)
 {
 	if (!filepath.empty())
 	{
@@ -220,7 +221,34 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 			return (response);
 		}
 	}
-	return (ResponseFormatting::format_response(request, status, filepath, config));
+	return (ResponseFormatting::format_response(request, status, filepath, config, body));
+}
+
+void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& responseBody) {
+
+	size_t	totalSent = 0;
+	int		bytesSent = 0;
+	size_t	bytesLeft = _output.size();
+
+	while (totalSent < _output.size()) {
+		bytesSent = send(sockClient, _output.data() + totalSent, bytesLeft, 0);
+		if (bytesSent != -1) {
+			totalSent += bytesSent;
+			bytesLeft -= bytesSent;
+		}
+	}
+	if (!responseBody.empty()) {
+		totalSent = 0;
+		bytesSent = 0;
+		bytesLeft = responseBody.size();
+		while (totalSent < responseBody.size()) {
+			bytesSent = send(sockClient, responseBody.data() + totalSent, bytesLeft, 0);
+			if (bytesSent != -1) {
+				totalSent += bytesSent;
+				bytesLeft -= bytesSent;
+			}
+		}
+	}
 }
 
 void	WebServ::receiveFromExistingClient(const int& sockClient)
@@ -253,27 +281,29 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 
 		std::string reqHost = _request.headers["Host"];
 		reqHost = reqHost.substr(0,reqHost.find(':'));
-		// std::cout << "REQHOST IN MAIN " << reqHost << std::endl;
 		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 		request_ip_check(reqHost, _config, _status);
 		_request.hostIP = reqHost;
-		// std::cout << "HERE IS THE IPHOST FROM REQUEST: " << _request.hostIP << std::endl;
 
 		totalBuff.clear();
 		_filepath = get_file_path(_request, _config, _status);
-		std::cout << "FILEPATH: " << _filepath << " STATUS: " << _status << std::endl;
+
 		if (_request.method == "POST") {
-			if (_request.content_length > _maxBodySize)
+			std::cout << CYAN << "IS POST" << RESETCLR << std::endl;
+			if (_request.content_length > _config.get_max_body())
 				_status = 413;
 			else
 				receiveBody(sockClient);
 		}
 		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
-		_output = WebServ::get_response(_filepath, _status, _request, _config);
+		std::vector<char>	responseBody;
+		_output = WebServ::get_response(_filepath, _status, _request, _config, responseBody);
 		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
 		std::cout << _output.c_str() << std::endl;
-		send(sockClient, _output.c_str(), _output.length(), 0);
+		sendToClient(sockClient, responseBody);
+		responseBody.clear();
+		_output.clear();
 		if (!_request.keepalive) {
 			close(sockClient);
 			if (sockClient == _maxFD)

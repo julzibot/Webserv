@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/21 16:16:58 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/27 14:10:43 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/01/28 21:33:43 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 
 void	WebServ::deleteResource( const std::string& resource ) {
 
+	if (_status != 200)
+		return;
 	std::string p = _request.path.substr(0, _request.path.find('/', 1));
 	std::string	reqHost = _request.hostIP;
 	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];

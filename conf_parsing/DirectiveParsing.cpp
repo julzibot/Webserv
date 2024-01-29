@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   DirectiveParsing.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 18:56:36 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/28 12:17:13 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/28 20:31:11 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,7 +172,6 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 	if (line.length() == keyword.length())
 		throw (std::invalid_argument("\"" + keyword + "\": Bad line in 'location' directive"));
 	value = line.substr(line.find(keyword) + keyword.length() + 1);
-	std::cout << "WUT" << std::endl;
 	for (unsigned int i = 0; i < ports.size(); i++)
 	{
 		tempRoute = route;

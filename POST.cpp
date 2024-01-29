@@ -28,11 +28,9 @@ void	WebServ::receiveBinary(const int& sockClient, const std::string& endBoundar
 	while (chunkSize > 0) {
 		memset(binChar, 0, 4096);
 		chunkSize = recv(sockClient, binChar, 4095, 0);
-		if (chunkSize == 0)
+		if (chunkSize <= 0)
 			break;
-		// if (select(_maxFD + 1, &_readySockets, NULL, NULL, NULL) < 0)
-		// 	printErrno(SELECT, EXIT);
-		for (int i = 0; i < chunkSize + 1; ++i)
+		for (int i = 0; i < chunkSize; ++i)
 			_request._binaryBody.push_back(binChar[i]);
 	}
 
@@ -51,6 +49,14 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 	std::ofstream	newFile;
 	std::string		filePath;
 
+	struct stat rootStat;
+	
+	// check if root is valid/exists
+	if (stat(root.c_str(), &rootStat) != 0) {
+		_status = 500; // Internal Server Error
+		return;
+	}
+
 	if (fileType == "image/jpeg")
 		filePath = root + "/" + filename + ".jpg";
 	else if (fileType == "image/png")
@@ -59,26 +65,29 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 		filePath = root + "/" + "unknown_file";
 	receiveBinary(sockClient, "");
 
-	newFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-	try {
+	if (_status == 200) {
+		newFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+		try {
 
-		struct stat	fileInfos;
-		if (stat(filePath.c_str(), &fileInfos) != -1) {
-			_status = 409; // Conflict
-			_request._binaryBody.clear();
-			return;
+			struct stat	fileInfos;
+			if (stat(filePath.c_str(), &fileInfos) != -1) {
+				_status = 409; // Conflict
+				_request._binaryBody.clear();
+				return;
+			}
+			newFile.open(filePath, std::ios::binary);
+			for (std::vector<char>::iterator it = _request._binaryBody.begin(); it != _request._binaryBody.end(); ++it)
+				newFile << *it;
 		}
-		newFile.open(filePath, std::ios::binary);
-		for (std::vector<char>::iterator it = _request._binaryBody.begin(); it != _request._binaryBody.end(); ++it)
-			newFile << *it;
+		catch (const std::ofstream::failure& e) {
+			std::cerr << RED << "Caught exception: receiveFileOnly() or receiveMultiFormData(): '" << e.what()
+				<< "' while receiving file on port: " << _request.port_number << RESETCLR << std::endl;
+			_status = 500; // Internal Server Error
+		}
+		newFile.close();
 	}
-	catch (const std::ofstream::failure& e) {
-		std::cerr << RED << "Caught exception: receiveFileOnly() or receiveMultiFormData(): '" << e.what()
-			<< "' while receiving file on port: " << _request.port_number << RESETCLR << std::endl;
-		_status = 500; // Internal Server Error
-	}
-	newFile.close();
 	_request._binaryBody.clear();
+	_request._bodyString.clear();
 	return;
 }
 
@@ -93,8 +102,6 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 		chunkSize = recv(sockClient, formDataBody, 1, 0);
 		if (chunkSize == 0)
 			break;
-		// if (select(_maxFD + 1, &_readySockets, NULL, NULL, &_timeoutSelect) < 0)
-		// 	printErrno(SELECT, EXIT);
 		formHeaderData.append(formDataBody);
 		if (formHeaderData.find("\r\n\r\n") != NPOS) {
 			receiveBinary(sockClient, "--" + boundary + "--");
@@ -139,6 +146,8 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 }
 
 void	WebServ::receiveBody( const int& sockClient ) {
+
+	std::cout << BLUE << "inside receiveBody() _status: " << _status << RESETCLR << std::endl;
 	std::string p = _request.path.substr(0, _request.path.find('/', 1));
 	std::string	reqHost = _request.hostIP;
 	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];
@@ -169,6 +178,7 @@ void	WebServ::receiveBody( const int& sockClient ) {
 		}
 		receiveMultiForm(sockClient, root, boundary);
 	}
-	else
+	else {
 		receiveFile(sockClient, fileType, "unknown_name", root);
+	}
 }
