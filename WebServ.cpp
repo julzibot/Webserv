@@ -72,6 +72,7 @@ WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(2
 		std::cerr << "Error: " << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	_maxBodySize = _config.get_max_body();
 	this->envp = envp;
 	initSockets(_config.get_portnums());
 	bindAndListen(_servsock, _config.get_portnums(), _saddr, _arrsize);
@@ -236,16 +237,6 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	else if (_recvsize > 0) {
 		receiveRequest(sockClient, chunkSize, totalBuff);
 		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
-
-		std::string reqHost = _request.headers["Host"];
-		reqHost = reqHost.substr(0,reqHost.find(':'));
-		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
-		request_ip_check(reqHost, _config, _status);
-		_request.hostIP = reqHost;
-
-		totalBuff.clear();
-		_filepath = get_file_path(_request, _config, _status);
-		std::cout << "FILEPATH: " << _filepath << " STATUS: " << _status << std::endl;
 		if (_request.method == "POST") {
 			if (_request.content_length > _maxBodySize)
 				_status = 413;
@@ -254,6 +245,18 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		}
 		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
+
+		std::string reqHost = _request.headers["Host"];
+		reqHost = reqHost.substr(0,reqHost.find(':'));
+		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+		request_ip_check(reqHost, _config, _status);
+		_request.hostIP = reqHost;
+
+		totalBuff.clear();
+		if (_status == 200) {
+			_filepath = get_file_path(_request, _config, _status);
+		}
+		std::cout << "FILEPATH: " << _filepath << " STATUS: " << _status << std::endl;
 		_output = WebServ::get_response(_filepath, _status, _request, _config);
 		send(sockClient, _output.c_str(), _output.length(), 0);
 		if (!_request.keepalive) {
