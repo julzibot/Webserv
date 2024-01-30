@@ -9,7 +9,7 @@ std::string	to_string(int number)
 	return result;
 }
 
-std::deque<std::string>	ResponseFormatting::get_status_infos(int status_code, std::string &file_path, std::string &error_path)
+std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string &error_path)
 {
 	if (error_path.empty())
 		error_path = "./server_files/error_pages";

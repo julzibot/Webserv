@@ -201,15 +201,16 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 		if (extension == "py" || extension == "php")
 		{
 			CGI *cgi = new CGI(this->envp, cgiExecPath);
-			std::string body = cgi->execute_cgi(request, cgi, filepath, status);
-			std::deque<std::string> status_infos = ResponseFormatting::get_status_infos(status,
-				body, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
+			cgi->execute_cgi(request, cgi, filepath, status, body);
+			std::string	bodyStr(body.begin(), body.end());
+			std::deque<std::string> status_infos = get_status_infos(status,
+				bodyStr, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
 			if (status != 200) {
-				body = ResponseFormatting::parse_body(status_infos[0], status);
+				ResponseFormatting::parse_body(status_infos[0], status, body);
 			}
-			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length(),
+			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.size(),
 					status, status_infos);
-			std::string response = headers + "\r\n" + body;
+			std::string response = headers + "\r\n" + bodyStr;
 			delete cgi;
 			return (response);
 		}

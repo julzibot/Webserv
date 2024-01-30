@@ -4,10 +4,9 @@
 #include <fcntl.h>
 #include <signal.h>
 
-std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
-	int &status_code)
+void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
+	int &status_code, std::vector<char>& output)
 {
-	std::string	output;
 	int			fd[2];
 	pid_t		pid;
 
@@ -55,7 +54,7 @@ std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepat
 				if (WEXITSTATUS(status) != 0)
 				{
 					status_code = 500;
-					output = "";
+					output.clear();
 				}
 				else
 				{
@@ -63,20 +62,26 @@ std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepat
 					char buffer[1024];
 					int bytes_read;
 					bytes_read = read(fd[0], buffer, 1024);
-					output.append(buffer, bytes_read);
-					while ((bytes_read = read(fd[0], buffer, 1024)) > 0)
-						output.append(buffer, bytes_read);
+					// output.append(buffer, bytes_read);
+					std::string	toAppend(buffer);
+					output.insert(output.end(), toAppend.begin(), toAppend.end());
+					while ((bytes_read = read(fd[0], buffer, 1024)) > 0) {
+
+						toAppend.clear();
+						toAppend = buffer;
+						output.insert(output.end(), toAppend.begin(), toAppend.end());
+						// output.append(buffer, bytes_read);
+					}
 				}
 			}
 		}
 		else if (result == 0)
 		{
 			status_code = 408;
-			output = "";
+			output.clear();
 		}
 		close(fd[0]);
 	}
-	return (output);
 }
 
 /**
