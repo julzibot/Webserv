@@ -12,7 +12,9 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 
 	cgi->insert_arg(filepath);
 	cgi->insert_arg(request.method);
-	cgi->insert_arg(request._bodyString);
+	std::string	vecToStr(request._binaryBody.begin(), request._binaryBody.end());
+
+	cgi->insert_arg(vecToStr);
 	if (pipe(fd) == -1)
 		throw std::exception();
 	fcntl(fd[0], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
@@ -28,7 +30,7 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 		close(fd[1]);
 		if (execve(cgi->get_cgi_path().c_str(), cgi->get_cgi_args(), cgi->get_envp()) == -1)
 		{
-			std::cout << "The code crashed" << std::endl;
+			std::cerr << "The CGI code crashed" << std::endl;
 			throw std::exception();
 		}
 	}
@@ -60,17 +62,18 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 				{
 					status_code = 200;
 					char buffer[1024];
-					int bytes_read;
-					bytes_read = read(fd[0], buffer, 1024);
-					// output.append(buffer, bytes_read);
+					std::memset(buffer, 0, 1024);
+					int bytes_read = read(fd[0], buffer, 1023);
 					std::string	toAppend(buffer);
 					output.insert(output.end(), toAppend.begin(), toAppend.end());
-					while ((bytes_read = read(fd[0], buffer, 1024)) > 0) {
+					while ((bytes_read = read(fd[0], buffer, 1023)) > 0) {
 
+						if (bytes_read <= 0)
+							break;
 						toAppend.clear();
 						toAppend = buffer;
 						output.insert(output.end(), toAppend.begin(), toAppend.end());
-						// output.append(buffer, bytes_read);
+						std::memset(buffer, 0, 1024);
 					}
 				}
 			}

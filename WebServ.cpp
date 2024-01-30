@@ -210,7 +210,7 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 			}
 			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.size(),
 					status, status_infos);
-			std::string response = headers + "\r\n" + bodyStr;
+			std::string response = headers + "\r\n";
 			delete cgi;
 			return (response);
 		}
@@ -267,6 +267,8 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	}
 	else if (_recvsize > 0) {
 		receiveRequest(sockClient, chunkSize, totalBuff);
+		std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
+		std::cout << totalBuff << std::endl;
 		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
 		std::string reqHost = _request.headers["Host"];
 		reqHost = reqHost.substr(0,reqHost.find(':'));
@@ -278,9 +280,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		if (_status == 200) {
 			_filepath = get_file_path(_request, _config, _status);
 		}
-		std::cout << "FILEPATH: " << _filepath << " STATUS: " << _status << std::endl;
 		if (_request.method == "POST") {
-			std::cout << CYAN << "IS POST" << RESETCLR << std::endl;
 			if (_request.content_length > _config.get_max_body())
 				_status = 413;
 			else
@@ -288,12 +288,12 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		}
 		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
-		std::vector<char>	responseBody;
-		_output = WebServ::get_response(_filepath, _status, _request, _config, responseBody);
+		_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
 		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
 		std::cout << _output.c_str() << std::endl;
-		sendToClient(sockClient, responseBody);
-		responseBody.clear();
+		sendToClient(sockClient, _responseBody);
+		_responseBody.clear();
+		_request._binaryBody.clear();
 		_output.clear();
 		if (!_request.keepalive) {
 			close(sockClient);

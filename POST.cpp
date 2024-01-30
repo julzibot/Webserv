@@ -40,7 +40,6 @@ void	WebServ::receiveBinary(const int& sockClient, const std::string& endBoundar
 		if (boundIt != _request._binaryBody.end())
 			_request._binaryBody.erase(boundIt, _request._binaryBody.end());
 	}
-	_request._bodyString.assign(_request._binaryBody.begin(), _request._binaryBody.end());
 }
 
 void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, const std::string& filename,
@@ -65,7 +64,7 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 		filePath = root + "/" + "unknown_file";
 	receiveBinary(sockClient, "");
 
-	if (_status == 200) {
+	if (_status == 200 && (_request.path.find("cgi")) == NPOS) {
 		newFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 		try {
 
@@ -86,8 +85,6 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 		}
 		newFile.close();
 	}
-	_request._binaryBody.clear();
-	_request._bodyString.clear();
 	return;
 }
 
@@ -147,7 +144,6 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 
 void	WebServ::receiveBody( const int& sockClient ) {
 
-	std::cout << BLUE << "inside receiveBody() _status: " << _status << RESETCLR << std::endl;
 	std::string p = _request.path.substr(0, _request.path.find('/', 1));
 	std::string	reqHost = _request.hostIP;
 	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];
@@ -178,7 +174,6 @@ void	WebServ::receiveBody( const int& sockClient ) {
 		}
 		receiveMultiForm(sockClient, root, boundary);
 	}
-	else {
+	else
 		receiveFile(sockClient, fileType, "unknown_name", root);
-	}
 }

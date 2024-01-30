@@ -98,13 +98,8 @@ void	ResponseFormatting::parse_body(std::string file_path, int const &status_cod
 	if (status_code == 301 || status_code == 408)
 		return;
 
-	std::ifstream	inputFile(file_path);
-	std::string		line;
-
-	if (!inputFile.is_open())
-		return;
-	
-	if (file_path.find(".jpg") != NPOS || file_path.find(".ico") != NPOS) {
+	if (file_path.find(".jpg") != NPOS || file_path.find(".jpg") != NPOS
+		|| file_path.find(".ico") != NPOS) {
 
 		std::ifstream	binaryFile(file_path, std::ios::binary);
 		binaryFile.seekg(0, std::ios::end);
@@ -121,12 +116,19 @@ void	ResponseFormatting::parse_body(std::string file_path, int const &status_cod
 		binaryFile.close();
 	}
 	else {
+		std::ifstream	inputFile(file_path);
+		if (!inputFile.is_open())
+			return;
+		
+		std::string		line;
 		while (std::getline(inputFile, line)) {
+			if (line.empty())
+				break;
 			line += '\n';
 			body.insert(body.end(), line.begin(), line.end());
 		}
+		inputFile.close();
 	}
-	inputFile.close();
 }
 
 std::string	ResponseFormatting::format_response(HttpRequest &request, int &status_code,

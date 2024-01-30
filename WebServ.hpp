@@ -77,6 +77,8 @@ private:
     int					_maxFD;
     struct timeval		_timeoutSelect;
 
+	std::vector<char>	_responseBody;
+
 	// POST Method
 	unsigned int		_maxBodySize;
 
