@@ -122,8 +122,6 @@ void	ResponseFormatting::parse_body(std::string file_path, int const &status_cod
 		
 		std::string		line;
 		while (std::getline(inputFile, line)) {
-			if (line.empty())
-				break;
 			line += '\n';
 			body.insert(body.end(), line.begin(), line.end());
 		}
