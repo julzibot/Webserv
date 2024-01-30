@@ -247,7 +247,6 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		if (_status == 200) {
 			_filepath = get_file_path(_request, _config, _status);
 		}
-		std::cout << "FILEPATH: " << _filepath << " STATUS: " << _status << std::endl;
 		if (_request.method == "POST") {
 			if (_request.content_length > _maxBodySize)
 				_status = 413;

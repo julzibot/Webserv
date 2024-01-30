@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/28 12:12:58 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/30 18:58:57 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,9 +86,9 @@ class Config
         strstrMap			get_hostMap(void) { return(this->hosts); };
         LocationDir			&getLocRef(std::string const &hostIP, int port, std::string route)
 							{ return (this->server_locs[hostIP + ":" + std::to_string(port)][route]); };
-		std::map<std::string, LocationDir>&	getLocMap(std::string const &hostIP, int port)
-							{ return (this->server_locs[hostIP + ":" + std::to_string(port)]); };
-		bool				checkNullID(std::string const &tempHost, int const &port) {
+		std::map<std::string, LocationDir> *getLocMap(std::string const &hostIP, int port)
+							{ return (&this->server_locs[hostIP + ":" + std::to_string(port)]); };
+		bool				checkHostServExist(std::string const &tempHost, int const &port) {
 								for (servLocMap::iterator it = this->server_locs.begin(); it != this->server_locs.end(); it++)
 									if (it->first == tempHost + ":" + std::to_string(port))
 										return (true);

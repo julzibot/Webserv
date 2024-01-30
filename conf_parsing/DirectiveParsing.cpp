@@ -103,15 +103,14 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 		throw (std::invalid_argument("\"" + varName + "\": Unknown parameter in 'server' directive"));
 }
 
-bool	loc_assign(std::string const &keyword, std::string const &value, LocationDir &ld, std::string const &tempRoute)
+bool	loc_assign(std::string const &keyword, std::string const &value, LocationDir &ld)
 {
 	std::istringstream locdirs("index root methods_except autoindex redirect");
 	std::string buff;
 
-	(void)tempRoute;
 	while (locdirs >> buff)
 		if (buff == keyword) break;
-	if (buff.empty())
+	if (buff == "redirect" && keyword != "redirect")
 		throw (std::invalid_argument("\"" + keyword + "\": Unknown parameter in 'location' directive"));
 	else if (keyword == "index" && ld.get_index().size() == 0)
 		{ ld.setindex(value); return (true); }
@@ -153,7 +152,6 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
     std::string			value;
 	std::string			tempRoute;
 
-
 	linestream >> keyword;
 	if (line.length() == keyword.length())
 		throw (std::invalid_argument("\"" + keyword + "\": Bad line in 'location' directive"));
@@ -168,7 +166,7 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 		if (ld.get_route().empty())
 			ld.setRoute(tempRoute);
 			
-		if	(loc_assign(keyword, value, ld, tempRoute) == false)
+		if	(loc_assign(keyword, value, ld) == false)
 			return;
 		strstrMap &ServerMain = config.getServMain(hostIP, ports[i], tempRoute, false);
 		if (ServerMain.empty())
@@ -226,6 +224,7 @@ void	dirParseHosts(Config& config, std::string line, std::string directive)
 void	dirParseMain(Config& config, std::string line, std::string directive)
 {
 	(void)directive;
+	std::istringstream dirStr = std::istringstream("types cgi hosts http");
 	if (line.empty())
 		return;
 	line = removeSpaces(line);
@@ -237,8 +236,14 @@ void	dirParseMain(Config& config, std::string line, std::string directive)
 	stream >> var >> value;
 	if (var == "max_bodysize")
 		config.set_bodysize(std::atoi(value.c_str()));
-	// else
-	// 	throw std::invalid_argument("Unknown main directive found");
+	else
+	{
+		std::string buff;
+		while (dirStr >> buff)
+			if (buff == var) break;
+		if (buff == "http" && var != "http")
+			throw std::invalid_argument("Unknown main directive found");
+	}
 }
 
 void	parseDirective(std::string line, std::string directive, Config& config) 
@@ -251,11 +256,13 @@ void	parseDirective(std::string line, std::string directive, Config& config)
 	line = removeSpaces(line);
 	if (line.empty())
 		return;
+	// std::cout << line << std::endl;
 	dirCase["location"] = &dirParseLocation;
 	dirCase["server"] = &dirParseServer;
 	dirCase["types"] = &dirParseTypes;
 	dirCase["hosts"] = &dirParseHosts;
 	dirCase["main"] = &dirParseMain;
+	dirCase["http"] = &dirParseMain;
 	dirCase["cgi"] = &dirParseCGI;
 
 	directive = removeSpaces(directive);
@@ -263,6 +270,6 @@ void	parseDirective(std::string line, std::string directive, Config& config)
 
 	if (dirCase.find(dirKey) != dirCase.end())
 		dirCase[dirKey](config, line, directive);
-	else if (dirKey != "http")
+	else
 		throw std::invalid_argument("Unknown main directive found");
 }
