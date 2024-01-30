@@ -476,14 +476,13 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 	status_code = 405; return ("");
 }
 
-std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
-		Config &config) {
-	DIR *dir;
-	struct dirent *en;
-	std::vector<std::string> list;
-	std::vector<std::string>::iterator it;
-	std::string	output;
-	LocationDir	&loc = get_Location_for_Path(request, config);
+void	get_directory_listing(std::string & file_path, HttpRequest &request,
+		Config &config, std::vector<char>& body) {
+	std::vector<std::string>::iterator	it;
+	std::vector<std::string>			list;
+	struct dirent						*en;
+	DIR									*dir;
+	LocationDir							&loc = get_Location_for_Path(request, config);
 
 	dir = opendir(file_path.c_str());
 	std::string reqHost = request.headers["Host"];
@@ -494,15 +493,13 @@ std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
 			list.push_back(en->d_name);
 		}
 		closedir(dir);
-		output = START_OF_LIST;
-		output += "<h1>Directory listing</h1>";
-		output += "<ul>";
+		body.insert(body.end(), START_OF_LIST.begin(), START_OF_LIST.end());
+		std::string	line;
 		for (it = list.begin(); it != list.end(); ++it) {
-			output += "<li><a href=\"http://" + reqHost + loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
+			line += "<li><a href=\"http://" + reqHost + loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
+			body.insert(body.end(), line.begin(), line.end());
 		}
-		output += "</ul>";
-		output += END_OF_LIST;
-		return (output);
+		body.insert(body.end(), END_OF_LIST.begin(), END_OF_LIST.end());
 	} else {
 		throw std::ios_base::failure("Error opening the directory!");
 	}

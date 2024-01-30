@@ -12,8 +12,8 @@ void	dirParseTypes(Config& config, std::string line, std::string directive);
 void	dirParseEvents(Config& config, std::string line, std::string directive);
 void	dirParseServer(Config& config, std::string line, std::string directive);
 void	dirParseLocation(std::string line, Config &config, std::string directive);
-std::string	get_directory_listing(std::string & file_path, HttpRequest &request,
-				Config& config);
+void	get_directory_listing(std::string & file_path, HttpRequest &request,
+				Config& config, std::vector<char>& body);
 
 /* Helper functions */
 std::string	removeSpaces( std::string line );

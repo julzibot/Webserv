@@ -4,16 +4,17 @@
 #include <fcntl.h>
 #include <signal.h>
 
-std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
-	int &status_code)
+void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
+	int &status_code, std::vector<char>& output)
 {
-	std::string	output;
 	int			fd[2];
 	pid_t		pid;
 
 	cgi->insert_arg(filepath);
 	cgi->insert_arg(request.method);
-	cgi->insert_arg(request._bodyString);
+	std::string	vecToStr(request._binaryBody.begin(), request._binaryBody.end());
+
+	cgi->insert_arg(vecToStr);
 	if (pipe(fd) == -1)
 		throw std::exception();
 	fcntl(fd[0], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
@@ -29,7 +30,7 @@ std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepat
 		close(fd[1]);
 		if (execve(cgi->get_cgi_path().c_str(), cgi->get_cgi_args(), cgi->get_envp()) == -1)
 		{
-			std::cout << "The code crashed" << std::endl;
+			std::cerr << "The CGI code crashed" << std::endl;
 			throw std::exception();
 		}
 	}
@@ -55,28 +56,35 @@ std::string	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepat
 				if (WEXITSTATUS(status) != 0)
 				{
 					status_code = 500;
-					output = "";
+					output.clear();
 				}
 				else
 				{
 					status_code = 200;
 					char buffer[1024];
-					int bytes_read;
-					bytes_read = read(fd[0], buffer, 1024);
-					output.append(buffer, bytes_read);
-					while ((bytes_read = read(fd[0], buffer, 1024)) > 0)
-						output.append(buffer, bytes_read);
+					std::memset(buffer, 0, 1024);
+					int bytes_read = read(fd[0], buffer, 1023);
+					std::string	toAppend(buffer);
+					output.insert(output.end(), toAppend.begin(), toAppend.end());
+					while ((bytes_read = read(fd[0], buffer, 1023)) > 0) {
+
+						if (bytes_read <= 0)
+							break;
+						toAppend.clear();
+						toAppend = buffer;
+						output.insert(output.end(), toAppend.begin(), toAppend.end());
+						std::memset(buffer, 0, 1024);
+					}
 				}
 			}
 		}
 		else if (result == 0)
 		{
 			status_code = 408;
-			output = "";
+			output.clear();
 		}
 		close(fd[0]);
 	}
-	return (output);
 }
 
 /**

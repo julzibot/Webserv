@@ -6,7 +6,7 @@ HttpRequest::HttpRequest() : content_length(UINT_MAX), cgi(false), keepalive(tru
 
 HttpRequest::HttpRequest(HttpRequest const &req) : headers(req.headers),
 	method(req.method), path(req.path), http_version(req.http_version),
-	body(req.body), port_number(req.port_number), cgi(false) {}
+	port_number(req.port_number), cgi(false) {}
 
 void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &request)
 {

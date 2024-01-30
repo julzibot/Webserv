@@ -1,0 +1,40 @@
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+    animation: background-flicker 0.1s infinite; /* Fast flickering */
+}
+
+.error-message {
+    font-size: 60px;
+    font-weight: bold;
+    color: red;
+    animation: blink 1s infinite, color-change 3s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes color-change {
+    0% { color: red; }
+    25% { color: blue; }
+    50% { color: green; }
+    75% { color: yellow; }
+    100% { color: red; }
+}
+
+@keyframes background-flicker {
+    0% { background-color: #ff0000; } /* Red */
+    20% { background-color: #00ff00; } /* Green */
+    40% { background-color: #0000ff; } /* Blue */
+    60% { background-color: #ff00ff; } /* Magenta */
+    80% { background-color: #00ffff; } /* Cyan */
+    100% { background-color: #ffff00; } /* Yellow */
+}

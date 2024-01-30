@@ -9,3 +9,4 @@ a.out
 */*.o
 webserv
 server_files/webserv.conf
+server_files/configuration_files/webserv.conf
