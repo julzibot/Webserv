@@ -125,9 +125,12 @@ void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to " << _socketTimeoutValue << "s)" << RESETCLR << std::endl;
 		_request.http_version = "HTTP/1.1";
 		_request.port_number = _sockPortMap[clientSock];
-		std::string	emptyStr = "";
+		std::string			emptyStr = "";
+		std::vector<char>	emptyVec;
 		_status = 408;
-		_output = _formatter.format_response(_request, _status, emptyStr, _config);
+		_output = _formatter.format_response(_request, _status, emptyStr, _config, emptyVec);
+		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
+		std::cout << _output.c_str() << std::endl;
 		send(clientSock, _output.c_str(), _output.length(), 0);
 		close(clientSock);
 		if (clientSock == _maxFD)
@@ -185,7 +188,7 @@ void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string&
 }
 
 std::string	WebServ::get_response(std::string &filepath, int &status,
-	HttpRequest &request, Config &config)
+	HttpRequest &request, Config &config, std::vector<char>& body)
 {
 	if (!filepath.empty())
 	{
@@ -198,20 +201,48 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 		if (extension == "py" || extension == "php")
 		{
 			CGI *cgi = new CGI(this->envp, cgiExecPath);
-			std::string body = cgi->execute_cgi(request, cgi, filepath, status);
-			std::deque<std::string> status_infos = ResponseFormatting::get_status_infos(status,
-				body, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
+			cgi->execute_cgi(request, cgi, filepath, status, body);
+			std::string	bodyStr(body.begin(), body.end());
+			std::deque<std::string> status_infos = get_status_infos(status,
+				bodyStr, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
 			if (status != 200) {
-				body = ResponseFormatting::parse_body(status_infos[0], status);
+				ResponseFormatting::parse_body(status_infos[0], status, body);
 			}
-			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.length(),
+			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.size(),
 					status, status_infos);
-			std::string response = headers + "\r\n" + body;
+			std::string response = headers + "\r\n";
 			delete cgi;
 			return (response);
 		}
 	}
-	return (ResponseFormatting::format_response(request, status, filepath, config));
+	return (ResponseFormatting::format_response(request, status, filepath, config, body));
+}
+
+void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& responseBody) {
+
+	size_t	totalSent = 0;
+	int		bytesSent = 0;
+	size_t	bytesLeft = _output.size();
+
+	while (totalSent < _output.size()) {
+		bytesSent = send(sockClient, _output.data() + totalSent, bytesLeft, 0);
+		if (bytesSent != -1) {
+			totalSent += bytesSent;
+			bytesLeft -= bytesSent;
+		}
+	}
+	if (!responseBody.empty()) {
+		totalSent = 0;
+		bytesSent = 0;
+		bytesLeft = responseBody.size();
+		while (totalSent < responseBody.size()) {
+			bytesSent = send(sockClient, responseBody.data() + totalSent, bytesLeft, 0);
+			if (bytesSent != -1) {
+				totalSent += bytesSent;
+				bytesLeft -= bytesSent;
+			}
+		}
+	}
 }
 
 void	WebServ::receiveFromExistingClient(const int& sockClient)
@@ -236,6 +267,8 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	}
 	else if (_recvsize > 0) {
 		receiveRequest(sockClient, chunkSize, totalBuff);
+		std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
+		std::cout << totalBuff << std::endl;
 		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
 		std::string reqHost = _request.headers["Host"];
 		reqHost = reqHost.substr(0,reqHost.find(':'));
@@ -248,16 +281,20 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 			_filepath = get_file_path(_request, _config, _status);
 		}
 		if (_request.method == "POST") {
-			if (_request.content_length > _maxBodySize)
+			if (_request.content_length > _config.get_max_body())
 				_status = 413;
 			else
 				receiveBody(sockClient);
 		}
 		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
-
-		_output = WebServ::get_response(_filepath, _status, _request, _config);
-		send(sockClient, _output.c_str(), _output.length(), 0);
+		_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
+		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
+		std::cout << _output.c_str() << std::endl;
+		sendToClient(sockClient, _responseBody);
+		_responseBody.clear();
+		_request._binaryBody.clear();
+		_output.clear();
 		if (!_request.keepalive) {
 			close(sockClient);
 			if (sockClient == _maxFD)

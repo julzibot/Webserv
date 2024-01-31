@@ -86,50 +86,46 @@ std::string	ResponseFormatting::parse_cgi_headers(std::string http_version,
 	return (headers);
 }
 
-// std::string	ResponseFormatting::parse_body(std::string file_path, int const &status_code)
-// {
-// 	std::ifstream	inputFile(file_path, std::ios::binary);
-// 	std::string		output;
-// 	std::string		line;
-
-// 	if (status_code == 301) //  || status_code == 408)
-// 		return (output);
-// 	if (!inputFile.is_open())
-// 		return output;
-
-//     std::vector<char> buffer(std::istreambuf_iterator<char>(inputFile), std::istreambuf_iterator<char>());
-//     return std::string(buffer.begin(), buffer.end());
-// }
-
-std::string	ResponseFormatting::parse_body(std::string file_path, int const &status_code)
+void	ResponseFormatting::parse_body(std::string file_path, int const &status_code, std::vector<char>& body)
 {
-    std::ifstream	inputFile(file_path.c_str(), std::ios::binary);
-    std::string		output;
-    std::string		line;
+	if (status_code == 301 || status_code == 408)
+		return;
 
-    if (status_code == 301) //  || status_code == 408)
-        return (output);
-    if (!inputFile.is_open())
-        return output;
+	if (file_path.find(".jpg") != NPOS || file_path.find(".jpg") != NPOS
+		|| file_path.find(".ico") != NPOS) {
 
-    inputFile.seekg(0, std::ios::end);
-    std::streamsize size = inputFile.tellg();
-    inputFile.seekg(0, std::ios::beg);
+		std::ifstream	binaryFile(file_path, std::ios::binary);
+		binaryFile.seekg(0, std::ios::end);
 
-    if (size > 0)
-    {
-        output.resize(size);
-        inputFile.read(&output[0], size);
-    }
+		std::streamsize	fileSize = binaryFile.tellg();
 
-    return output;
+		body.resize(fileSize);
+		binaryFile.seekg(0, std::ios::beg);
+
+		if (!binaryFile.read(body.data(), fileSize)) {
+			std::cerr << "parse_body(): Set status code to 500!" << std::endl;
+			// status_code = 500; // Internal Server Error
+		}
+		binaryFile.close();
+	}
+	else {
+		std::ifstream	inputFile(file_path);
+		if (!inputFile.is_open())
+			return;
+		
+		std::string		line;
+		while (std::getline(inputFile, line)) {
+			line += '\n';
+			body.insert(body.end(), line.begin(), line.end());
+		}
+		inputFile.close();
+	}
 }
 
 std::string	ResponseFormatting::format_response(HttpRequest &request, int &status_code,
-		std::string &file_path, Config &config)
+		std::string &file_path, Config &config, std::vector<char>& body)
 {
 	std::string	output;
-	std::string	body;
 	std::string	headers;
 	std::string p = request.path.substr(0, request.path.find('/', 1));
 	std::string	reqHost = request.hostIP;
@@ -140,24 +136,26 @@ std::string	ResponseFormatting::format_response(HttpRequest &request, int &statu
 	if (status_code == 1001)
 	{
 		try {
-			body = get_directory_listing(file_path, request, config);
+			get_directory_listing(file_path, request, config, body);
 			headers = parse_headers(status_infos, request.http_version, status_code,
-						config, body.length());
+						config, body.size());
 		} catch (const std::ios_base::failure& e) {
 			status_code = 403;
 			status_infos = get_status_infos(status_code,
 				file_path, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
-			body = parse_body(status_infos[0], status_code);
+			parse_body(status_infos[0], status_code, body);
 		}
 	}
 	else
 	{
-		body = parse_body(status_infos[0], status_code);
+		parse_body(status_infos[0], status_code, body);
+		if (status_infos[0].find(".jpg") != NPOS || status_infos[0].find(".ico") != NPOS)
+			headers = parse_headers(status_infos, request.http_version,
+					status_code, config, body.size());
+		else
 		headers = parse_headers(status_infos, request.http_version,
-				status_code, config, body.length());
+					status_code, config, body.size());
 	}
-	output = headers;
-	// if (body.length() > 0)
-	output += '\n' + body + '\n';
+	output = headers + "\n";
 	return (output);
 }

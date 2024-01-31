@@ -1,0 +1,21 @@
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+}
+
+.error-message {
+    font-size: 60px;
+    font-weight: bold;
+    color: red;
+    animation: scaleUpDown 0.5s infinite; /* Adjust the duration for speed */
+}
+
+@keyframes scaleUpDown {
+    0%, 100% { transform: scale(1); } /* Normal size */
+    50% { transform: scale(1.8); } /* 1.5 times the normal size */
+}

@@ -77,6 +77,8 @@ private:
     int					_maxFD;
     struct timeval		_timeoutSelect;
 
+	std::vector<char>	_responseBody;
+
 	// POST Method
 	unsigned int		_maxBodySize;
 
@@ -98,7 +100,8 @@ private:
 	bool	isServSock(const std::vector<int>& servsock, const int& sock);
 	void	acceptNewConnection( const int& servSock );
 	void	receiveFromExistingClient( const int& sockClient );
-	std::string	get_response(std::string &filepath, int &status, HttpRequest &request, Config &config);
+	std::string	get_response(std::string &filepath, int &status,
+		HttpRequest &request, Config &config, std::vector<char>& body);
 	
 	// POST method
 	void	receiveRequest( const int& sockClient,
@@ -106,8 +109,9 @@ private:
 	void	receiveBody( const int& sockClient );
 	void	receiveMultiForm( const int& sockClient, std::string root, std::string boundary );
 	void	receiveBinary( const int& sockClient, const std::string& endBoundary );
-	void	receiveFile(const int& sockClient, const std::string& fileType, const std::string& filename,
-				const std::string& root);
+	void	receiveFile(const int& sockClient, const std::string& fileType,
+		const std::string& filename, const std::string& root);
+	void	sendToClient(const int& sockClient, const std::vector<char>& responseBody);
 
 	// DELETE method
 	void	deleteResource( const std::string& resource );
