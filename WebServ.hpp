@@ -112,6 +112,7 @@ private:
 	void	receiveFile(const int& sockClient, const std::string& fileType,
 		const std::string& filename, const std::string& root);
 	void	sendToClient(const int& sockClient, const std::vector<char>& responseBody);
+	void    socketFlush(const int& sockClient);
 
 	// DELETE method
 	void	deleteResource( const std::string& resource );

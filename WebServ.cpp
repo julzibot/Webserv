@@ -130,7 +130,7 @@ void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 		_status = 408;
 		_output = _formatter.format_response(_request, _status, emptyStr, _config, emptyVec);
 		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
-		std::cout << _output.c_str() << std::endl;
+		// std::cout << _output.c_str() << std::endl;
 		send(clientSock, _output.c_str(), _output.length(), 0);
 		close(clientSock);
 		if (clientSock == _maxFD)
@@ -224,6 +224,7 @@ void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& respo
 	int		bytesSent = 0;
 	size_t	bytesLeft = _output.size();
 
+	std::cout << "OUTPUT: " << _output.data() << " SIZE: " << _output.size() << std::endl;
 	while (totalSent < _output.size()) {
 		bytesSent = send(sockClient, _output.data() + totalSent, bytesLeft, 0);
 		if (bytesSent != -1) {
@@ -232,6 +233,7 @@ void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& respo
 		}
 	}
 	if (!responseBody.empty()) {
+		std::cout << "BODY" << std::endl;
 		totalSent = 0;
 		bytesSent = 0;
 		bytesLeft = responseBody.size();
@@ -243,6 +245,18 @@ void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& respo
 			}
 		}
 	}
+}
+
+void    WebServ::socketFlush(const int& sockClient)
+{
+    int        chunkSize = 1;
+    char    binChar[4096];
+
+    while (chunkSize > 0) {
+        chunkSize = recv(sockClient, binChar, 4095, 0);
+        if (chunkSize <= 0)
+            break;
+    }
 }
 
 void	WebServ::receiveFromExistingClient(const int& sockClient)
@@ -268,8 +282,14 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	else if (_recvsize > 0) {
 		receiveRequest(sockClient, chunkSize, totalBuff);
 		std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
-		std::cout << totalBuff << std::endl;
+		// std::cout << totalBuff << std::endl;
 		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
+		// strstrMap::iterator ite = 
+		std::map<std::string, std::string>::iterator it;
+		for (it = _request.headers.begin(); it != _request.headers.end(); ++it) {
+			std::cout << it->first << ": " << it->second << std::endl;
+		}
+
 		std::string reqHost = _request.headers["Host"];
 		reqHost = reqHost.substr(0,reqHost.find(':'));
 		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
@@ -281,8 +301,12 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 			_filepath = get_file_path(_request, _config, _status);
 		}
 		if (_request.method == "POST") {
+			std::cout << "CONTENT_LENGTH: " << _request.content_length << std::endl;
 			if (_request.content_length > _config.get_max_body())
+			{
 				_status = 413;
+				socketFlush(sockClient);
+			}
 			else
 				receiveBody(sockClient);
 		}

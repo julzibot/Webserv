@@ -10,7 +10,9 @@ import signal
 # i = 0
 # while True:
 # 	i+=1
-
+print('--------------')
+print(sys.argv[2])
+print('--------------')
 # Get the request method from the first command line argument
 method = sys.argv[1].upper()
 

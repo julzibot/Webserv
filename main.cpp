@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/27 22:27:34 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/01/31 19:41:22 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ int main(int argc, char **argv, char **envp) {
 	if (argc == 2)
 		WebServ	server(argv[1], envp);
 	else
-		WebServ	server("server_files/webserv.conf", envp);
+		WebServ	server("server_files/configuration_files/tosh_tests.conf", envp);
 
     return (0);
 }

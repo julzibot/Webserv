@@ -235,7 +235,10 @@ void	dirParseMain(Config& config, std::string line, std::string directive)
 
 	stream >> var >> value;
 	if (var == "max_bodysize")
+	{
 		config.set_bodysize(std::atoi(value.c_str()));
+		std::cout << "MAX BODY: " << config.get_max_body() << std::endl;
+	}
 	else
 	{
 		std::string buff;
