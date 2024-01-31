@@ -197,8 +197,7 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 		std::string reqHost = request.hostIP;
 		std::string p = request.path.substr(0, request.path.find('/', 1));
 
-		int	status;
-		if (extension == "py" || extension == "php")
+		if (status == 200 && (extension == "py" || extension == "php"))
 		{
 			CGI *cgi = new CGI(this->envp, cgiExecPath);
 			cgi->execute_cgi(request, cgi, filepath, status, body);
@@ -254,8 +253,6 @@ void    WebServ::socketFlush(const int& sockClient)
 
     while (chunkSize > 0) {
         chunkSize = recv(sockClient, binChar, 4095, 0);
-        if (chunkSize <= 0)
-            break;
     }
 }
 
