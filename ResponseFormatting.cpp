@@ -1,17 +1,10 @@
 #include "ResponseFormatting.hpp"
+#include "conf_parsing/Config.hpp"
 #include "conf_parsing/DirectiveParsing.h"
-
-std::string	to_string(int number)
-{
-	std::stringstream ss;
-	ss << number;
-	std::string result = ss.str();
-	return result;
-}
 
 std::deque<std::string>	ResponseFormatting::get_status_infos(int status_code, std::string &file_path, std::string &error_path)
 {
-	if (error_path.empty())
+	if (error_path.empty() || access(file_path.c_str(), F_OK) != 0)
 		error_path = "./server_files/error_pages";
 	std::deque<std::string>	status_infos;
 	switch (status_code)

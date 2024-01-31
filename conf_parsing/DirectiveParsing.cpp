@@ -172,8 +172,8 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 		if (ServerMain.empty())
 		{
 			strstrMap &to_assign = config.getServMain(hostIP, ports[i], "", false);
-			if (to_assign["root"].empty() || to_assign["error_pages"].empty())
-				throw std::invalid_argument("Config file: 'root' or 'error_pages' missing in server settings");
+			if (to_assign["root"].empty())
+				throw std::invalid_argument("Config file: 'root' missing in server settings");
 			ServerMain["root"] = to_assign["root"];
 			ServerMain["server_name"] = to_assign["server_name"];
 			ServerMain["error_pages"] = to_assign["error_pages"];

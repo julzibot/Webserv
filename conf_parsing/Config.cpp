@@ -43,12 +43,20 @@ std::string	Config::get_cgi_type(std::string file_ext)
 	return (this->cgi[file_ext]);
 }
 
+std::string	to_string(int number)
+{
+	std::stringstream ss;
+	ss << number;
+	std::string result = ss.str();
+	return result;
+}
+
 strstrMap		&Config::getServMain(std::string const &hostIP, int port, std::string const  &route, bool const &init)
 {
-	std::map<std::string, strstrMap> &servers = this->server_main[hostIP + ":" + std::to_string(port)];
+	std::map<std::string, strstrMap> &servers = this->server_main[hostIP + ":" + to_string(port)];
 	if (init && servers.begin() == servers.end())
 	{
-		servers = this->server_main[":" + std::to_string(port)];
+		servers = this->server_main[":" + to_string(port)];
 		return (servers["main"]);
 	}
 	std::map<std::string, strstrMap>::iterator it;
