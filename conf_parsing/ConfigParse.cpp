@@ -239,6 +239,7 @@ std::string	file_request_case(size_t &dotPos, HttpRequest &request, Config &conf
 
 	std::string p = request.path;
 	file_path = config.getServMain(reqHost, request.port_number, p, true)["root"] + p;
+	std::cout << "FILEPATH: " << file_path << std::endl;
 	acss = access(file_path.c_str(), F_OK);
 	if (!acss && !access(file_path.c_str(), R_OK))
 		return (file_path);
@@ -380,7 +381,10 @@ std::map<std::string, LocationDir>	*getNullLocation(Config &config, HttpRequest 
 
 	locations = config.getLocMap("", request.port_number);
 	if (locations->begin() == locations->end())
+	{
 		status_code = 404;
+		return (locations);
+	}
 	matching_host = get_match_vect("", request, *locations, config);
 	if (matching_host[0] == false)
 		status_code = 404;
@@ -421,7 +425,7 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 				return("");
 	}
 	else if (matching_host[0] == false && tempHost == "")
-	{ status_code = 404; return (""); }
+		{ status_code = 404; return ("");}
 
 	if (request.path.length() > 1)
 		slashPos = request.path.find('/', 1);
