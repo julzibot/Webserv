@@ -105,15 +105,13 @@ private:
 		HttpRequest &request, Config &config, std::vector<char>& body);
 	
 	// POST method
-	void	receiveRequest( const int& sockClient,
-				int& chunkSize, std::string& totalBuff );
-	void	receiveBody( const int& sockClient );
-	void	receiveMultiForm( const int& sockClient, std::string root, std::string boundary );
-	void	receiveBinary( const int& sockClient, const std::string& endBoundary );
-	void	receiveFile(const int& sockClient, const std::string& fileType,
-		const std::string& filename, const std::string& root);
+	bool		receiveRequest( const int& sockClient, std::string& headers );
+	void	receiveBody( void );
+	void	receiveMultiForm( std::string root, const std::string boundary );
+	void	storeBinary( const std::string& endBoundary );
+	void	storeFile(const std::string& fileType, const std::string& filename,
+		const std::string& root, const std::string boundary);
 	void	sendToClient(const int& sockClient, const std::vector<char>& responseBody);
-	void    socketFlush(const int& sockClient);
 
 	// DELETE method
 	void	deleteResource( const std::string& resource );

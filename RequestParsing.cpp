@@ -27,23 +27,21 @@ void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &req
 	}
 }
 
-HttpRequest	HttpRequestParse::parse(std::string const &req_str, int portnum)
+void	HttpRequestParse::parse(HttpRequest& request, std::string const &req_str, int portnum)
 {
-	HttpRequest request;
-
 	request.port_number = portnum;
-	std::istringstream requestStream(req_str);
-	std::string line;
+	std::istringstream	requestStream(req_str);
+	std::string			line;
+	
 	std::getline(requestStream, line);
 	std::istringstream linestream(line);
 	linestream >> request.method >> request.path >> request.http_version;
 	HttpRequestParse::parse_headers(requestStream, request);
+
 	strstrMap::iterator	headerIt = request.headers.find("Content-Length");
 	if (headerIt != request.headers.end())
 		request.content_length = std::atoi(headerIt->second.c_str());
 	headerIt = request.headers.find("Connection");
 	if (headerIt != request.headers.end() && headerIt->second == "close")
 		request.keepalive = false;
-
-    return (request);
 }

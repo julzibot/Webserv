@@ -161,29 +161,13 @@ void	WebServ::acceptNewConnection( const int& servSock ) {
 		_socketTimeoutMap[_clientsock] = startSockTimeout;
 		
 		if (!isServSock(_servsock, _clientsock))
-			std::cout << BOLD << "[SERVER] [socket: " << _clientsock << "] New client connected with success" << RESETCLR << std::endl;
+			std::cout << BOLD << "[SERVER] [socket: " << _clientsock
+				<< "] New client connected with success" << RESETCLR << std::endl;
 		fcntl(_clientsock, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 		if (_clientsock > _maxFD)
 			_maxFD = _clientsock;
 		FD_SET(_clientsock, &_currentSockets);
 		_sockPortMap[_clientsock] = _sockPortMap[servSock];
-	}
-}
-
-void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string& headers ) {
-	// POST:
-	// if Content-Length > limit_max_body_size send 413 Content Too Large
-	// create a file with type specified in Content-Type
-	// if \r\n\r\n (CRLF) encountered, headers end, body begins
-	while (chunkSize > 0) {
-		if (headers.find("\r\n\r\n") != NPOS)
-			break;
-		memset(_buff, 0, 2);
-		chunkSize = recv(sockClient, _buff, 1, 0);
-		if (chunkSize == 0)
-			break;
-		_recvsize += chunkSize;
-		headers.append(_buff);
 	}
 }
 
@@ -249,18 +233,58 @@ void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& respo
 		fullResponse.clear();
 	}
 	_responseBody.clear();
+	_request.fullRequest.clear();
 	_request._binaryBody.clear();
 	_output.clear();
 }
 
-void    WebServ::socketFlush(const int& sockClient)
-{
-    int        chunkSize = 1;
-    char    binChar[4096];
+bool	WebServ::receiveRequest( const int& sockClient, std::string& headers ) {
 
-    while (chunkSize > 0) {
-        chunkSize = recv(sockClient, binChar, 4095, 0);
-    }
+	// POST:
+	// if Content-Length > limit_max_body_size send 413 Content Too Large
+	// create a file with type specified in Content-Type
+	// if \r\n\r\n (CRLF) encountered, headers end, body begins
+	ssize_t	chunkSize = 1;
+	char	buffer[2048];
+
+	while (chunkSize > 0) {
+		std::memset(buffer, 0, 2048);
+		chunkSize = recv(sockClient, buffer, 2048, 0);
+		if (chunkSize == 0)
+			break;
+		_recvsize += chunkSize;
+		std::cout << "chunksize: " << chunkSize << std::endl;
+		_request.fullRequest.insert(_request.fullRequest.end(), buffer, buffer + chunkSize);
+	}
+
+	if (_request.fullRequest.empty())
+		return (0);
+	std::cout << "REQ SIZE: " << _request.fullRequest.size() << std::endl;
+	std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
+
+	// split headers and body by CRLF
+	size_t	reqSize = _request.fullRequest.size();
+	for (size_t i = 0; i < reqSize; ++i) {
+		if (i < reqSize - 4 && _request.fullRequest[i] == '\r'
+			&& _request.fullRequest[i + 1] == '\n' && _request.fullRequest[i + 2] == '\r'
+			&& _request.fullRequest[i + 3] == '\n') {
+				i += 3;
+				break;
+			}
+		headers.push_back(_request.fullRequest[i]);
+	}
+	// Delete headers up until body including CRLF
+	const char*					crlf = "\r\n\r\n";
+	std::vector<char>::iterator it = std::search(_request.fullRequest.begin(),
+		_request.fullRequest.end(), crlf, crlf + 4);
+	if (it != _request.fullRequest.end())
+		_request.fullRequest.erase(_request.fullRequest.begin(), it + 4);
+
+	// std::cout << "---------------------" << std::endl;
+	// for (size_t i = 0; i < _request.fullRequest.size(); ++i)
+	// 	std::cout << _request.fullRequest[i];
+	// exit (0);
+	return (1);
 }
 
 void	WebServ::receiveFromExistingClient(const int& sockClient)
@@ -270,12 +294,8 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		printErrno(GETTIMEOFDAY, EXIT);
 	_socketTimeoutMap[sockClient] = timeoutUpdate;
 
-	std::string	totalBuff;
-	int			chunkSize = 1;
-	
-	memset(_buff, 0, 2);
-	_recvsize = recv(sockClient, _buff, 1, 0);
-	totalBuff.append(_buff);
+	std::string	headers;
+	_recvsize = receiveRequest(sockClient, headers);
 
 	if (_recvsize == 0) {
 		std::cout << YELLOW << "[socket: " << sockClient << "] Client has disconnected" << RESETCLR << std::endl;
@@ -285,33 +305,31 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		FD_CLR(sockClient, &_currentSockets);
 	}
 	else if (_recvsize > 0) {
-		receiveRequest(sockClient, chunkSize, totalBuff);
-		std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
-		std::cout << totalBuff << std::endl;
-		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
-
+		std::cout << "Headers:" << std::endl;
+		std::cout << headers << std::endl;
+		HttpRequestParse::parse(_request, headers, _sockPortMap[sockClient]);
+		/* Headers will be parsed at this point */
 		std::string reqHost = _request.headers["Host"];
 		reqHost = reqHost.substr(0,reqHost.find(':'));
 		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 		request_ip_check(reqHost, _config, _status);
 		_request.hostIP = reqHost;
 
-		totalBuff.clear();
+		headers.clear();
 		if (_status == 200) {
 			_filepath = get_file_path(_request, _config, _status);
 		}
 		if (_request.method == "POST") {
 			if (_request.content_length > _config.get_max_body())
-			{
 				_status = 413;
-				socketFlush(sockClient);
-			}
 			else
-				receiveBody(sockClient);
+				receiveBody();
 		}
 		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
 	}
+	_request.fullRequest.clear();
+	_request._binaryBody.clear();
 	FD_CLR(sockClient, &_readSockets);
 	FD_SET(sockClient, &_writeSockets);
 }
@@ -374,6 +392,26 @@ void	WebServ::startServer( void ) {
 				printed = true;
 			}
 			if (FD_ISSET(i, &_writeSockets)) {
+
+				/*print*/
+				std::cout << "Read sockets: ";
+				for (int i = 0; printed == true && i < _maxFD + 1; ++i) {
+					if (FD_ISSET(i, &_readSockets))
+						std::cout << RED << i << " " << RESETCLR;
+				}
+				if (printed == true)
+					std::cout << std::endl;
+			
+				if (printed == true)
+					std::cout << "Write sockets: ";
+				for (int i = 0; printed == true && i < _maxFD + 1; ++i) {
+					if (FD_ISSET(i, &_writeSockets))
+						std::cout << RED << i << " " << RESETCLR;
+				}
+				if (printed == true)
+					std::cout << std::endl;
+					/*print*/
+				
 				sendToClient(i, _responseBody);
 				printed = true;
 			}
