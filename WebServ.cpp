@@ -94,7 +94,6 @@ void	WebServ::initSockets( const std::vector<int>& portNums ) {
 	for (unsigned int i = 0; i < _arrsize; ++i) {
 		_servsock.push_back(socket(AF_INET, SOCK_STREAM, 0));
 		fcntl(_servsock[i], F_SETFL, O_NONBLOCK, FD_CLOEXEC);
-		
 		if (_servsock[i] == -1)
 			printErrno(SOCKET, EXIT);
 	}
@@ -130,7 +129,6 @@ void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 		_status = 408;
 		_output = _formatter.format_response(_request, _status, emptyStr, _config, emptyVec);
 		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
-		std::cout << _output.c_str() << std::endl;
 		send(clientSock, _output.c_str(), _output.length(), 0);
 		close(clientSock);
 		if (clientSock == _maxFD)
@@ -197,8 +195,7 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 		std::string reqHost = request.hostIP;
 		std::string p = request.path.substr(0, request.path.find('/', 1));
 
-		int	status;
-		if (extension == "py" || extension == "php")
+		if (status == 200 && (extension == "py" || extension == "php"))
 		{
 			CGI *cgi = new CGI(this->envp, cgiExecPath);
 			cgi->execute_cgi(request, cgi, filepath, status, body);
@@ -245,6 +242,16 @@ void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& respo
 	}
 }
 
+void    WebServ::socketFlush(const int& sockClient)
+{
+    int        chunkSize = 1;
+    char    binChar[4096];
+
+    while (chunkSize > 0) {
+        chunkSize = recv(sockClient, binChar, 4095, 0);
+    }
+}
+
 void	WebServ::receiveFromExistingClient(const int& sockClient)
 {
 	struct timeval	timeoutUpdate;
@@ -270,6 +277,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
 		std::cout << totalBuff << std::endl;
 		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
+
 		std::string reqHost = _request.headers["Host"];
 		reqHost = reqHost.substr(0,reqHost.find(':'));
 		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
@@ -282,7 +290,10 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		}
 		if (_request.method == "POST") {
 			if (_request.content_length > _config.get_max_body())
+			{
 				_status = 413;
+				socketFlush(sockClient);
+			}
 			else
 				receiveBody(sockClient);
 		}

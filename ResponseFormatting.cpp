@@ -1,17 +1,10 @@
 #include "ResponseFormatting.hpp"
+#include "conf_parsing/Config.hpp"
 #include "conf_parsing/DirectiveParsing.h"
-
-std::string	to_string(int number)
-{
-	std::stringstream ss;
-	ss << number;
-	std::string result = ss.str();
-	return result;
-}
 
 std::deque<std::string>	get_status_infos(int status_code, std::string &file_path, std::string &error_path)
 {
-	if (error_path.empty())
+	if (error_path.empty() || access(file_path.c_str(), F_OK) != 0)
 		error_path = "./server_files/error_pages";
 	std::deque<std::string>	status_infos;
 	switch (status_code)
@@ -68,7 +61,7 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 		headers += "Content-Length: " + to_string(content_length) + "\n";
 	}
 	else if (status_code == 301)
-		headers += "Location: " + status_infos[0] + "\nContent-Length: 0";
+		headers += "Location: " + status_infos[0] + "\nContent-Length: 0\n";
 	else
 		headers += "Connection: close";
 
@@ -98,9 +91,8 @@ void	ResponseFormatting::parse_body(std::string file_path, int const &status_cod
 	if (status_code == 301 || status_code == 408)
 		return;
 
-	if (file_path.find(".jpg") != NPOS || file_path.find(".jpg") != NPOS
-		|| file_path.find(".ico") != NPOS) {
-
+	if (file_path.find(".jpg") != NPOS || file_path.find(".ico") != NPOS)
+	{
 		std::ifstream	binaryFile(file_path, std::ios::binary);
 		binaryFile.seekg(0, std::ios::end);
 
@@ -132,7 +124,6 @@ void	ResponseFormatting::parse_body(std::string file_path, int const &status_cod
 std::string	ResponseFormatting::format_response(HttpRequest &request, int &status_code,
 		std::string &file_path, Config &config, std::vector<char>& body)
 {
-	std::string	output;
 	std::string	headers;
 	std::string p = request.path.substr(0, request.path.find('/', 1));
 	std::string	reqHost = request.hostIP;
@@ -160,9 +151,9 @@ std::string	ResponseFormatting::format_response(HttpRequest &request, int &statu
 			headers = parse_headers(status_infos, request.http_version,
 					status_code, config, body.size());
 		else
-		headers = parse_headers(status_infos, request.http_version,
+			headers = parse_headers(status_infos, request.http_version,
 					status_code, config, body.size());
 	}
-	output = headers + "\n";
-	return (output);
+	headers += "\n";
+	return (headers);
 }

@@ -55,13 +55,23 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 		_status = 500; // Internal Server Error
 		return;
 	}
+	// // Create timestamp
+	struct timeval	currentTime;
+	if (gettimeofday(&currentTime, NULL) < 0)
+		printErrno(GETTIMEOFDAY, EXIT);
+
+	time_t		now = currentTime.tv_sec;
+    struct tm	*tm_now = localtime(&now);
+    char		date_buffer[20];
+
+    strftime(date_buffer, sizeof(date_buffer), "%Y-%m-%d %H:%M:%S", tm_now);
 
 	if (fileType == "image/jpeg")
-		filePath = root + "/" + filename + ".jpg";
+		filePath = root + "/" + filename + date_buffer + ".jpg";
 	else if (fileType == "image/png")
-		filePath = root + "/" + filename + ".png";
+		filePath = root + "/" + filename + date_buffer + ".png";
 	else
-		filePath = root + "/" + "unknown_file";
+		filePath = root + "/" + filename + "_" + date_buffer;
 	receiveBinary(sockClient, "");
 
 	if (_status == 200 && (_request.path.find("cgi")) == NPOS) {
