@@ -1,3 +1,4 @@
+#include "WebServ.hpp"
 #include "ResponseFormatting.hpp"
 #include "conf_parsing/Config.hpp"
 #include "conf_parsing/DirectiveParsing.h"
@@ -118,6 +119,10 @@ void	ResponseFormatting::parse_body(std::string file_path, int const &status_cod
 			body.insert(body.end(), line.begin(), line.end());
 		}
 		inputFile.close();
+		std::cout << BLUE << "Response body: " << RESETCLR << std::endl;
+		for (size_t i = 0; i < body.size(); ++i)
+			std::cout << body[i];
+		std::cout << std::endl;
 	}
 }
 

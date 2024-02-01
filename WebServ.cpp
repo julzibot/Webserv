@@ -54,6 +54,8 @@ void	WebServ::initSelectFDs( const unsigned int& size ) {
 	_maxFD = _servsock[0];
 
     FD_ZERO(&_currentSockets);
+	FD_ZERO(&_readSockets);
+	FD_ZERO(&_writeSockets);
 	for (unsigned int i = 0; i < size; ++i) {
   		FD_SET(_servsock[i], &_currentSockets);
 		if (_servsock[i] > _maxFD)
@@ -217,29 +219,38 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 
 void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& responseBody) {
 
-	size_t	totalSent = 0;
-	int		bytesSent = 0;
-	size_t	bytesLeft = _output.size();
-
-	while (totalSent < _output.size()) {
-		bytesSent = send(sockClient, _output.data() + totalSent, bytesLeft, 0);
-		if (bytesSent != -1) {
-			totalSent += bytesSent;
-			bytesLeft -= bytesSent;
-		}
+	_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
+	std::cout << CYAN << "[socket: " << sockClient << "] Sending response:" << RESETCLR << std::endl;
+	std::cout << _output.c_str() << std::endl;
+	if (!_request.keepalive) {
+		close(sockClient);
+		if (sockClient == _maxFD)
+			_maxFD -= 1;
+		FD_CLR(sockClient, &_currentSockets);
 	}
-	if (!responseBody.empty()) {
-		totalSent = 0;
-		bytesSent = 0;
-		bytesLeft = responseBody.size();
-		while (totalSent < responseBody.size()) {
-			bytesSent = send(sockClient, responseBody.data() + totalSent, bytesLeft, 0);
+	else {
+		std::vector<char>	fullResponse(_output.begin(), _output.end());
+		size_t	totalSent = 0;
+		int		bytesSent = 0;
+
+		if (!responseBody.empty())
+			fullResponse.insert(fullResponse.end(), responseBody.begin(), responseBody.end());
+		size_t	bytesLeft = fullResponse.size();
+
+		while (totalSent < fullResponse.size()) {
+			bytesSent = send(sockClient, fullResponse.data() + totalSent, bytesLeft, 0);
 			if (bytesSent != -1) {
 				totalSent += bytesSent;
 				bytesLeft -= bytesSent;
 			}
 		}
+		FD_CLR(sockClient, &_writeSockets);
+		FD_SET(sockClient, &_readSockets);
+		fullResponse.clear();
 	}
+	_responseBody.clear();
+	_request._binaryBody.clear();
+	_output.clear();
 }
 
 void    WebServ::socketFlush(const int& sockClient)
@@ -267,6 +278,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	totalBuff.append(_buff);
 
 	if (_recvsize == 0) {
+		std::cout << YELLOW << "[socket: " << sockClient << "] Client has disconnected" << RESETCLR << std::endl;
 		close(sockClient);
 		if (sockClient == _maxFD)
 			_maxFD -= 1;
@@ -299,38 +311,72 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		}
 		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
-		_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
-		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
-		std::cout << _output.c_str() << std::endl;
-		sendToClient(sockClient, _responseBody);
-		_responseBody.clear();
-		_request._binaryBody.clear();
-		_output.clear();
-		if (!_request.keepalive) {
-			close(sockClient);
-			if (sockClient == _maxFD)
-				_maxFD -= 1;
-			FD_CLR(sockClient, &_currentSockets);
-		}
 	}
+	FD_CLR(sockClient, &_readSockets);
+	FD_SET(sockClient, &_writeSockets);
 }
 
 void	WebServ::startServer( void ) {
 
 	signal(SIGINT, sigHandler);
+	bool	printed = true;
     while (isTrue)
     {
         _status = 200;
-		_readySockets = _currentSockets;
-		if (select(_maxFD + 1, &_readySockets, NULL, NULL, &_timeoutSelect) < 0)
+		_readSockets = _currentSockets;
+		for (int i = 0; i < _maxFD + 1; ++i) {
+			if (FD_ISSET(i, &_readSockets) && FD_ISSET(i, &_writeSockets))
+				FD_CLR(i, &_readSockets);
+		}
+
+		/*PRINTS*/
+		if (printed == true)
+			std::cout << "Current sockets: ";
+		for (int i = 0; printed == true && i < _maxFD + 1; ++i) {
+			if (FD_ISSET(i, &_currentSockets))
+				std::cout << RED << i << " " << RESETCLR;
+		}
+		if (printed == true)
+			std::cout << std::endl;
+		
+		if (printed == true)
+			std::cout << "Read sockets: ";
+		for (int i = 0; printed == true && i < _maxFD + 1; ++i) {
+			if (FD_ISSET(i, &_readSockets))
+				std::cout << RED << i << " " << RESETCLR;
+		}
+		if (printed == true)
+			std::cout << std::endl;
+	
+		if (printed == true)
+			std::cout << "Write sockets: ";
+		for (int i = 0; printed == true && i < _maxFD + 1; ++i) {
+			if (FD_ISSET(i, &_writeSockets))
+				std::cout << RED << i << " " << RESETCLR;
+		}
+		if (printed == true)
+			std::cout << std::endl;
+		printed = false;
+		/*PRINTS*/
+
+		if (select(_maxFD + 1, &_readSockets, &_writeSockets, NULL, &_timeoutSelect) < 0)
 			printErrno(SELECT, EXIT);
 
 		for (int i = 0; i < _maxFD + 1; ++i)
 		{
-			if (isServSock(_servsock, i) && FD_ISSET(i, &_readySockets)) // Accepting new connection
+			if (isServSock(_servsock, i) && FD_ISSET(i, &_readSockets)) // Accepting new connection
+			{
 				acceptNewConnection(i);
-			else if (FD_ISSET(i, &_readySockets))
+				printed = true;
+			}
+			else if (FD_ISSET(i, &_readSockets)) {
 				receiveFromExistingClient(i);
+				printed = true;
+			}
+			else if (FD_ISSET(i, &_writeSockets)) {
+				sendToClient(i, _responseBody);
+				printed = true;
+			}
 			else if (FD_ISSET(i, &_currentSockets) && !isServSock(_servsock, i)) { // Check keep-alive timeout
 				if (gettimeofday(&_currentTime, NULL) < 0)
 					printErrno(GETTIMEOFDAY, EXIT);

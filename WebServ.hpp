@@ -73,7 +73,8 @@ private:
     int					_recvsize;
 
 	fd_set				_currentSockets;
-    fd_set				_readySockets;
+    fd_set				_readSockets;
+	fd_set				_writeSockets;
     int					_maxFD;
     struct timeval		_timeoutSelect;
 
