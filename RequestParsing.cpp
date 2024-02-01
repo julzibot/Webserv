@@ -36,6 +36,7 @@ HttpRequest	HttpRequestParse::parse(std::string const &req_str, int portnum)
 	std::string line;
 	std::getline(requestStream, line);
 	std::istringstream linestream(line);
+	
 	linestream >> request.method >> request.path >> request.http_version;
 	HttpRequestParse::parse_headers(requestStream, request);
 	strstrMap::iterator	headerIt = request.headers.find("Content-Length");
