@@ -239,7 +239,6 @@ std::string	file_request_case(size_t &dotPos, HttpRequest &request, Config &conf
 
 	std::string p = request.path;
 	file_path = config.getServMain(reqHost, request.port_number, p, true)["root"] + p;
-	std::cout << "FILEPATH: " << file_path << std::endl;
 	acss = access(file_path.c_str(), F_OK);
 	if (!acss && !access(file_path.c_str(), R_OK))
 		return (file_path);
@@ -318,7 +317,6 @@ std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &reque
 	reqHost = reqHost.substr(0,reqHost.find(':'));
 	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 
-	// std::map<std::string, LocationDir>::iterator	it;
 	std::map<std::string, LocationDir>::iterator	locEnd = locations.end();
 	strstrMap hostMap = config.get_hostMap();
 	strstrMap::iterator h;
