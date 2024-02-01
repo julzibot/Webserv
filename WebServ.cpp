@@ -279,13 +279,13 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	else if (_recvsize > 0) {
 		receiveRequest(sockClient, chunkSize, totalBuff);
 		std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
-		// std::cout << totalBuff << std::endl;
+		std::cout << totalBuff << std::endl;
 		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
 		// strstrMap::iterator ite = 
-		std::map<std::string, std::string>::iterator it;
-		for (it = _request.headers.begin(); it != _request.headers.end(); ++it) {
-			std::cout << it->first << ": " << it->second << std::endl;
-		}
+		// std::map<std::string, std::string>::iterator it;
+		// for (it = _request.headers.begin(); it != _request.headers.end(); ++it) {
+		// 	std::cout << it->first << ": " << it->second << std::endl;
+		// }
 
 		std::string reqHost = _request.headers["Host"];
 		reqHost = reqHost.substr(0,reqHost.find(':'));

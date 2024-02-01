@@ -123,3 +123,5 @@ public:
 
 	void	startServer( void );
 };
+
+void    printErrno(int func, bool ex);
