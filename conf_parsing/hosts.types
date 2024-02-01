@@ -1,6 +1,5 @@
 
 hosts {
     127.0.0.1   localhost;
-    127.0.0.1   brotherhost;
-	127.0.0.1	betahost;
+    127.0.0.1   betahost;
 }
