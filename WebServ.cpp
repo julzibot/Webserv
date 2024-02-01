@@ -373,7 +373,7 @@ void	WebServ::startServer( void ) {
 				receiveFromExistingClient(i);
 				printed = true;
 			}
-			else if (FD_ISSET(i, &_writeSockets)) {
+			if (FD_ISSET(i, &_writeSockets)) {
 				sendToClient(i, _responseBody);
 				printed = true;
 			}
