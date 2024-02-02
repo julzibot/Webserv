@@ -121,6 +121,7 @@ public:
 	~WebServ( void ) {};
 
 	void	startServer( void );
+	static void	removeUntilCRLF( std::vector<char>& request );
 };
 
 void    printErrno(int func, bool ex);

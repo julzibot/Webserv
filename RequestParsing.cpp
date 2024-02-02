@@ -43,14 +43,18 @@ void	HttpRequestParse::parse(HttpRequest& request, std::vector<char> &req_str, i
 
 	for (size_t j = 0; j < headerSize; j++)
 		headers[j] = req_str[j];
-	std::cout << "HEADERS: " << headers << std::endl;
+	// WebServ::removeUntilCRLF(req_str);
+	// for (size_t i = 0; i < req_str.size(); ++i)
+	// 	std::cout << req_str[i];
+	// std::cout << "*** *** ***" << std::endl;
 
 	// Headers parse
 	request.port_number = portnum;
-	std::istringstream requestStream(headers);
-	std::string line;
+	std::istringstream	requestStream(headers);
+	std::string			line;
 	std::getline(requestStream, line);
-	std::istringstream linestream(line);
+	std::istringstream	linestream(line);
+
 	linestream >> request.method >> request.path >> request.http_version;
 	HttpRequestParse::parse_headers(requestStream, request);
 	strstrMap::iterator	headerIt = request.headers.find("Content-Length");
@@ -59,6 +63,7 @@ void	HttpRequestParse::parse(HttpRequest& request, std::vector<char> &req_str, i
 	headerIt = request.headers.find("Connection");
 	if (headerIt != request.headers.end() && headerIt->second == "close")
 		request.keepalive = false;
+
 	// Extract body from the entire request
 	if (it != req_str.end() && headerSize + 4 < req_str.size())
 	{

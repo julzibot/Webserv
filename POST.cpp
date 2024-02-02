@@ -90,6 +90,7 @@ void	WebServ::storeFile(const std::string& fileType, const std::string& filename
 
 void	WebServ::receiveMultiForm( std::string root, std::string boundary )
 {
+	(void)boundary;
 	// Extract Header Form Data from the initial portion of the body
 	const char					*crlf = "\r\n\r\n";
 	std::vector<char>::iterator	it = std::search(_request.body.begin(), _request.body.end(), crlf, crlf + 4);
@@ -102,22 +103,30 @@ void	WebServ::receiveMultiForm( std::string root, std::string boundary )
 	formHeaderData.assign(_request.body.begin(), it);
 	std::cout << BLUE << "*** FORM HEADERS ***" << formHeaderData << "******" << RESETCLR << std::endl;
 
-	// const char	*flrc = "\n\r\n\r";
+	// removeUntilCRLF(_request.body);
+	// std::cout << "BODY:" << std::endl;
+	// for (size_t i = 0; i < _request.body.size(); ++i)
+	// 	std::cout << _request.body[i];
+	// std::cout << std::endl;
+	// if (!_request.body.empty())
+	// 	parseBinary("--" + boundary + "--");
+
+		// const char	*flrc = "\n\r\n\r";
 	// std::vector<char>::iterator	binaryStartIt = std::search(_request.body.rbegin(), _request.body.rend(), flrc, flrc + 4);
 
-	std::cout << "Distance between last crlf until end of body: " << std::distance(binaryStartIt, _request.body.end()) << std::endl;
-	size_t	bodyBegin = std::distance(_request.body.begin(), binaryStartIt);
-	std::cout << "Distance from start to the body: " << bodyBegin << std::endl;
-	// Extract binary from the body
-	if (bodyBegin + 4 < _request.body.size()) {
+	// std::cout << "Distance between last crlf until end of body: " << std::distance(binaryStartIt, _request.body.end()) << std::endl;
+	// size_t	bodyBegin = std::distance(_request.body.begin(), binaryStartIt);
+	// std::cout << "Distance from start to the body: " << bodyBegin << std::endl;
+	// // Extract binary from the body
+	// if (bodyBegin + 4 < _request.body.size()) {
 
-		size_t	binaryBodySize = _request.body.size() - bodyBegin - 4;
-		// size_t	binaryBodySize = _request.body.size() - headerSize - 4;
-		_request.binaryBody.resize(binaryBodySize);
-		_request.binaryBody.assign(binaryStartIt + 4, _request.body.end());
-		// _request.binaryBody.assign(it, _request.body.end());
-		parseBinary("--" + boundary + "--");
-	}
+	// 	size_t	binaryBodySize = _request.body.size() - bodyBegin - 4;
+	// 	// size_t	binaryBodySize = _request.body.size() - headerSize - 4;
+	// 	_request.binaryBody.resize(binaryBodySize);
+	// 	_request.binaryBody.assign(binaryStartIt + 4, _request.body.end());
+	// 	// _request.binaryBody.assign(it, _request.body.end());
+	// 	parseBinary("--" + boundary + "--");
+	// }
 	// std::cout << YELLOW << "*** BINARY BODY ***" << std::endl;
 	// for (size_t i = 0; i < _request.binaryBody.size(); ++i) {
 	// 	std::cout << _request.binaryBody[i];
@@ -128,12 +137,15 @@ void	WebServ::receiveMultiForm( std::string root, std::string boundary )
 	// if (formHeaderData.find("\r\n\r\n") != NPOS)
 	// 	receiveBinary(sockClient, "--" + boundary + "--");
 
+
+
 	std::istringstream			formStream(formHeaderData);
 	std::string					tmpLine;
 	std::vector<std::string>	formHeaders;
 	
 	while (std::getline(formStream, tmpLine)) {
-		tmpLine.erase(tmpLine.find("\r"));
+		if (tmpLine.find("\r") != NPOS)
+			tmpLine.erase(tmpLine.find("\r"));
 		formHeaders.push_back(tmpLine);
 	}
 	formStream.clear();

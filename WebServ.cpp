@@ -234,15 +234,26 @@ bool	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::vector<
 	char	buff[4096];
 	int bytesRead = 1;
 	_recvsize = 0;
+
+	// fd_set	readFD;
+	// fd_set	readyReadFD;
+
+	// FD_ZERO(&readFD);
+	// FD_ZERO(&readyReadFD);
+
+	// FD_SET(sockClient, &readFD);
 	while (bytesRead > 0) {
+		// readyReadFD = readFD;
+		// if (select(sockClient + 1, &readyReadFD, NULL, NULL, &_timeoutSelect) < 0)
+		// 	printErrno(SELECT, EXIT);
 		std::memset(buff, '\0', 4096);
 		bytesRead = recv(sockClient, buff, chunkSize, 0);
 		if (bytesRead > 0)
 		{
 			_recvsize += bytesRead;
+			std::cout << MAGENTA << "bytesRead: " << bytesRead << std::endl;
 			for (int j = 0; j < bytesRead; j++)
 				totalBuff.push_back(buff[j]);
-			// std::cout << "recvsize: " << _recvsize << std::endl;
 		}
 	}
 	if (totalBuff.empty())
@@ -261,6 +272,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	int					chunkSize = 4096;
 	
 	bool	recvBool = receiveRequest(sockClient, chunkSize, totalBuff);
+	std::cout << YELLOW << "request size: " << totalBuff.size() << RESETCLR << std::endl;
 
 	if (!recvBool) {
 		std::cout << YELLOW << "[socket: " << sockClient << "] Client has disconnected" << RESETCLR << std::endl;
