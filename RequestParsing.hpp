@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestParsing.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/02/02 11:46:41 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/02/02 13:20:23 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ class HttpRequest
         bool                                cgi;
 		bool								keepalive;
 		std::vector<char>					body;
+		std::vector<char>					binaryBody;
 
         HttpRequest();
         HttpRequest(HttpRequest const &req);
@@ -42,6 +43,6 @@ class HttpRequestParse
 {
     public:
         char *  process_request(char *buff, int recvsize, int port_number);
-        static HttpRequest parse(std::vector<char> &req_str, int portnum);
+        static void	parse(HttpRequest& request, std::vector<char> &req_str, int portnum);
         static void parse_headers(std::istringstream &requestStream, HttpRequest &request);
 };

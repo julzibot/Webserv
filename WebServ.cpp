@@ -226,13 +226,14 @@ void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& respo
 	}
 }
 
-void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::vector<char> &totalBuff ) {
+bool	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::vector<char> &totalBuff ) {
 	// POST:
 	// if Content-Length > limit_max_body_size send 413 Content Too Large
 	// create a file with type specified in Content-Type
 	// if \r\n\r\n (CRLF) encountered, headers end, body begins
 	char	buff[4096];
 	int bytesRead = 1;
+	_recvsize = 0;
 	while (bytesRead > 0) {
 		std::memset(buff, '\0', 4096);
 		bytesRead = recv(sockClient, buff, chunkSize, 0);
@@ -241,8 +242,12 @@ void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::vector<
 			_recvsize += bytesRead;
 			for (int j = 0; j < bytesRead; j++)
 				totalBuff.push_back(buff[j]);
+			// std::cout << "recvsize: " << _recvsize << std::endl;
 		}
 	}
+	if (totalBuff.empty())
+		return (false);
+	return (true);
 }
 
 void	WebServ::receiveFromExistingClient(const int& sockClient)
@@ -253,52 +258,57 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	_socketTimeoutMap[sockClient] = timeoutUpdate;
 
 	std::vector<char>	totalBuff;
-	int			chunkSize = 4096;
+	int					chunkSize = 4096;
 	
-	// memset(_buff, 0, 2);
+	bool	recvBool = receiveRequest(sockClient, chunkSize, totalBuff);
 
-	// if (_recvsize == 0) {
-	// 	close(sockClient);
-	// 	if (sockClient == _maxFD)
-	// 		_maxFD -= 1;
-	// 	FD_CLR(sockClient, &_currentSockets);
-	// }
-	receiveRequest(sockClient, chunkSize, totalBuff);
-	std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
-	// std::cout << totalBuff << std::endl;
-	_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
-
-	std::string reqHost = _request.headers["Host"];
-	reqHost = reqHost.substr(0,reqHost.find(':'));
-	reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
-	request_ip_check(reqHost, _config, _status);
-	_request.hostIP = reqHost;
-
-	totalBuff.clear();
-	if (_status == 200) {
-		_filepath = get_file_path(_request, _config, _status);
-	}
-	if (_request.method == "POST") {
-		if (_request.content_length > _config.get_max_body())
-			_status = 413;
-		// else
-		// 	receiveBody(sockClient);
-	}
-	else if (_request.method == "DELETE")
-		deleteResource(_request.path);
-	_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
-	std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
-	std::cout << _output.c_str() << std::endl;
-	sendToClient(sockClient, _responseBody);
-	_responseBody.clear();
-	// _request.body.clear();
-	_output.clear();
-	if (!_request.keepalive) {
+	if (!recvBool) {
+		std::cout << YELLOW << "[socket: " << sockClient << "] Client has disconnected" << RESETCLR << std::endl;
 		close(sockClient);
 		if (sockClient == _maxFD)
 			_maxFD -= 1;
 		FD_CLR(sockClient, &_currentSockets);
 	}
+	else {
+		std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
+		// std::cout << totalBuff << std::endl;
+		HttpRequestParse::parse(_request, totalBuff, _sockPortMap[sockClient]);
+
+		std::string reqHost = _request.headers["Host"];
+		reqHost = reqHost.substr(0,reqHost.find(':'));
+		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
+		request_ip_check(reqHost, _config, _status);
+		_request.hostIP = reqHost;
+
+		totalBuff.clear();
+		if (_status == 200) {
+			_filepath = get_file_path(_request, _config, _status);
+		}
+		if (_request.method == "POST") {
+			if (_request.content_length > _config.get_max_body())
+				_status = 413;
+			else
+				receiveBody();
+		}
+		else if (_request.method == "DELETE")
+			deleteResource(_request.path);
+		_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
+		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
+		std::cout << _output.c_str() << std::endl;
+		sendToClient(sockClient, _responseBody);
+		_responseBody.clear();
+		// _request.body.clear();
+		_output.clear();
+		if (!_request.keepalive) {
+			close(sockClient);
+			if (sockClient == _maxFD)
+				_maxFD -= 1;
+			FD_CLR(sockClient, &_currentSockets);
+		}
+	}
+	totalBuff.clear();
+	_request.body.clear();
+	_request.binaryBody.clear();
 }
 
 void	WebServ::startServer( void ) {

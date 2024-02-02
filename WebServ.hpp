@@ -104,12 +104,12 @@ private:
 		HttpRequest &request, Config &config, std::vector<char>& body);
 	
 	// POST method
-	void	receiveRequest( const int& sockClient,
+	bool	receiveRequest( const int& sockClient,
 				int& chunkSize, std::vector<char> &totalBuff );
-	void	receiveBody( const int& sockClient );
-	void	receiveMultiForm( const int& sockClient, std::string root, std::string boundary );
-	void	receiveBinary( const int& sockClient, const std::string& endBoundary );
-	void	receiveFile(const int& sockClient, const std::string& fileType,
+	void	receiveBody( void );
+	void	receiveMultiForm( std::string root, std::string boundary );
+	void	parseBinary( const std::string& endBoundary );
+	void	storeFile(const std::string& fileType,
 		const std::string& filename, const std::string& root);
 	void	sendToClient(const int& sockClient, const std::vector<char>& responseBody);
 
