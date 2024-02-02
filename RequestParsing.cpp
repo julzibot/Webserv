@@ -11,9 +11,15 @@ HttpRequest::HttpRequest(HttpRequest const &req) : headers(req.headers),
 void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &request)
 {
 	std::string line;
-	while (std::getline(rs, line) && !line.empty())
+	std::string testline;
+
+	while (std::getline(rs, line))
 	{
-		// line.erase(line.find("\r"));
+		line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
+		line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+		if (line.empty())
+			return;
+
 		size_t sepPos = line.find(":");
 		if (sepPos != std::string::npos)
 		{
@@ -45,6 +51,7 @@ HttpRequest	HttpRequestParse::parse(std::string const &req_str, int portnum)
 	headerIt = request.headers.find("Connection");
 	if (headerIt != request.headers.end() && headerIt->second == "close")
 		request.keepalive = false;
-
+	while (std::getline(requestStream, line))
+		request.body += line;
     return (request);
 }

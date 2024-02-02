@@ -57,7 +57,7 @@ private:
 	std::map<int, int>			_sockPortMap; // Socket and its associated port number
 
 	// Socket loop 
-	char   				_buff[2];
+	char   				_buff[4096];
     std::string			_output;
     std::string			_filepath;
     std::string			_line;
@@ -112,7 +112,6 @@ private:
 	void	receiveFile(const int& sockClient, const std::string& fileType,
 		const std::string& filename, const std::string& root);
 	void	sendToClient(const int& sockClient, const std::vector<char>& responseBody);
-	void    socketFlush(const int& sockClient);
 
 	// DELETE method
 	void	deleteResource( const std::string& resource );
