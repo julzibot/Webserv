@@ -111,7 +111,7 @@ private:
 	void	storeBinary( const std::string& endBoundary );
 	void	storeFile(const std::string& fileType, const std::string& filename,
 		const std::string& root, const std::string boundary);
-	void	sendToClient(const int& sockClient, const std::vector<char>& responseBody);
+	void	sendToClient(const int& sockClient);
 
 	// DELETE method
 	void	deleteResource( const std::string& resource );

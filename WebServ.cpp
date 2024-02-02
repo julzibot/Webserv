@@ -201,40 +201,38 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 	return (ResponseFormatting::format_response(request, status, filepath, config, body));
 }
 
-void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& responseBody) {
-
+void	WebServ::sendToClient(const int& sockClient)
+{
 	_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
 	std::cout << CYAN << "[socket: " << sockClient << "] Sending response:" << RESETCLR << std::endl;
 	std::cout << _output.c_str() << std::endl;
+
+	std::vector<char>	fullResponse(_output.begin(), _output.end());
+	size_t	totalSent = 0;
+	int		bytesSent = 0;
+
+	if (!_responseBody.empty())
+		fullResponse.insert(fullResponse.end(), _responseBody.begin(), _responseBody.end());
+	size_t	bytesLeft = fullResponse.size();
+
+	while (totalSent < fullResponse.size()) {
+		bytesSent = send(sockClient, fullResponse.data() + totalSent, bytesLeft, 0);
+		if (bytesSent != -1) {
+			totalSent += bytesSent;
+			bytesLeft -= bytesSent;
+		}
+	}
+	FD_CLR(sockClient, &_writeSockets);
+	FD_SET(sockClient, &_readSockets);
+	fullResponse.clear();
 	if (!_request.keepalive) {
 		close(sockClient);
 		if (sockClient == _maxFD)
 			_maxFD -= 1;
 		FD_CLR(sockClient, &_currentSockets);
 	}
-	else {
-		std::vector<char>	fullResponse(_output.begin(), _output.end());
-		size_t	totalSent = 0;
-		int		bytesSent = 0;
-
-		if (!responseBody.empty())
-			fullResponse.insert(fullResponse.end(), responseBody.begin(), responseBody.end());
-		size_t	bytesLeft = fullResponse.size();
-
-		while (totalSent < fullResponse.size()) {
-			bytesSent = send(sockClient, fullResponse.data() + totalSent, bytesLeft, 0);
-			if (bytesSent != -1) {
-				totalSent += bytesSent;
-				bytesLeft -= bytesSent;
-			}
-		}
-		FD_CLR(sockClient, &_writeSockets);
-		FD_SET(sockClient, &_readSockets);
-		fullResponse.clear();
-	}
 	_responseBody.clear();
 	_request.fullRequest.clear();
-	_request._binaryBody.clear();
 	_output.clear();
 }
 
@@ -245,22 +243,54 @@ bool	WebServ::receiveRequest( const int& sockClient, std::string& headers ) {
 	// create a file with type specified in Content-Type
 	// if \r\n\r\n (CRLF) encountered, headers end, body begins
 	ssize_t	chunkSize = 1;
-	char	buffer[2048];
+	char	buffer[256];
+	_recvsize = 0;
+	// fd_set	readFD;
+	// fd_set	readyReadFD;
 
+	// FD_ZERO(&readFD);
+	// FD_ZERO(&readyReadFD);
+
+	// FD_SET(sockClient, &readFD);
+	// readyReadFD = readFD;
+	std::cout << "buffer: " << buffer << std::endl;
+	_request.fullRequest.clear();
 	while (chunkSize > 0) {
-		std::memset(buffer, 0, 2048);
-		chunkSize = recv(sockClient, buffer, 2048, 0);
-		if (chunkSize == 0)
-			break;
-		_recvsize += chunkSize;
-		std::cout << "chunksize: " << chunkSize << std::endl;
-		_request.fullRequest.insert(_request.fullRequest.end(), buffer, buffer + chunkSize);
-	}
+		// if (FD_ISSET(sockClient, &readyReadFD)) {
+			std::memset(buffer, 0, 256);
+			chunkSize = recv(sockClient, buffer, sizeof(buffer), 0);
+			if (chunkSize == 0) {
+				std::cout << "chunkSize " << chunkSize << "is" << " == 0!" << std::endl;
+				// FD_CLR(sockClient, &readFD);
+				break;
 
-	if (_request.fullRequest.empty())
+			}
+			if (chunkSize > 0) {
+				_recvsize += chunkSize;
+				std::cout << "_recvsize: " << _recvsize << std::endl;
+				for (int i = 0; i < chunkSize; ++i)
+					_request.fullRequest.push_back(buffer[i]);
+				// _request.fullRequest.insert(_request.fullRequest.end(), buffer, buffer + chunkSize);
+			}
+		// }
+		// else
+		// 	break;
+		// if (!FD_ISSET(sockClient, &readFD))
+		// 	break;
+		// readyReadFD = readFD;
+		// if (select(sockClient + 1, &readyReadFD, NULL, NULL, &_timeoutSelect) < 0)
+		// 	printErrno(SELECT, EXIT);
+	}
+	_recvsize = 0;
+	std::memset(buffer, 0, sizeof(buffer));
+
+	if (_request.fullRequest.empty()) {
+		std::cout << "request empty, returns 0" << std::endl;
 		return (0);
+	}
 	std::cout << "REQ SIZE: " << _request.fullRequest.size() << std::endl;
-	std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
+	std::cout << MAGENTA << "[Server] [socket: " << sockClient
+		<< "] Receiving request from client:" << RESETCLR << std::endl;
 
 	// split headers and body by CRLF
 	size_t	reqSize = _request.fullRequest.size();
@@ -270,7 +300,7 @@ bool	WebServ::receiveRequest( const int& sockClient, std::string& headers ) {
 			&& _request.fullRequest[i + 3] == '\n') {
 				i += 3;
 				break;
-			}
+		}
 		headers.push_back(_request.fullRequest[i]);
 	}
 	// Delete headers up until body including CRLF
@@ -280,7 +310,7 @@ bool	WebServ::receiveRequest( const int& sockClient, std::string& headers ) {
 	if (it != _request.fullRequest.end())
 		_request.fullRequest.erase(_request.fullRequest.begin(), it + 4);
 
-	// std::cout << "---------------------" << std::endl;
+	// std::cout << "----------" << _request.fullRequest.size() << "---------" << std::endl;
 	// for (size_t i = 0; i < _request.fullRequest.size(); ++i)
 	// 	std::cout << _request.fullRequest[i];
 	// exit (0);
@@ -305,8 +335,8 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		FD_CLR(sockClient, &_currentSockets);
 	}
 	else if (_recvsize > 0) {
-		std::cout << "Headers:" << std::endl;
-		std::cout << headers << std::endl;
+		// std::cout << "Headers:" << std::endl;
+		// std::cout << headers << std::endl;
 		HttpRequestParse::parse(_request, headers, _sockPortMap[sockClient]);
 		/* Headers will be parsed at this point */
 		std::string reqHost = _request.headers["Host"];
@@ -315,7 +345,6 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		request_ip_check(reqHost, _config, _status);
 		_request.hostIP = reqHost;
 
-		headers.clear();
 		if (_status == 200) {
 			_filepath = get_file_path(_request, _config, _status);
 		}
@@ -328,8 +357,8 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
 	}
+	headers.clear();
 	_request.fullRequest.clear();
-	_request._binaryBody.clear();
 	FD_CLR(sockClient, &_readSockets);
 	FD_SET(sockClient, &_writeSockets);
 }
@@ -412,7 +441,7 @@ void	WebServ::startServer( void ) {
 					std::cout << std::endl;
 					/*print*/
 				
-				sendToClient(i, _responseBody);
+				sendToClient(i);
 				printed = true;
 			}
 			else if (FD_ISSET(i, &_currentSockets) && !isServSock(_servsock, i)) { // Check keep-alive timeout
