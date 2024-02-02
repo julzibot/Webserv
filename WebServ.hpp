@@ -105,7 +105,7 @@ private:
 	
 	// POST method
 	void	receiveRequest( const int& sockClient,
-				int& chunkSize, std::string& totalBuff );
+				int& chunkSize, std::vector<char> &totalBuff );
 	void	receiveBody( const int& sockClient );
 	void	receiveMultiForm( const int& sockClient, std::string root, std::string boundary );
 	void	receiveBinary( const int& sockClient, const std::string& endBoundary );

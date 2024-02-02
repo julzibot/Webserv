@@ -33,16 +33,23 @@ void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &req
 	}
 }
 
-HttpRequest	HttpRequestParse::parse(std::string const &req_str, int portnum)
+HttpRequest	HttpRequestParse::parse(std::vector<char> &req_str, int portnum)
 {
 	HttpRequest request;
+	const char	*crlf = "\r\n\r\n";
+	std::vector<char>::iterator	it = std::search(req_str.begin(), req_str.end(), crlf, crlf + 4);
+	size_t	headerSize = std::distance(req_str.begin(), it);
+	std::string	headers(headerSize, '\0');
+
+	for (size_t j = 0; j < headerSize; j++)
+		headers[j] = req_str[j];
+	std::cout << "HEADERS: " << headers << std::endl;
 
 	request.port_number = portnum;
-	std::istringstream requestStream(req_str);
+	std::istringstream requestStream(headers);
 	std::string line;
 	std::getline(requestStream, line);
 	std::istringstream linestream(line);
-	
 	linestream >> request.method >> request.path >> request.http_version;
 	HttpRequestParse::parse_headers(requestStream, request);
 	strstrMap::iterator	headerIt = request.headers.find("Content-Length");
@@ -51,7 +58,17 @@ HttpRequest	HttpRequestParse::parse(std::string const &req_str, int portnum)
 	headerIt = request.headers.find("Connection");
 	if (headerIt != request.headers.end() && headerIt->second == "close")
 		request.keepalive = false;
-	while (std::getline(requestStream, line))
-		request.body += line;
-    return (request);
+	
+	if (it != req_str.end() && headerSize + 4 < req_str.size())
+	{
+		std::cout << "PARSING BODY" << std::endl;
+		it += 4;
+		size_t	bodySize = req_str.size() - headerSize - 4;
+		request.body.resize(bodySize);
+		request.body.insert(request.body.end(), it, req_str.end());
+	}
+	std::cout << "BODY" << std::endl;
+	for (size_t k = 0; k < request.body.size(); k++)
+		std::cout << request.body[k];
+	return (request);
 }

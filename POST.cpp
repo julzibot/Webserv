@@ -31,14 +31,14 @@ void	WebServ::receiveBinary(const int& sockClient, const std::string& endBoundar
 		if (chunkSize <= 0)
 			break;
 		for (int i = 0; i < chunkSize; ++i)
-			_request._binaryBody.push_back(binChar[i]);
+			_request.body.push_back(binChar[i]);
 	}
 
 	if (endBoundary != "") {
-		std::vector<char>::iterator	boundIt = std::search(_request._binaryBody.begin(),
-			_request._binaryBody.end(), endBoundary.begin(), endBoundary.end());
-		if (boundIt != _request._binaryBody.end())
-			_request._binaryBody.erase(boundIt, _request._binaryBody.end());
+		std::vector<char>::iterator	boundIt = std::search(_request.body.begin(),
+			_request.body.end(), endBoundary.begin(), endBoundary.end());
+		if (boundIt != _request.body.end())
+			_request.body.erase(boundIt, _request.body.end());
 	}
 }
 
@@ -48,6 +48,7 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 	std::ofstream	newFile;
 	std::string		filePath;
 
+	(void) sockClient;
 	struct stat rootStat;
 	
 	// check if root is valid/exists
@@ -72,7 +73,7 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 		filePath = root + "/" + filename + date_buffer + ".png";
 	else
 		filePath = root + "/" + filename + "_" + date_buffer;
-	receiveBinary(sockClient, "");
+	// receiveBinary(sockClient, "");
 
 	if (_status == 200 && (_request.path.find("cgi")) == NPOS) {
 		newFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
@@ -81,11 +82,11 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 			struct stat	fileInfos;
 			if (stat(filePath.c_str(), &fileInfos) != -1) {
 				_status = 409; // Conflict
-				_request._binaryBody.clear();
+				_request.body.clear();
 				return;
 			}
 			newFile.open(filePath, std::ios::binary);
-			for (std::vector<char>::iterator it = _request._binaryBody.begin(); it != _request._binaryBody.end(); ++it)
+			for (std::vector<char>::iterator it = _request.body.begin(); it != _request.body.end(); ++it)
 				newFile << *it;
 		}
 		catch (const std::ofstream::failure& e) {
@@ -98,23 +99,18 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 	return;
 }
 
-void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::string boundary ) {
+void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::string boundary )
+{
+	const char	*crlf = "\r\n\r\n";
+	std::vector<char>::iterator	it = std::search(_request.body.begin(), _request.body.end(), crlf, crlf + 4);
+	size_t	headerSize = std::distance(_request.body.begin(), it);
+	std::string	formHeaderData(headerSize, '\0');
 
-	int			chunkSize = 1;
-	char		formDataBody[2];
-	std::string	formHeaderData;
+	if (headerSize + 4 < _request.body.size())
+		formHeaderData.insert(formHeaderData.end(), _request.body.begin(), it + 4);
 
-	while (chunkSize > 0) {
-		memset(formDataBody, 0, 2);
-		chunkSize = recv(sockClient, formDataBody, 1, 0);
-		if (chunkSize == 0)
-			break;
-		formHeaderData.append(formDataBody);
-		if (formHeaderData.find("\r\n\r\n") != NPOS) {
-			receiveBinary(sockClient, "--" + boundary + "--");
-			break;
-		}
-	}
+	if (formHeaderData.find("\r\n\r\n") != NPOS)
+		receiveBinary(sockClient, "--" + boundary + "--");
 
 	std::istringstream			formStream(formHeaderData);
 	std::string					tmpLine;

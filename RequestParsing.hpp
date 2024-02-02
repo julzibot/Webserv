@@ -6,7 +6,7 @@
 /*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/02/02 10:08:16 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/02/02 11:46:41 by julzibot         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,7 @@ class HttpRequest
 		unsigned int						content_length;
         bool                                cgi;
 		bool								keepalive;
-        std::string                         body;
-		std::vector<char>					_binaryBody;
+		std::vector<char>					body;
 
         HttpRequest();
         HttpRequest(HttpRequest const &req);
@@ -43,6 +42,6 @@ class HttpRequestParse
 {
     public:
         char *  process_request(char *buff, int recvsize, int port_number);
-        static HttpRequest parse(std::string const &req_str, int portnum);
+        static HttpRequest parse(std::vector<char> &req_str, int portnum);
         static void parse_headers(std::istringstream &requestStream, HttpRequest &request);
 };

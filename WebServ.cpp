@@ -226,18 +226,22 @@ void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& respo
 	}
 }
 
-void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string& body ) {
+void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::vector<char> &totalBuff ) {
 	// POST:
 	// if Content-Length > limit_max_body_size send 413 Content Too Large
 	// create a file with type specified in Content-Type
 	// if \r\n\r\n (CRLF) encountered, headers end, body begins
+	char	buff[4096];
 	int bytesRead = 1;
 	while (bytesRead > 0) {
-		bytesRead = recv(sockClient, _buff, chunkSize, 0);
-		if (bytesRead < chunkSize)
-			memset(_buff + bytesRead, '\0', chunkSize - bytesRead);
-		_recvsize += bytesRead;
-		body.append(_buff);
+		std::memset(buff, '\0', 4096);
+		bytesRead = recv(sockClient, buff, chunkSize, 0);
+		if (bytesRead > 0)
+		{
+			_recvsize += bytesRead;
+			for (int j = 0; j < bytesRead; j++)
+				totalBuff.push_back(buff[j]);
+		}
 	}
 }
 
@@ -248,10 +252,10 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		printErrno(GETTIMEOFDAY, EXIT);
 	_socketTimeoutMap[sockClient] = timeoutUpdate;
 
-	std::string	totalBuff;
+	std::vector<char>	totalBuff;
 	int			chunkSize = 4096;
 	
-	memset(_buff, 0, 2);
+	// memset(_buff, 0, 2);
 
 	// if (_recvsize == 0) {
 	// 	close(sockClient);
@@ -261,7 +265,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	// }
 	receiveRequest(sockClient, chunkSize, totalBuff);
 	std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
-	std::cout << totalBuff << std::endl;
+	// std::cout << totalBuff << std::endl;
 	_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
 
 	std::string reqHost = _request.headers["Host"];
@@ -277,8 +281,8 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	if (_request.method == "POST") {
 		if (_request.content_length > _config.get_max_body())
 			_status = 413;
-		else
-			receiveBody(sockClient);
+		// else
+		// 	receiveBody(sockClient);
 	}
 	else if (_request.method == "DELETE")
 		deleteResource(_request.path);
@@ -287,7 +291,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	std::cout << _output.c_str() << std::endl;
 	sendToClient(sockClient, _responseBody);
 	_responseBody.clear();
-	_request._binaryBody.clear();
+	// _request.body.clear();
 	_output.clear();
 	if (!_request.keepalive) {
 		close(sockClient);
