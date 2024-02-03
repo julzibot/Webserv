@@ -51,7 +51,9 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 	else
 		headers = http_version + " " + to_string(status_code) + " " + status_infos[1] + "\n";	
 
-	if (status_code == 1001)
+	if (status_code == 204)
+		headers += "Content-Length: " + to_string(content_length) + "\n";
+	else if (status_code == 1001)
 	{
 		headers += "Content-Type: text/html\n";
 		headers += "Content-Length: " + to_string(content_length) + "\n";
@@ -88,12 +90,16 @@ std::string	ResponseFormatting::parse_cgi_headers(std::string http_version,
 
 void	ResponseFormatting::parse_body(std::string file_path, int const &status_code, std::vector<char>& body)
 {
-	if (status_code == 301 || status_code == 408)
+	if (status_code == 204 || status_code == 301 || status_code == 408)
 		return;
 
-	if (file_path.find(".jpg") != NPOS || file_path.find(".ico") != NPOS)
+	if (file_path.find(".jpg") != NPOS || file_path.find(".png")
+		|| file_path.find(".ico") != NPOS)
 	{
 		std::ifstream	binaryFile(file_path, std::ios::binary);
+
+		if (!binaryFile.is_open())
+			return;
 		binaryFile.seekg(0, std::ios::end);
 
 		std::streamsize	fileSize = binaryFile.tellg();
@@ -144,10 +150,15 @@ std::string	ResponseFormatting::format_response(HttpRequest &request, int &statu
 			parse_body(status_infos[0], status_code, body);
 		}
 	}
+	else if (status_code == 204) {
+		headers = parse_headers(status_infos, request.http_version,
+					status_code, config, 0);
+	}
 	else
 	{
 		parse_body(status_infos[0], status_code, body);
-		if (status_infos[0].find(".jpg") != NPOS || status_infos[0].find(".ico") != NPOS)
+		if (status_infos[0].find(".jpg") != NPOS || status_infos[0].find(".png") != NPOS
+			|| status_infos[0].find(".ico") != NPOS)
 			headers = parse_headers(status_infos, request.http_version,
 					status_code, config, body.size());
 		else

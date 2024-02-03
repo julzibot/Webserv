@@ -319,9 +319,6 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		request_ip_check(reqHost, _config, _status);
 		_request.hostIP = reqHost;
 
-		if (_status == 200) {
-			_filepath = get_file_path(_request, _config, _status);
-		}
 		if (_request.method == "POST") {
 			if (_request.content_length > _config.get_max_body())
 				_status = 413;
@@ -330,6 +327,9 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		}
 		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
+		if (_status == 200) {
+			_filepath = get_file_path(_request, _config, _status);
+		}
 	}
 	FD_CLR(sockClient, &_readSockets);
 	FD_SET(sockClient, &_writeSockets);

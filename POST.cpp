@@ -41,7 +41,7 @@ void	WebServ::storeFile(const std::string& fileType, const std::string& filename
 	// check if root is valid/exists
 	if (stat(root.c_str(), &rootStat) != 0) {
 		_status = 500; // Internal Server Error
-		std::cerr << "Error: Invalid root" << std::endl;
+		std::cerr << RED << "Error: Invalid root" << RESETCLR << std::endl;
 		return;
 	}
 	// // Create timestamp
@@ -51,16 +51,16 @@ void	WebServ::storeFile(const std::string& fileType, const std::string& filename
 
 	time_t		now = currentTime.tv_sec;
     struct tm	*tm_now = localtime(&now);
-    char		date_buffer[20];
+    char		timestamp[20];
 
-    strftime(date_buffer, sizeof(date_buffer), "%Y-%m-%d %H:%M:%S", tm_now);
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H:%M:%S", tm_now);
 
 	if (fileType == "image/jpeg")
-		filePath = root + "/" + filename + date_buffer + ".jpg";
+		filePath = root + "/" + filename + "_" + timestamp + ".jpg";
 	else if (fileType == "image/png")
-		filePath = root + "/" + filename + date_buffer + ".png";
+		filePath = root + "/" + filename + "_" + timestamp + ".png";
 	else
-		filePath = root + "/" + filename + "_" + date_buffer;
+		filePath = root + "/" + filename + "_" + timestamp;
 	parseBinary("");
 
 	if (_status == 200 && (_request.path.find("cgi")) == NPOS) {

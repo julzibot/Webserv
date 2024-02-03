@@ -1,6 +1,6 @@
 NAME	= webserv
 
-CC		= c++ -Wall -Wextra -Werror -std=c++98 -pedantic -o3# TODO: remove -o3 before submission
+CC		= c++ -Wall -Wextra -Werror -std=c++98 -pedantic
 
 RM		= rm -rf
 
