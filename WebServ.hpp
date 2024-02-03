@@ -73,7 +73,8 @@ private:
     int					_recvsize;
 
 	fd_set				_currentSockets;
-    fd_set				_readySockets;
+    fd_set				_readSockets;
+	fd_set				_writeSockets;
     int					_maxFD;
     struct timeval		_timeoutSelect;
 
@@ -111,7 +112,7 @@ private:
 	void	receiveBinary( const int& sockClient, const std::string& endBoundary );
 	void	receiveFile(const int& sockClient, const std::string& fileType,
 		const std::string& filename, const std::string& root);
-	void	sendToClient(const int& sockClient, const std::vector<char>& responseBody);
+	void	sendToClient(const int& sockClient);
 	void    socketFlush(const int& sockClient);
 
 	// DELETE method

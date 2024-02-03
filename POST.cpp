@@ -53,6 +53,7 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 	// check if root is valid/exists
 	if (stat(root.c_str(), &rootStat) != 0) {
 		_status = 500; // Internal Server Error
+		std::cerr << "Error: Invalid root: " << root << std::endl;
 		return;
 	}
 	// // Create timestamp
