@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/02/01 09:32:44 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/02/02 16:54:54 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ int main(int argc, char **argv, char **envp) {
 	if (argc == 2)
 		WebServ	server(argv[1], envp);
 	else
-		WebServ	server("server_files/configuration_files/webserv.conf", envp);
+		WebServ	server("server_files/configuration_files/tosh_tests.conf", envp);
 
     return (0);
 }

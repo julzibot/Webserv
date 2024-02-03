@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/30 19:47:24 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/02/02 16:33:55 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ class HttpRequest
 		unsigned int						content_length;
         bool                                cgi;
 		bool								keepalive;
+		std::vector<char>					fullRequest;
 		std::vector<char>					_binaryBody;
 
         HttpRequest();
