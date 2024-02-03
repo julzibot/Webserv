@@ -54,6 +54,8 @@ void	WebServ::initSelectFDs( const unsigned int& size ) {
 	_maxFD = _servsock[0];
 
     FD_ZERO(&_currentSockets);
+	FD_ZERO(&_readSockets);
+	FD_ZERO(&_writeSockets);
 	for (unsigned int i = 0; i < size; ++i) {
   		FD_SET(_servsock[i], &_currentSockets);
 		if (_servsock[i] > _maxFD)
@@ -63,7 +65,7 @@ void	WebServ::initSelectFDs( const unsigned int& size ) {
 
 WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(200),
 	_arrsize(0), _filepath(""), _prevReqPath(""), _caddrsize(sizeof(_caddr)),
-	_maxBodySize(UINT_MAX), _socketTimeoutValue(CLIENT_TIMEOUT) {
+	_socketTimeoutValue(CLIENT_TIMEOUT) {
 
 	try {
 		_config = parse_config_file(confFilenamePath);
@@ -72,7 +74,6 @@ WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(2
 		std::cerr << "Error: " << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	_maxBodySize = _config.get_max_body();
 	this->envp = envp;
 	initSockets(_config.get_portnums());
 	bindAndListen(_servsock, _config.get_portnums(), _saddr, _arrsize);
@@ -159,7 +160,8 @@ void	WebServ::acceptNewConnection( const int& servSock ) {
 		_socketTimeoutMap[_clientsock] = startSockTimeout;
 		
 		if (!isServSock(_servsock, _clientsock))
-			std::cout << BOLD << "[SERVER] [socket: " << _clientsock << "] New client connected with success" << RESETCLR << std::endl;
+			std::cout << BOLD << "[SERVER] [socket: " << _clientsock
+				<< "] New client connected with success" << RESETCLR << std::endl;
 		fcntl(_clientsock, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 		if (_clientsock > _maxFD)
 			_maxFD = _clientsock;
@@ -168,22 +170,6 @@ void	WebServ::acceptNewConnection( const int& servSock ) {
 	}
 }
 
-void	WebServ::receiveRequest(const int& sockClient, int& chunkSize, std::string& headers ) {
-	// POST:
-	// if Content-Length > limit_max_body_size send 413 Content Too Large
-	// create a file with type specified in Content-Type
-	// if \r\n\r\n (CRLF) encountered, headers end, body begins
-	while (chunkSize > 0) {
-		if (headers.find("\r\n\r\n") != NPOS)
-			break;
-		memset(_buff, 0, 2);
-		chunkSize = recv(sockClient, _buff, 1, 0);
-		if (chunkSize == 0)
-			break;
-		_recvsize += chunkSize;
-		headers.append(_buff);
-	}
-}
 
 std::string	WebServ::get_response(std::string &filepath, int &status,
 	HttpRequest &request, Config &config, std::vector<char>& body)
@@ -215,41 +201,93 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 	return (ResponseFormatting::format_response(request, status, filepath, config, body));
 }
 
-void	WebServ::sendToClient(const int& sockClient, const std::vector<char>& responseBody) {
+void	WebServ::sendToClient(const int& sockClient)
+{
+	_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
+	std::cout << CYAN << "[socket: " << sockClient << "] Sending response:" << RESETCLR << std::endl;
+	std::cout << _output.c_str() << std::endl;
 
+	std::vector<char>	fullResponse(_output.begin(), _output.end());
 	size_t	totalSent = 0;
 	int		bytesSent = 0;
-	size_t	bytesLeft = _output.size();
 
-	while (totalSent < _output.size()) {
-		bytesSent = send(sockClient, _output.data() + totalSent, bytesLeft, 0);
+	if (!_responseBody.empty())
+		fullResponse.insert(fullResponse.end(), _responseBody.begin(), _responseBody.end());
+	size_t	bytesLeft = fullResponse.size();
+
+	while (totalSent < fullResponse.size()) {
+		bytesSent = send(sockClient, fullResponse.data() + totalSent, bytesLeft, 0);
 		if (bytesSent != -1) {
 			totalSent += bytesSent;
 			bytesLeft -= bytesSent;
 		}
 	}
-	if (!responseBody.empty()) {
-		totalSent = 0;
-		bytesSent = 0;
-		bytesLeft = responseBody.size();
-		while (totalSent < responseBody.size()) {
-			bytesSent = send(sockClient, responseBody.data() + totalSent, bytesLeft, 0);
-			if (bytesSent != -1) {
-				totalSent += bytesSent;
-				bytesLeft -= bytesSent;
-			}
-		}
+	FD_CLR(sockClient, &_writeSockets);
+	FD_SET(sockClient, &_readSockets);
+	fullResponse.clear();
+	if (!_request.keepalive) {
+		close(sockClient);
+		if (sockClient == _maxFD)
+			_maxFD -= 1;
+		FD_CLR(sockClient, &_currentSockets);
 	}
+	_request.body.clear();
+	_responseBody.clear();
+	_request.fullRequest.clear();
+	_output.clear();
 }
 
-void    WebServ::socketFlush(const int& sockClient)
+void	WebServ::removeUntilCRLF( std::vector<char>& request )
 {
-    int        chunkSize = 1;
-    char    binChar[4096];
+	const char	*crlf = "\r\n\r\n";
 
-    while (chunkSize > 0) {
-        chunkSize = recv(sockClient, binChar, 4095, 0);
+	std::vector<char>::iterator	it = std::search(request.begin(), request.end(), crlf, crlf + 4);
+	if (it != request.end())
+		request.erase(request.begin(), it + 4);
+}
+
+bool	WebServ::receiveRequest(const int& sockClient, std::vector<char> &totalBuff )
+{
+	_recvsize = 0;
+	char		buff[4096];
+	int			bytesRead = 1;
+	const char	*crlf = "\r\n\r\n";
+
+	totalBuff.clear();
+
+    HttpRequest tempRequest;
+	bool		headersParsed = false;
+    while (true) {
+        bytesRead = 1;
+        while (bytesRead > 0)
+        {
+            std::memset(buff, '\0', 4096);
+            bytesRead = recv(sockClient, buff, 4096, 0);
+            if (bytesRead > 0) {
+                _recvsize += bytesRead;
+				for (int j = 0; j < bytesRead; j++)
+					totalBuff.push_back(buff[j]);
+			}
+        }
+		if (!headersParsed && std::search(totalBuff.begin(),
+				totalBuff.end(), crlf, crlf + 4) != totalBuff.end())
+		{
+			HttpRequestParse::parse(tempRequest, totalBuff, _sockPortMap[sockClient]);
+			headersParsed = true;
+		}
+        if (headersParsed && tempRequest.content_length > 0
+			&& static_cast<size_t>(tempRequest.content_length) <= totalBuff.size())
+		{	
+        	break;
+		}
+		else if (tempRequest.content_length <= 0)
+			break;
     }
+	_request = tempRequest;
+	_request.body = totalBuff;
+	if (!headersParsed)
+		return (false);
+	return (true);
 }
 
 void	WebServ::receiveFromExistingClient(const int& sockClient)
@@ -259,24 +297,21 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		printErrno(GETTIMEOFDAY, EXIT);
 	_socketTimeoutMap[sockClient] = timeoutUpdate;
 
-	std::string	totalBuff;
-	int			chunkSize = 1;
+	std::vector<char>	totalBuff;
 	
-	memset(_buff, 0, 2);
-	_recvsize = recv(sockClient, _buff, 1, 0);
-	totalBuff.append(_buff);
+	bool	recvBool = receiveRequest(sockClient, totalBuff);
 
-	if (_recvsize == 0) {
+	if (!recvBool) {
+		std::cout << YELLOW << "[socket: " << sockClient << "] Client has disconnected" << RESETCLR << std::endl;
 		close(sockClient);
 		if (sockClient == _maxFD)
 			_maxFD -= 1;
 		FD_CLR(sockClient, &_currentSockets);
 	}
-	else if (_recvsize > 0) {
-		receiveRequest(sockClient, chunkSize, totalBuff);
+	else {
 		std::cout << MAGENTA << "[Server] [socket: " << sockClient << "] Receiving request from client:" << RESETCLR << std::endl;
-		std::cout << totalBuff << std::endl;
-		_request = HttpRequestParse::parse(totalBuff, _sockPortMap[sockClient]);
+		std::cout << _request.strHeaders << std::endl;
+		_request.strHeaders.clear();
 
 		std::string reqHost = _request.headers["Host"];
 		reqHost = reqHost.substr(0,reqHost.find(':'));
@@ -284,35 +319,23 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		request_ip_check(reqHost, _config, _status);
 		_request.hostIP = reqHost;
 
-		totalBuff.clear();
 		if (_status == 200) {
 			_filepath = get_file_path(_request, _config, _status);
 		}
 		if (_request.method == "POST") {
 			if (_request.content_length > _config.get_max_body())
-			{
 				_status = 413;
-				socketFlush(sockClient);
-			}
 			else
-				receiveBody(sockClient);
+				receiveBody();
 		}
 		else if (_request.method == "DELETE")
 			deleteResource(_request.path);
-		_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
-		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
-		std::cout << _output.c_str() << std::endl;
-		sendToClient(sockClient, _responseBody);
-		_responseBody.clear();
-		_request._binaryBody.clear();
-		_output.clear();
-		if (!_request.keepalive) {
-			close(sockClient);
-			if (sockClient == _maxFD)
-				_maxFD -= 1;
-			FD_CLR(sockClient, &_currentSockets);
-		}
 	}
+	FD_CLR(sockClient, &_readSockets);
+	FD_SET(sockClient, &_writeSockets);
+	_request.fullRequest.clear();
+	totalBuff.clear();
+	// _request.binaryBody.clear();
 }
 
 void	WebServ::startServer( void ) {
@@ -321,16 +344,18 @@ void	WebServ::startServer( void ) {
     while (isTrue)
     {
         _status = 200;
-		_readySockets = _currentSockets;
-		if (select(_maxFD + 1, &_readySockets, NULL, NULL, &_timeoutSelect) < 0)
+		_readSockets = _currentSockets;
+		if (select(_maxFD + 1, &_readSockets, &_writeSockets, NULL, &_timeoutSelect) < 0)
 			printErrno(SELECT, EXIT);
 
 		for (int i = 0; i < _maxFD + 1; ++i)
 		{
-			if (isServSock(_servsock, i) && FD_ISSET(i, &_readySockets)) // Accepting new connection
+			if (isServSock(_servsock, i) && FD_ISSET(i, &_readSockets)) // Accepting new connection
 				acceptNewConnection(i);
-			else if (FD_ISSET(i, &_readySockets))
+			else if (FD_ISSET(i, &_readSockets))
 				receiveFromExistingClient(i);
+			if (FD_ISSET(i, &_writeSockets))
+				sendToClient(i);
 			else if (FD_ISSET(i, &_currentSockets) && !isServSock(_servsock, i)) { // Check keep-alive timeout
 				if (gettimeofday(&_currentTime, NULL) < 0)
 					printErrno(GETTIMEOFDAY, EXIT);

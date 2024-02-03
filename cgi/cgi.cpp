@@ -12,8 +12,7 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 
 	cgi->insert_arg(filepath);
 	cgi->insert_arg(request.method);
-	std::string	vecToStr(request._binaryBody.begin(), request._binaryBody.end());
-
+	std::string	vecToStr(request.body.begin(), request.body.end());
 	cgi->insert_arg(vecToStr);
 	if (pipe(fd) == -1)
 		throw std::exception();

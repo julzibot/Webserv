@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/30 19:47:24 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/02/03 15:13:49 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,10 +29,13 @@ class HttpRequest
         std::string							http_version;
         std::string                         prio_file;
 		int									port_number;
-		unsigned int						content_length;
+		int									content_length;
         bool                                cgi;
 		bool								keepalive;
-		std::vector<char>					_binaryBody;
+		std::vector<char>					body;
+		// std::vector<char>					binaryBody;
+		std::vector<char>					fullRequest;
+		std::string							strHeaders;
 
         HttpRequest();
         HttpRequest(HttpRequest const &req);
@@ -42,6 +45,6 @@ class HttpRequestParse
 {
     public:
         char *  process_request(char *buff, int recvsize, int port_number);
-        static HttpRequest parse(std::string const &req_str, int portnum);
+        static void	parse(HttpRequest& request, std::vector<char> &req_str, int portnum);
         static void parse_headers(std::istringstream &requestStream, HttpRequest &request);
 };

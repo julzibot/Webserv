@@ -20,29 +20,17 @@ std::string	extractBetweenChars(std::string str, char c) {
 	return (str.substr(start, end - start));
 }
 
-void	WebServ::receiveBinary(const int& sockClient, const std::string& endBoundary) {
-
-	int		chunkSize = 1;
-	char	binChar[4096];
-
-	while (chunkSize > 0) {
-		memset(binChar, 0, 4096);
-		chunkSize = recv(sockClient, binChar, 4095, 0);
-		if (chunkSize <= 0)
-			break;
-		for (int i = 0; i < chunkSize; ++i)
-			_request._binaryBody.push_back(binChar[i]);
-	}
+void	WebServ::parseBinary(const std::string& endBoundary) {
 
 	if (endBoundary != "") {
-		std::vector<char>::iterator	boundIt = std::search(_request._binaryBody.begin(),
-			_request._binaryBody.end(), endBoundary.begin(), endBoundary.end());
-		if (boundIt != _request._binaryBody.end())
-			_request._binaryBody.erase(boundIt, _request._binaryBody.end());
+		std::vector<char>::iterator	boundIt = std::search(_request.body.begin(),
+			_request.body.end(), endBoundary.begin(), endBoundary.end());
+		if (boundIt != _request.body.end())
+			_request.body.erase(boundIt, _request.body.end());
 	}
 }
 
-void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, const std::string& filename,
+void	WebServ::storeFile(const std::string& fileType, const std::string& filename,
 	const std::string& root) {
 
 	std::ofstream	newFile;
@@ -53,6 +41,7 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 	// check if root is valid/exists
 	if (stat(root.c_str(), &rootStat) != 0) {
 		_status = 500; // Internal Server Error
+		std::cerr << "Error: Invalid root" << std::endl;
 		return;
 	}
 	// // Create timestamp
@@ -72,7 +61,7 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 		filePath = root + "/" + filename + date_buffer + ".png";
 	else
 		filePath = root + "/" + filename + "_" + date_buffer;
-	receiveBinary(sockClient, "");
+	parseBinary("");
 
 	if (_status == 200 && (_request.path.find("cgi")) == NPOS) {
 		newFile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
@@ -81,15 +70,15 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 			struct stat	fileInfos;
 			if (stat(filePath.c_str(), &fileInfos) != -1) {
 				_status = 409; // Conflict
-				_request._binaryBody.clear();
+				_request.body.clear();
 				return;
 			}
 			newFile.open(filePath, std::ios::binary);
-			for (std::vector<char>::iterator it = _request._binaryBody.begin(); it != _request._binaryBody.end(); ++it)
+			for (std::vector<char>::iterator it = _request.body.begin(); it != _request.body.end(); ++it)
 				newFile << *it;
 		}
 		catch (const std::ofstream::failure& e) {
-			std::cerr << RED << "Caught exception: receiveFileOnly() or receiveMultiFormData(): '" << e.what()
+			std::cerr << RED << "Caught exception: storeFile() or receiveMultiFormData(): '" << e.what()
 				<< "' while receiving file on port: " << _request.port_number << RESETCLR << std::endl;
 			_status = 500; // Internal Server Error
 		}
@@ -98,30 +87,27 @@ void	WebServ::receiveFile(const int& sockClient, const std::string& fileType, co
 	return;
 }
 
-void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::string boundary ) {
+void	WebServ::receiveMultiForm( std::string root, std::string boundary )
+{
+	const char					*crlf = "\r\n\r\n";
+	std::vector<char>::iterator	it = std::search(_request.body.begin(), _request.body.end(), crlf, crlf + 4);
+	size_t						headerSize = std::distance(_request.body.begin(), it + 1);
+	std::string					formHeaderData(headerSize, '\0');
 
-	int			chunkSize = 1;
-	char		formDataBody[2];
-	std::string	formHeaderData;
-
-	while (chunkSize > 0) {
-		memset(formDataBody, 0, 2);
-		chunkSize = recv(sockClient, formDataBody, 1, 0);
-		if (chunkSize == 0)
-			break;
-		formHeaderData.append(formDataBody);
-		if (formHeaderData.find("\r\n\r\n") != NPOS) {
-			receiveBinary(sockClient, "--" + boundary + "--");
-			break;
-		}
-	}
+	if (headerSize + 4 < _request.body.size())
+		it += 4;	
+	formHeaderData.assign(_request.body.begin(), it);
+	removeUntilCRLF(_request.body);
+	if (!_request.body.empty())
+		parseBinary("--" + boundary + "--");
 
 	std::istringstream			formStream(formHeaderData);
 	std::string					tmpLine;
 	std::vector<std::string>	formHeaders;
 	
 	while (std::getline(formStream, tmpLine)) {
-		tmpLine.erase(tmpLine.find("\r"));
+		if (tmpLine.find("\r") != NPOS)
+			tmpLine.erase(tmpLine.find("\r"));
 		formHeaders.push_back(tmpLine);
 	}
 	formStream.clear();
@@ -148,12 +134,12 @@ void	WebServ::receiveMultiForm( const int& sockClient, std::string root, std::st
 			}
 		}
 	}
-	receiveFile(sockClient, fileType, inputName, root);
+	storeFile(fileType, inputName, root);
 	return;
 }
 
-void	WebServ::receiveBody( const int& sockClient ) {
-
+void	WebServ::receiveBody( void )
+{
 	std::string p = _request.path.substr(0, _request.path.find('/', 1));
 	std::string	reqHost = _request.hostIP;
 	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];
@@ -182,8 +168,8 @@ void	WebServ::receiveBody( const int& sockClient ) {
 			_status = 400; // Bad request
 			return;
 		}
-		receiveMultiForm(sockClient, root, boundary);
+		receiveMultiForm(root, boundary);
 	}
 	else
-		receiveFile(sockClient, fileType, "unknown_name", root);
+		storeFile(fileType, "unknown_name", root);
 }

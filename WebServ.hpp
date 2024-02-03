@@ -57,7 +57,7 @@ private:
 	std::map<int, int>			_sockPortMap; // Socket and its associated port number
 
 	// Socket loop 
-	char   				_buff[2];
+	char   				_buff[4096];
     std::string			_output;
     std::string			_filepath;
     std::string			_line;
@@ -73,14 +73,12 @@ private:
     int					_recvsize;
 
 	fd_set				_currentSockets;
-    fd_set				_readySockets;
+    fd_set				_readSockets;
+	fd_set				_writeSockets;
     int					_maxFD;
     struct timeval		_timeoutSelect;
 
 	std::vector<char>	_responseBody;
-
-	// POST Method
-	unsigned int		_maxBodySize;
 
 	// Timeout management
 	std::map<int, struct timeval>	_socketTimeoutMap;
@@ -104,15 +102,13 @@ private:
 		HttpRequest &request, Config &config, std::vector<char>& body);
 	
 	// POST method
-	void	receiveRequest( const int& sockClient,
-				int& chunkSize, std::string& totalBuff );
-	void	receiveBody( const int& sockClient );
-	void	receiveMultiForm( const int& sockClient, std::string root, std::string boundary );
-	void	receiveBinary( const int& sockClient, const std::string& endBoundary );
-	void	receiveFile(const int& sockClient, const std::string& fileType,
+	bool	receiveRequest( const int& sockClient, std::vector<char> &totalBuff );
+	void	receiveBody( void );
+	void	receiveMultiForm( std::string root, std::string boundary );
+	void	parseBinary( const std::string& endBoundary );
+	void	storeFile(const std::string& fileType,
 		const std::string& filename, const std::string& root);
-	void	sendToClient(const int& sockClient, const std::vector<char>& responseBody);
-	void    socketFlush(const int& sockClient);
+	void	sendToClient(const int& sockClient);
 
 	// DELETE method
 	void	deleteResource( const std::string& resource );
@@ -122,6 +118,7 @@ public:
 	~WebServ( void ) {};
 
 	void	startServer( void );
+	static void	removeUntilCRLF( std::vector<char>& request );
 };
 
 void    printErrno(int func, bool ex);
