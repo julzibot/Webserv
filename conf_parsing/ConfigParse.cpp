@@ -330,7 +330,6 @@ std::vector<bool>	get_match_vect(std::string const &tempHost, HttpRequest &reque
 	for (it = locations.begin(); it != locEnd; it++)
 	{
 		servername = config.getServMain(tempHost, request.port_number, it->first, true)["server_name"];
-		// std::cout << "route: " << it->first << " SERVNAME: " << servername << std::endl;
 		for (j = 0; j < hostnames.size(); j++)
 		{
 			if (servername == hostnames[j] || servername.empty())

@@ -73,14 +73,12 @@ private:
     int					_recvsize;
 
 	fd_set				_currentSockets;
-    fd_set				_readySockets;
+    fd_set				_readSockets;
+	fd_set				_writeSockets;
     int					_maxFD;
     struct timeval		_timeoutSelect;
 
 	std::vector<char>	_responseBody;
-
-	// POST Method
-	unsigned int		_maxBodySize;
 
 	// Timeout management
 	std::map<int, struct timeval>	_socketTimeoutMap;
@@ -104,14 +102,13 @@ private:
 		HttpRequest &request, Config &config, std::vector<char>& body);
 	
 	// POST method
-	bool	receiveRequest( const int& sockClient,
-				int& chunkSize, std::vector<char> &totalBuff );
+	bool	receiveRequest( const int& sockClient, std::vector<char> &totalBuff );
 	void	receiveBody( void );
 	void	receiveMultiForm( std::string root, std::string boundary );
 	void	parseBinary( const std::string& endBoundary );
 	void	storeFile(const std::string& fileType,
 		const std::string& filename, const std::string& root);
-	void	sendToClient(const int& sockClient, const std::vector<char>& responseBody);
+	void	sendToClient(const int& sockClient);
 
 	// DELETE method
 	void	deleteResource( const std::string& resource );

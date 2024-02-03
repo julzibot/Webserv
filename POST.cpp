@@ -23,11 +23,10 @@ std::string	extractBetweenChars(std::string str, char c) {
 void	WebServ::parseBinary(const std::string& endBoundary) {
 
 	if (endBoundary != "") {
-		std::cout << RED << "boundary encountered!" << RESETCLR << std::endl;
-		std::vector<char>::iterator	boundIt = std::search(_request.binaryBody.begin(),
-			_request.binaryBody.end(), endBoundary.begin(), endBoundary.end());
-		if (boundIt != _request.binaryBody.end())
-			_request.binaryBody.erase(boundIt, _request.binaryBody.end());
+		std::vector<char>::iterator	boundIt = std::search(_request.body.begin(),
+			_request.body.end(), endBoundary.begin(), endBoundary.end());
+		if (boundIt != _request.body.end())
+			_request.body.erase(boundIt, _request.body.end());
 	}
 }
 
@@ -90,54 +89,17 @@ void	WebServ::storeFile(const std::string& fileType, const std::string& filename
 
 void	WebServ::receiveMultiForm( std::string root, std::string boundary )
 {
-	(void)boundary;
-	// Extract Header Form Data from the initial portion of the body
 	const char					*crlf = "\r\n\r\n";
 	std::vector<char>::iterator	it = std::search(_request.body.begin(), _request.body.end(), crlf, crlf + 4);
 	size_t						headerSize = std::distance(_request.body.begin(), it + 1);
 	std::string					formHeaderData(headerSize, '\0');
 
-	// it = headersize
 	if (headerSize + 4 < _request.body.size())
 		it += 4;	
 	formHeaderData.assign(_request.body.begin(), it);
-	std::cout << BLUE << "*** FORM HEADERS ***" << formHeaderData << "******" << RESETCLR << std::endl;
-
-	// removeUntilCRLF(_request.body);
-	// std::cout << "BODY:" << std::endl;
-	// for (size_t i = 0; i < _request.body.size(); ++i)
-	// 	std::cout << _request.body[i];
-	// std::cout << std::endl;
-	// if (!_request.body.empty())
-	// 	parseBinary("--" + boundary + "--");
-
-		// const char	*flrc = "\n\r\n\r";
-	// std::vector<char>::iterator	binaryStartIt = std::search(_request.body.rbegin(), _request.body.rend(), flrc, flrc + 4);
-
-	// std::cout << "Distance between last crlf until end of body: " << std::distance(binaryStartIt, _request.body.end()) << std::endl;
-	// size_t	bodyBegin = std::distance(_request.body.begin(), binaryStartIt);
-	// std::cout << "Distance from start to the body: " << bodyBegin << std::endl;
-	// // Extract binary from the body
-	// if (bodyBegin + 4 < _request.body.size()) {
-
-	// 	size_t	binaryBodySize = _request.body.size() - bodyBegin - 4;
-	// 	// size_t	binaryBodySize = _request.body.size() - headerSize - 4;
-	// 	_request.binaryBody.resize(binaryBodySize);
-	// 	_request.binaryBody.assign(binaryStartIt + 4, _request.body.end());
-	// 	// _request.binaryBody.assign(it, _request.body.end());
-	// 	parseBinary("--" + boundary + "--");
-	// }
-	// std::cout << YELLOW << "*** BINARY BODY ***" << std::endl;
-	// for (size_t i = 0; i < _request.binaryBody.size(); ++i) {
-	// 	std::cout << _request.binaryBody[i];
-	// 	usleep(5);
-	// }
-	// std::cout << RESETCLR << std::endl;
-	// exit(0);
-	// if (formHeaderData.find("\r\n\r\n") != NPOS)
-	// 	receiveBinary(sockClient, "--" + boundary + "--");
-
-
+	removeUntilCRLF(_request.body);
+	if (!_request.body.empty())
+		parseBinary("--" + boundary + "--");
 
 	std::istringstream			formStream(formHeaderData);
 	std::string					tmpLine;
@@ -176,9 +138,8 @@ void	WebServ::receiveMultiForm( std::string root, std::string boundary )
 	return;
 }
 
-void	WebServ::receiveBody( void ) {
-
-	std::cout << YELLOW << "receiveBody() body size: " << _request.body.size() << RESETCLR << std::endl;
+void	WebServ::receiveBody( void )
+{
 	std::string p = _request.path.substr(0, _request.path.find('/', 1));
 	std::string	reqHost = _request.hostIP;
 	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];

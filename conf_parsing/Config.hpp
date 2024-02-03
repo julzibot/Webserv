@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/31 08:47:24 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/02/03 14:25:47 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,12 +75,12 @@ class Config
         servLocMap			server_locs;
         servInfos			server_main;
 		std::vector<int>	servPortNums;
-		unsigned int		max_bodysize;
+		int					max_bodysize;
 
     public:
 		/* Accessors */
         std::vector<int>    get_portnums() const { return (this->servPortNums); };
-		unsigned int		get_max_body() const { return (this->max_bodysize); };
+		int					get_max_body() const { return (this->max_bodysize); };
 		servLocMap			getServ() const { return (this->server_locs); };
         std::string			get_type(std::string file_ext);
         std::string			get_cgi_type(std::string file_ext);

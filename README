@@ -39,13 +39,3 @@ To fix ASAP:
   3. How to test 405?
   4. What if someone sends invalid method in a request:
     How will output be sent to it? ReceiveFromExistingClient needs updating, (_recvsize > 0)
-
-
-void	WebServ::removeUntilCRLF( std::vector<char>& request ) {
-
-	const char	*crlf = "\r\n\r\n";
-
-	std::vector<char>::iterator	it = std::search(request.begin(), request.end(), crlf, crlf + 4);
-	if (it != request.end())
-		request.erase(request.begin(), it + 4);
-}
