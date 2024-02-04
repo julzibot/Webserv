@@ -499,6 +499,7 @@ void	get_directory_listing(std::string & file_path, HttpRequest &request,
 		for (it = list.begin(); it != list.end(); ++it) {
 			line += "<li><a href=\"http://" + reqHost + loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
 			body.insert(body.end(), line.begin(), line.end());
+			line.clear();
 		}
 		body.insert(body.end(), END_OF_LIST.begin(), END_OF_LIST.end());
 	} else {
