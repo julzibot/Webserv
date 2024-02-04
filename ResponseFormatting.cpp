@@ -89,7 +89,9 @@ std::string	ResponseFormatting::parse_cgi_headers(std::string http_version,
 
 void	ResponseFormatting::parse_body(std::string file_path, int &status_code, std::vector<char>& body)
 {
-	if (status_code == 204 || status_code == 301 || status_code == 408)
+	std::cout << "parsebody(): " << status_code << std::endl;
+	std::cout << "parsebody() filepath: " << file_path << std::endl;
+	if (status_code == 204 || status_code == 301) // || status_code == 408
 		return;
 
 	if (file_path.find(".jpg") != NPOS || file_path.find(".png")
@@ -112,6 +114,7 @@ void	ResponseFormatting::parse_body(std::string file_path, int &status_code, std
 		binaryFile.close();
 	}
 	else {
+		std::cout << "408 file path: " << file_path.c_str() << std::endl;
 		std::ifstream	inputFile(file_path.c_str());
 		if (!inputFile.is_open())
 			return;
@@ -121,6 +124,7 @@ void	ResponseFormatting::parse_body(std::string file_path, int &status_code, std
 			line += '\n';
 			body.insert(body.end(), line.begin(), line.end());
 		}
+		std::cout << "body size: " << body.size() << std::endl;
 		inputFile.close();
 	}
 }

@@ -67,6 +67,7 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 		if (result > 0)
 		{
 			waitpid(pid, &status, 0);
+			kill(pid, SIGKILL);
 			if (WIFEXITED(status))
 			{
 				if (WEXITSTATUS(status) != 0)

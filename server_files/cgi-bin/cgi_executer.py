@@ -7,9 +7,9 @@ import signal
 
 # Uncomment below code for running an infinite loop
 # to test out 408 Request Timeout.
-# i = 0
-# while True:
-# 	i+=1
+i = 0
+while True:
+	i+=1
 # Get the request method from the first command line argument
 method = sys.argv[1].upper()
 

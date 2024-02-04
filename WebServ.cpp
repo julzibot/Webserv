@@ -188,10 +188,11 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 			std::string	bodyStr(body.begin(), body.end());
 			std::deque<std::string> status_infos = get_status_infos(status,
 				bodyStr, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
+			std::cout << "status infos[0]: " << status_infos[0] << std::endl;
 			if (status != 200) {
 				ResponseFormatting::parse_body(status_infos[0], status, body);
 			}
-			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.size(),
+			std::string headers = ResponseFormatting::parse_cgi_headers("HTTP/1.1", body.size(),
 					status, status_infos);
 			std::string response = headers + "\r\n";
 			delete cgi;
@@ -204,8 +205,10 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 void	WebServ::sendToClient(const int& sockClient)
 {
 	_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
-	std::cout << CYAN << "[socket: " << sockClient << "] Sending response:" << RESETCLR << std::endl;
-	std::cout << _output.c_str() << std::endl;
+	if (!_output.empty()) {
+		std::cout << CYAN << "[socket: " << sockClient << "] Sending response:" << RESETCLR << std::endl;
+		// std::cout << _output.c_str() << std::endl;
+	}
 
 	std::vector<char>	fullResponse(_output.begin(), _output.end());
 
@@ -214,6 +217,11 @@ void	WebServ::sendToClient(const int& sockClient)
 
 	if (!_responseBody.empty()) {
 		fullResponse.insert(fullResponse.end(), _responseBody.begin(), _responseBody.end());
+	}
+	if (!fullResponse.empty()) {
+		for (size_t i = 0; i < fullResponse.size(); ++i)
+			std::cout << fullResponse[i];
+		std::cout << std::endl;
 	}
 	size_t	bytesLeft = fullResponse.size();
 
@@ -345,13 +353,16 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 
 void	WebServ::startServer( void )
 {
+	struct timeval	selectTimeout;
+
 	signal(SIGINT, sigHandler);
     while (isTrue)
     {
         _status = 200;
 		_readSockets = _currentSockets;
-		if (select(_maxFD + 1, &_readSockets, &_writeSockets, NULL, NULL) < 0) {
-			std::cout << "errno: " << errno << std::endl;
+		selectTimeout.tv_usec = 0;
+		selectTimeout.tv_sec = 1;
+		if (select(_maxFD + 1, &_readSockets, &_writeSockets, NULL, &selectTimeout) < 0) {
 			printErrno(SELECT, NO_EXIT);
 			break;
 		}
@@ -364,7 +375,7 @@ void	WebServ::startServer( void )
 				receiveFromExistingClient(i);
 			if (FD_ISSET(i, &_writeSockets))
 				sendToClient(i);
-			else if (FD_ISSET(i, &_currentSockets) && !isServSock(_servsock, i)) { // Check keep-alive timeout
+			if (FD_ISSET(i, &_currentSockets) && !isServSock(_servsock, i)) { // Check keep-alive timeout
 				if (gettimeofday(&_currentTime, NULL) < 0)
 					printErrno(GETTIMEOFDAY, EXIT);
 				checkClientTimeout(_currentTime, _socketTimeoutValue, i);
