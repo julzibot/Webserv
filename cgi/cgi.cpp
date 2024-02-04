@@ -29,7 +29,7 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 		close(fd[1]);
 		if (execve(cgi->get_cgi_path().c_str(), cgi->get_cgi_args(), cgi->get_envp()) == -1)
 		{
-			std::cerr << "The CGI code crashed" << std::endl;
+			std::cerr << RED << "Error: The CGI code crashed" << RESETCLR << std::endl;
 			throw std::exception();
 		}
 	}

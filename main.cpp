@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julzibot <julzibot@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/02/01 14:54:03 by julzibot         ###   ########.fr       */
+/*   Updated: 2024/02/04 09:31:17 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,8 @@
 int main(int argc, char **argv, char **envp) {
 
 	if (argc > 2) {
-		std::cout << "Error: Bad number of arguments. Only '.config' file is accepted.";
+		std::cerr << RED << "Error: Bad number of arguments" << RESETCLR << std::endl;
+		std::cerr << RED << "Only '.config' file is accepted" << RESETCLR << std::endl;
 		return (1);
 	}
 

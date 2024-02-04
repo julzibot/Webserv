@@ -31,7 +31,7 @@
 #define EXIT true
 #define NO_EXIT false
 
-#define CLIENT_TIMEOUT 30
+#define CLIENT_TIMEOUT 45
 #define CLIENT_TIMEOUT_CGI 10
 
 #define RESETCLR "\033[0m"

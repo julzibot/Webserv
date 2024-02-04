@@ -22,7 +22,6 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 415:	status_infos.push_back(error_path + "/415.html"); status_infos.push_back("Unsupported Media Type"); break;
 		case 422:	status_infos.push_back(error_path + "/422.html"); status_infos.push_back("Unprocessable Content"); break;
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
-		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
 		case 1001:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
 	}
 	return (status_infos);

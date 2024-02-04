@@ -43,8 +43,9 @@ void    printErrno(int func, bool ex)
         default: std::cerr << "errno: Unknown error code, should update: " << errno << std::endl;
     }
 
-    if (ex)
+    if (ex) {
         exit(errno);
+	}
 }
 
 void	WebServ::initSelectFDs( const unsigned int& size ) {
@@ -71,7 +72,7 @@ WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(2
 		_config = parse_config_file(confFilenamePath);
 	}
 	catch (std::invalid_argument &e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		std::cerr << RED << "Error: " << e.what() << RESETCLR << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	this->envp = envp;
@@ -122,7 +123,8 @@ void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 	const int& keepAliveTimeout, const int& clientSock )
 {
 	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout) {
-		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to " << _socketTimeoutValue << "s)" << RESETCLR << std::endl;
+		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to "
+			<< _socketTimeoutValue << "s)" << RESETCLR << std::endl;
 		_request.http_version = "HTTP/1.1";
 		_request.port_number = _sockPortMap[clientSock];
 		std::string			emptyStr = "";
@@ -208,11 +210,13 @@ void	WebServ::sendToClient(const int& sockClient)
 	std::cout << _output.c_str() << std::endl;
 
 	std::vector<char>	fullResponse(_output.begin(), _output.end());
+
 	size_t	totalSent = 0;
 	int		bytesSent = 0;
 
-	if (!_responseBody.empty())
+	if (!_responseBody.empty()) {
 		fullResponse.insert(fullResponse.end(), _responseBody.begin(), _responseBody.end());
+	}
 	size_t	bytesLeft = fullResponse.size();
 
 	while (totalSent < fullResponse.size()) {
@@ -339,7 +343,6 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	FD_SET(sockClient, &_writeSockets);
 	_request.fullRequest.clear();
 	totalBuff.clear();
-	// _request.binaryBody.clear();
 }
 
 void	WebServ::startServer( void )
@@ -348,9 +351,11 @@ void	WebServ::startServer( void )
     while (isTrue)
     {
         _status = 200;
+		_timeoutSelect.tv_usec = 200;
+		_timeoutSelect.tv_sec = 0;
 		_readSockets = _currentSockets;
 		if (select(_maxFD + 1, &_readSockets, &_writeSockets, NULL, &_timeoutSelect) < 0)
-			printErrno(SELECT, EXIT);
+			printErrno(SELECT, NO_EXIT);
 
 		for (int i = 0; i < _maxFD + 1; ++i)
 		{

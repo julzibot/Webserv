@@ -41,7 +41,7 @@ void	WebServ::storeFile(const std::string& fileType, const std::string& filename
 	// check if root is valid/exists
 	if (stat(root.c_str(), &rootStat) != 0) {
 		_status = 500; // Internal Server Error
-		std::cerr << RED << "Error: Invalid root" << RESETCLR << std::endl;
+		std::cerr << RED << "Error: storeFile(): Invalid root" << RESETCLR << std::endl;
 		return;
 	}
 	// // Create timestamp
@@ -78,7 +78,7 @@ void	WebServ::storeFile(const std::string& fileType, const std::string& filename
 				newFile << *it;
 		}
 		catch (const std::ofstream::failure& e) {
-			std::cerr << RED << "Caught exception: storeFile() or receiveMultiFormData(): '" << e.what()
+			std::cerr << RED << "Error: storeFile() or receiveMultiFormData(): '" << e.what()
 				<< "' while receiving file on port: " << _request.port_number << RESETCLR << std::endl;
 			_status = 500; // Internal Server Error
 		}
@@ -127,7 +127,7 @@ void	WebServ::receiveMultiForm( std::string root, std::string boundary )
 			fileType = formHeaders[i].substr(formHeaders[i].find("Content-Type: ") + 14);
 			if (fileType != "image/jpeg" && fileType != "image/png")
 			{
-				std::cerr << "Error: Unsupported file type" << std::endl;
+				std::cerr << RED << "Error: Unsupported file type" << RESETCLR << std::endl;
 				_status = 415; // Unsupported Media Type
 				formHeaders.clear();
 				return;
@@ -144,7 +144,7 @@ void	WebServ::receiveBody( void )
 	std::string	reqHost = _request.hostIP;
 	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];
 	if (root.empty()) {
-		std::cerr << "receiveBody: 'root' not found" << std::endl;
+		std::cerr << RED << "Error: receiveBody(): 'root' not found" << RESETCLR << std::endl;
 		_status = 500; // 500 Internal Server Error
 		return;
 	}
@@ -153,7 +153,7 @@ void	WebServ::receiveBody( void )
 	std::string			fileName;
 	strstrMap::iterator contentTypeIt = _request.headers.find("Content-Type");
 	if (contentTypeIt == _request.headers.end()) {
-		std::cerr << "Error: Cannot process POST request: No 'Content-Type' in request headers" << std::endl;
+		std::cerr << RED << "Error: POST: No 'Content-Type' in request headers" << RESETCLR << std::endl;
 		_status = 422; // Unprocessable Content
 		return;
 	}
@@ -164,7 +164,7 @@ void	WebServ::receiveBody( void )
 			boundary.append(fileType.substr(fileType.find("boundary=") + 9, fileType.length() - 1));
 		}
 		catch (std::exception &e) {
-			std::cerr << "Error: Cannot process POST request: No boundary inside multiform/data." << std::endl;
+			std::cerr << RED << "Error: POST: No boundary inside multiform/data." << RESETCLR << std::endl;
 			_status = 400; // Bad request
 			return;
 		}
