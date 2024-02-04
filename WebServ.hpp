@@ -2,24 +2,26 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/stat.h>
-#include <netdb.h>
-#include <unistd.h>
 #include <arpa/inet.h>
-#include <stdlib.h>
+#include <netdb.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #include <iostream>
 #include <sstream>
 #include <csignal>
-#include <fcntl.h>
-#include <sys/time.h>
-#include <string>
 #include <map>
 #include <list>
+#include <string>
 #include <algorithm>
-#include "conf_parsing/Config.hpp"
+
 #include "RequestParsing.hpp"
 #include "ResponseFormatting.hpp"
+#include "conf_parsing/Config.hpp"
 
 #define SOCKET 1
 #define BIND 2
