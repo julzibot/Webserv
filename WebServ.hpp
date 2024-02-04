@@ -6,7 +6,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <string>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
@@ -14,8 +13,10 @@
 #include <csignal>
 #include <fcntl.h>
 #include <sys/time.h>
+#include <string>
 #include <map>
 #include <list>
+#include <algorithm>
 #include "conf_parsing/Config.hpp"
 #include "RequestParsing.hpp"
 #include "ResponseFormatting.hpp"
