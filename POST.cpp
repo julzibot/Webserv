@@ -56,11 +56,11 @@ void	WebServ::storeFile(const std::string& fileType, const std::string& filename
     strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H:%M:%S", tm_now);
 
 	if (fileType == "image/jpeg")
-		filePath = root + "/" + filename + "_" + timestamp + ".jpg";
+		filePath = root + "/uploaded-files/" + filename + "_" + timestamp + ".jpg";
 	else if (fileType == "image/png")
-		filePath = root + "/" + filename + "_" + timestamp + ".png";
+		filePath = root + "/uploaded-files/" + filename + "_" + timestamp + ".png";
 	else
-		filePath = root + "/" + filename + "_" + timestamp;
+		filePath = root + "/uploaded-files/" + filename + "_" + timestamp;
 	parseBinary("");
 
 	if (_status == 200 && (_request.path.find("cgi")) == NPOS) {

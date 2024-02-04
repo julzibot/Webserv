@@ -88,7 +88,7 @@ std::string	ResponseFormatting::parse_cgi_headers(std::string http_version,
 	return (headers);
 }
 
-void	ResponseFormatting::parse_body(std::string file_path, int const &status_code, std::vector<char>& body)
+void	ResponseFormatting::parse_body(std::string file_path, int &status_code, std::vector<char>& body)
 {
 	if (status_code == 204 || status_code == 301 || status_code == 408)
 		return;
@@ -108,8 +108,7 @@ void	ResponseFormatting::parse_body(std::string file_path, int const &status_cod
 		binaryFile.seekg(0, std::ios::beg);
 
 		if (!binaryFile.read(body.data(), fileSize)) {
-			std::cerr << "parse_body(): Set status code to 500!" << std::endl;
-			// status_code = 500; // Internal Server Error
+			status_code = 500;
 		}
 		binaryFile.close();
 	}
@@ -140,7 +139,7 @@ std::string	ResponseFormatting::format_response(HttpRequest &request, int &statu
 	if (status_code == 1001)
 	{
 		try {
-			get_directory_listing(file_path, request, config, body);
+			get_directory_listing(file_path, request, body);
 			headers = parse_headers(status_infos, request.http_version, status_code,
 						config, body.size());
 		} catch (const std::ios_base::failure& e) {

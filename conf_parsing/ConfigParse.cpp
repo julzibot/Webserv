@@ -478,12 +478,11 @@ std::string get_file_path(HttpRequest &request, Config &config, int &status_code
 }
 
 void	get_directory_listing(std::string & file_path, HttpRequest &request,
-		Config &config, std::vector<char>& body) {
+		std::vector<char>& body) {
 	std::vector<std::string>::iterator	it;
 	std::vector<std::string>			list;
 	struct dirent						*en;
 	DIR									*dir;
-	LocationDir							&loc = get_Location_for_Path(request, config);
 
 	dir = opendir(file_path.c_str());
 	std::string reqHost = request.headers["Host"];
@@ -496,8 +495,9 @@ void	get_directory_listing(std::string & file_path, HttpRequest &request,
 		closedir(dir);
 		body.insert(body.end(), START_OF_LIST.begin(), START_OF_LIST.end());
 		std::string	line;
+
 		for (it = list.begin(); it != list.end(); ++it) {
-			line += "<li><a href=\"http://" + reqHost + loc.get_route() + "/" + *it + "\">" + *it + "</a></li>";
+			line += "<li><a href=\"http://" + reqHost + request.path + "/" + *it + "\">" + *it + "</a></li>";
 			body.insert(body.end(), line.begin(), line.end());
 			line.clear();
 		}
