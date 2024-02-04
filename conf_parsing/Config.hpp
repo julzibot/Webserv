@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/23 19:15:02 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/02/03 14:25:47 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/02/04 18:05:28 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,13 +86,14 @@ class Config
         std::string			get_cgi_type(std::string file_ext);
         strstrMap			get_hostMap(void) { return(this->hosts); };
         LocationDir			&getLocRef(std::string const &hostIP, int port, std::string route)
-							{ return (this->server_locs[hostIP + ":" + std::to_string(port)][route]); };
+							{ return (this->server_locs[hostIP + ":" + to_string(port)][route]); };
 		std::map<std::string, LocationDir> *getLocMap(std::string const &hostIP, int port)
-							{ return (&this->server_locs[hostIP + ":" + std::to_string(port)]); };
+							{ return (&this->server_locs[hostIP + ":" + to_string(port)]); };
 		bool				checkHostServExist(std::string const &tempHost, int const &port) {
-								for (servLocMap::iterator it = this->server_locs.begin(); it != this->server_locs.end(); it++)
+								for (servLocMap::iterator it = this->server_locs.begin(); it != this->server_locs.end(); it++) {
 									if (it->first == tempHost + ":" + to_string(port))
 										return (true);
+								}
 									return (false);
 							}
 		strstrMap			&getServMain(std::string const &hostIP, int port, std::string const &route, bool const &init);
