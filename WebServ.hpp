@@ -14,6 +14,7 @@
 #include <iostream>
 #include <sstream>
 #include <csignal>
+#include <cstring>
 #include <map>
 #include <list>
 #include <string>

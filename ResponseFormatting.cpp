@@ -95,7 +95,7 @@ void	ResponseFormatting::parse_body(std::string file_path, int &status_code, std
 	if (file_path.find(".jpg") != NPOS || file_path.find(".png")
 		|| file_path.find(".ico") != NPOS)
 	{
-		std::ifstream	binaryFile(file_path, std::ios::binary);
+		std::ifstream	binaryFile(file_path.c_str(), std::ios::binary);
 
 		if (!binaryFile.is_open())
 			return;
@@ -112,7 +112,7 @@ void	ResponseFormatting::parse_body(std::string file_path, int &status_code, std
 		binaryFile.close();
 	}
 	else {
-		std::ifstream	inputFile(file_path);
+		std::ifstream	inputFile(file_path.c_str());
 		if (!inputFile.is_open())
 			return;
 		

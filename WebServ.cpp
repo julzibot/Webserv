@@ -113,7 +113,7 @@ void	WebServ::bindAndListen( const std::vector<int>& servsock, const std::vector
 		std::cout << "[SERVER] Now listening on port " << portnums[i] << std::endl;
 	}
 	std::map<int, int>::const_iterator	it;
-	for (it = _sockPortMap.cbegin(); it != _sockPortMap.cend(); ++it)
+	for (it = _sockPortMap.begin(); it != _sockPortMap.end(); ++it)
 		std::cout << "[" << it->first << "] = " << it->second << std::endl;
 }
 
@@ -263,7 +263,7 @@ bool	WebServ::receiveRequest(const int& sockClient, std::vector<char> &totalBuff
         bytesRead = 1;
         while (bytesRead > 0)
         {
-            std::memset(buff, '\0', 4096);
+            memset(buff, '\0', 4096);
             bytesRead = recv(sockClient, buff, 4096, 0);
             if (bytesRead > 0) {
                 _recvsize += bytesRead;

@@ -73,7 +73,7 @@ void	WebServ::storeFile(const std::string& fileType, const std::string& filename
 				_request.body.clear();
 				return;
 			}
-			newFile.open(filePath, std::ios::binary);
+			newFile.open(filePath.c_str(), std::ios::binary);
 			for (std::vector<char>::iterator it = _request.body.begin(); it != _request.body.end(); ++it)
 				newFile << *it;
 		}

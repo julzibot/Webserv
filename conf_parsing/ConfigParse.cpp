@@ -1,5 +1,6 @@
 #include "Config.hpp"
 #include "DirectiveParsing.h"
+#include <algorithm>
 
 typedef std::map<std::string, std::string> strstrMap;
 
@@ -63,7 +64,8 @@ void    expandInclude(std::string &line, T &s)
 	toParse >> command >> filename;
 	if (command != "include")
 		return;
-    std::ifstream    fs("./conf_parsing/" + filename);
+	std::string	path = "./conf_parsing/" + filename;
+    std::ifstream    fs(path.c_str());
     if (fs.fail())
         throw (std::invalid_argument("Config file: Bad include filename."));
     while (std::getline(fs, fileLine)) {
@@ -181,7 +183,7 @@ Config	parse_config_file( std::string path )
     std::string					directive = "main";
 	std::vector<std::string>	dir_index;
 	std::vector<std::string>	stringPorts;
-    std::ifstream				conf_file(path);
+    std::ifstream				conf_file(path.c_str());
 	
 	if (!conf_file.good())
 		throw std::invalid_argument("Invalid config file name");

@@ -89,13 +89,17 @@ class Config
 							{ return (this->server_locs[hostIP + ":" + to_string(port)][route]); };
 		std::map<std::string, LocationDir> *getLocMap(std::string const &hostIP, int port)
 							{ return (&this->server_locs[hostIP + ":" + to_string(port)]); };
-		bool				checkHostServExist(std::string const &tempHost, int const &port) {
-								for (servLocMap::iterator it = this->server_locs.begin(); it != this->server_locs.end(); it++) {
-									if (it->first == tempHost + ":" + to_string(port))
-										return (true);
-								}
-									return (false);
+		bool			checkHostServExist(std::string const &tempHost, int const &port)
+					{
+						for (servLocMap::iterator it = this->server_locs.begin(); it != this->server_locs.end(); it++)
+						{
+							if (it->first == tempHost + ":" + to_string(port))
+							{
+								return (true);
 							}
+						}
+						return (false);
+					}
 		strstrMap			&getServMain(std::string const &hostIP, int port, std::string const &route, bool const &init);
 
         void	add_type(std::string extension, std::string path) { this->types[extension] += path; };

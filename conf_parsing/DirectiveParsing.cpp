@@ -1,4 +1,6 @@
 #include "Config.hpp"
+#include <algorithm>
+#include <cstdlib>
 
 std::string	removeSpaces( std::string line ) {
 
@@ -71,9 +73,9 @@ void	dirParseServer(Config& config, std::string line, std::string directive)
 	if (is_valid_IP(buff) == true)
 		hostIP = buff;
 	else
-		ports.push_back(stoi(buff.substr(0, buff.find('_'))));
+		ports.push_back(std::atoi(buff.substr(0, buff.find('_')).c_str()));
 	while (ls >> buff)
-		ports.push_back(stoi(buff.substr(0, buff.find('_'))));
+		ports.push_back(std::atoi(buff.substr(0, buff.find('_')).c_str()));
 
 	ls.clear(); ls.str(line);
 	ls >> varName;
@@ -143,9 +145,9 @@ void	dirParseLocation(Config &config, std::string line, std::string directive)
 	if (is_valid_IP(portStr) == true)
 		hostIP = portStr;
 	else
-		ports.push_back(stoi(portStr.substr(0, portStr.find('_'))));
+		ports.push_back(std::atoi(portStr.substr(0, portStr.find('_')).c_str()));
 	while (dirStream >> portStr)
-		ports.push_back(stoi(portStr.substr(0, portStr.find('_'))));
+		ports.push_back(std::atoi(portStr.substr(0, portStr.find('_')).c_str()));
 
     std::istringstream	linestream(line);
     std::string			keyword;
@@ -224,7 +226,7 @@ void	dirParseHosts(Config& config, std::string line, std::string directive)
 void	dirParseMain(Config& config, std::string line, std::string directive)
 {
 	(void)directive;
-	std::istringstream dirStr = std::istringstream("types cgi hosts http");
+	std::istringstream dirStr("types cgi hosts http");
 	if (line.empty())
 		return;
 	line = removeSpaces(line);
@@ -265,7 +267,8 @@ void	parseDirective(std::string line, std::string directive, Config& config)
 	dirCase["cgi"] = &dirParseCGI;
 
 	directive = removeSpaces(directive);
-	std::istringstream(directive) >> dirKey;
+	std::istringstream	stream(directive);
+	stream >> dirKey;
 
 	if (dirCase.find(dirKey) != dirCase.end())
 		dirCase[dirKey](config, line, directive);
