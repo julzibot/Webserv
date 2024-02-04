@@ -1,6 +1,5 @@
 #include "RequestParsing.hpp"
 #include "WebServ.hpp"
-#include "conf_parsing/Config.hpp"
 
 HttpRequest::HttpRequest() : content_length(-1), cgi(false), keepalive(true), accepted_method(true) {}
 

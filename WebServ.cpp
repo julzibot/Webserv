@@ -304,7 +304,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	_socketTimeoutMap[sockClient] = timeoutUpdate;
 
 	std::vector<char>	totalBuff;
-	
+
 	bool	recvBool = receiveRequest(sockClient, totalBuff);
 
 	if (!recvBool) {

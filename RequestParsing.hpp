@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestParsing.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: toshsharma <toshsharma@student.42.fr>      +#+  +:+       +#+        */
+/*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:37:45 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/02/04 15:28:42 by toshsharma       ###   ########.fr       */
+/*   Updated: 2024/02/04 16:39:40 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,6 @@ class HttpRequest
         bool                                cgi;
 		bool								keepalive;
 		std::vector<char>					body;
-		// std::vector<char>					binaryBody;
 		std::vector<char>					fullRequest;
 		std::string							strHeaders;
         bool                                accepted_method;
