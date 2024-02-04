@@ -273,6 +273,10 @@ bool	WebServ::receiveRequest(const int& sockClient, std::vector<char> &totalBuff
 				totalBuff.end(), crlf, crlf + 4) != totalBuff.end())
 		{
 			HttpRequestParse::parse(tempRequest, totalBuff, _sockPortMap[sockClient]);
+			if (!tempRequest.accepted_method)
+			{
+				_status = 405;
+			}
 			headersParsed = true;
 		}
         if (headersParsed && tempRequest.content_length > 0
@@ -338,8 +342,8 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	// _request.binaryBody.clear();
 }
 
-void	WebServ::startServer( void ) {
-
+void	WebServ::startServer( void )
+{
 	signal(SIGINT, sigHandler);
     while (isTrue)
     {

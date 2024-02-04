@@ -2,11 +2,11 @@
 #include "WebServ.hpp"
 #include "conf_parsing/Config.hpp"
 
-HttpRequest::HttpRequest() : content_length(-1), cgi(false), keepalive(true) {}
+HttpRequest::HttpRequest() : content_length(-1), cgi(false), keepalive(true), accepted_method(true) {}
 
 HttpRequest::HttpRequest(HttpRequest const &req) : headers(req.headers),
 	method(req.method), path(req.path), http_version(req.http_version),
-	port_number(req.port_number), content_length(req.content_length), cgi(false) {}
+	port_number(req.port_number), content_length(req.content_length), cgi(false), accepted_method(req.accepted_method) {}
 
 void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &request)
 {
@@ -53,6 +53,10 @@ void	HttpRequestParse::parse(HttpRequest& request, std::vector<char> &req_str, i
 	std::istringstream	linestream(line);
 
 	linestream >> request.method >> request.path >> request.http_version;
+	if (request.method != "GET" && request.method != "POST" && request.method != "DELETE")
+	{
+		request.accepted_method = false;
+	}
 	HttpRequestParse::parse_headers(requestStream, request);
 	strstrMap::iterator	headerIt = request.headers.find("Content-Length");
 	if (headerIt != request.headers.end())
