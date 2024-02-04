@@ -50,8 +50,6 @@ void    printErrno(int func, bool ex)
 
 void	WebServ::initSelectFDs( const unsigned int& size ) {
 
-	_timeoutSelect.tv_usec = 20;
-	_timeoutSelect.tv_sec = 0;
 	_maxFD = _servsock[0];
 
     FD_ZERO(&_currentSockets);
@@ -351,11 +349,12 @@ void	WebServ::startServer( void )
     while (isTrue)
     {
         _status = 200;
-		_timeoutSelect.tv_usec = 200;
-		_timeoutSelect.tv_sec = 0;
 		_readSockets = _currentSockets;
-		if (select(_maxFD + 1, &_readSockets, &_writeSockets, NULL, &_timeoutSelect) < 0)
+		if (select(_maxFD + 1, &_readSockets, &_writeSockets, NULL, NULL) < 0) {
+			std::cout << "errno: " << errno << std::endl;
 			printErrno(SELECT, NO_EXIT);
+			break;
+		}
 
 		for (int i = 0; i < _maxFD + 1; ++i)
 		{
@@ -373,8 +372,10 @@ void	WebServ::startServer( void )
     	}
 	}
 	for (int i = 0; i < _maxFD + 1; ++i) {
-		close(i);
-		FD_CLR(i, &_currentSockets);
+		if (FD_ISSET(i, &_currentSockets)) {
+			FD_CLR(i, &_currentSockets);
+			close(i);
+		}
 	}
 	for (unsigned int i = 0; i < _servsock.size(); ++i) {
 		close(_servsock[i]);

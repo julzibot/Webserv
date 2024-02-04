@@ -5,7 +5,6 @@
  - Overload the server
 	 - siege -b http://localhost:9999/empty_page
 ## POST
- - [ ] **We need to create an img folder!**
  - Post image
  - Post text
  - POST an existing image (difficult to do because of timestamp)

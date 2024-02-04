@@ -76,7 +76,6 @@ private:
     fd_set				_readSockets;
 	fd_set				_writeSockets;
     int					_maxFD;
-    struct timeval		_timeoutSelect;
 
 	std::vector<char>	_responseBody;
 

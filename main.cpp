@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 22:39:27 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/02/04 09:31:17 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/02/04 13:00:58 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@ int main(int argc, char **argv, char **envp) {
 
 	if (argc > 2) {
 		std::cerr << RED << "Error: Bad number of arguments" << RESETCLR << std::endl;
-		std::cerr << RED << "Only '.config' file is accepted" << RESETCLR << std::endl;
 		return (1);
 	}
 
