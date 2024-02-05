@@ -327,18 +327,15 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 		request_ip_check(reqHost, _config, _status);
 		_request.hostIP = reqHost;
-
-		if (_request.method == "POST") {
+		_filepath = get_file_path(_request, _config, _status);
+		if (_request.method == "POST" && _status != 405) {
 			if (_request.content_length > _config.get_max_body())
 				_status = 413;
 			else
 				receiveBody();
 		}
-		else if (_request.method == "DELETE")
+		else if (_request.method == "DELETE" && _status != 405)
 			deleteResource(_request.path);
-		if (_status == 200) {
-			_filepath = get_file_path(_request, _config, _status);
-		}
 	}
 	if (FD_ISSET(sockClient, &_currentSockets))
 	{
