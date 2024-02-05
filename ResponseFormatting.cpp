@@ -84,6 +84,8 @@ std::string	ResponseFormatting::parse_cgi_headers(std::string http_version,
 		headers += "Content-Type: text/html\n";
 		headers += "Content-Length: " + to_string(content_length) + "\n";
 	}
+	if (status_code == 408)
+		headers += "Connection: close\n";
 	return (headers);
 }
 

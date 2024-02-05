@@ -120,17 +120,11 @@ void	WebServ::bindAndListen( const std::vector<int>& servsock, const std::vector
 void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 	const int& keepAliveTimeout, const int& clientSock )
 {
-	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout) {
+	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout)
+	{
 		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to "
 			<< _socketTimeoutValue << "s)" << RESETCLR << std::endl;
-		_request.http_version = "HTTP/1.1";
-		_request.port_number = _sockPortMap[clientSock];
-		std::string			emptyStr = "";
-		std::vector<char>	emptyVec;
 		_status = 408;
-		_output = _formatter.format_response(_request, _status, emptyStr, _config, emptyVec);
-		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
-		send(clientSock, _output.c_str(), _output.length(), 0);
 		close(clientSock);
 		if (clientSock == _maxFD)
 			_maxFD -= 1;
@@ -207,7 +201,7 @@ void	WebServ::sendToClient(const int& sockClient)
 	_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
 	if (!_output.empty()) {
 		std::cout << CYAN << "[socket: " << sockClient << "] Sending response:" << RESETCLR << std::endl;
-		// std::cout << _output.c_str() << std::endl;
+		std::cout << _output.c_str() << std::endl;
 	}
 
 	std::vector<char>	fullResponse(_output.begin(), _output.end());
@@ -217,11 +211,6 @@ void	WebServ::sendToClient(const int& sockClient)
 
 	if (!_responseBody.empty()) {
 		fullResponse.insert(fullResponse.end(), _responseBody.begin(), _responseBody.end());
-	}
-	if (!fullResponse.empty()) {
-		for (size_t i = 0; i < fullResponse.size(); ++i)
-			std::cout << fullResponse[i];
-		std::cout << std::endl;
 	}
 	size_t	bytesLeft = fullResponse.size();
 
@@ -273,6 +262,11 @@ bool	WebServ::receiveRequest(const int& sockClient, std::vector<char> &totalBuff
         {
             memset(buff, '\0', 4096);
             bytesRead = recv(sockClient, buff, 4096, 0);
+			if (bytesRead == 0)
+			{
+				std::cout << "BREAKING " << std::endl;
+				return (false);
+			}
             if (bytesRead > 0) {
                 _recvsize += bytesRead;
 				for (int j = 0; j < bytesRead; j++)
@@ -299,7 +293,7 @@ bool	WebServ::receiveRequest(const int& sockClient, std::vector<char> &totalBuff
     }
 	_request = tempRequest;
 	_request.body = totalBuff;
-	if (!headersParsed)
+	if (!headersParsed && bytesRead != 0)
 		return (false);
 	return (true);
 }
@@ -345,8 +339,11 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 			_filepath = get_file_path(_request, _config, _status);
 		}
 	}
-	FD_CLR(sockClient, &_readSockets);
-	FD_SET(sockClient, &_writeSockets);
+	if (FD_ISSET(sockClient, &_currentSockets))
+	{
+		FD_CLR(sockClient, &_readSockets);
+		FD_SET(sockClient, &_writeSockets);
+	}
 	_request.fullRequest.clear();
 	totalBuff.clear();
 }
@@ -375,7 +372,7 @@ void	WebServ::startServer( void )
 				receiveFromExistingClient(i);
 			if (FD_ISSET(i, &_writeSockets))
 				sendToClient(i);
-			if (FD_ISSET(i, &_currentSockets) && !isServSock(_servsock, i)) { // Check keep-alive timeout
+			else if (FD_ISSET(i, &_currentSockets) && !isServSock(_servsock, i)) { // Check keep-alive timeout
 				if (gettimeofday(&_currentTime, NULL) < 0)
 					printErrno(GETTIMEOFDAY, EXIT);
 				checkClientTimeout(_currentTime, _socketTimeoutValue, i);

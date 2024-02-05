@@ -47,7 +47,7 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 			freeCharArray(args, cgi_args.size());
 			freeCharArray(envp, cgi_envp.size());
 			std::cerr << RED << "Error: The CGI code crashed" << RESETCLR << std::endl;
-			throw std::exception();
+			exit(EXIT_FAILURE);
 		}
 	}
 	else
@@ -96,10 +96,12 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 			}
 		}
 		else if (result == 0)
-		{
-			status_code = 408;
-			output.clear();
-		}
+        {
+            kill(pid, SIGKILL);
+            sleep(1);
+            status_code = 408;
+            output.clear();
+        }
 		close(fd[0]);
 	}
 	freeCharArray(args, cgi_args.size());
