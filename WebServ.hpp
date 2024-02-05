@@ -2,23 +2,27 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/stat.h>
-#include <netdb.h>
-#include <unistd.h>
 #include <arpa/inet.h>
-#include <string>
-#include <stdlib.h>
+#include <netdb.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #include <iostream>
 #include <sstream>
 #include <csignal>
-#include <fcntl.h>
-#include <sys/time.h>
+#include <cstring>
 #include <map>
 #include <list>
-#include "conf_parsing/Config.hpp"
+#include <string>
+#include <algorithm>
+
 #include "RequestParsing.hpp"
 #include "ResponseFormatting.hpp"
+#include "conf_parsing/Config.hpp"
 
 #define SOCKET 1
 #define BIND 2
@@ -31,8 +35,8 @@
 #define EXIT true
 #define NO_EXIT false
 
-#define CLIENT_TIMEOUT 30
-#define CLIENT_TIMEOUT_CGI 10
+#define CLIENT_TIMEOUT 40
+#define CLIENT_TIMEOUT_CGI 5
 
 #define RESETCLR "\033[0m"
 #define BOLD "\033[1m"
@@ -76,7 +80,6 @@ private:
     fd_set				_readSockets;
 	fd_set				_writeSockets;
     int					_maxFD;
-    struct timeval		_timeoutSelect;
 
 	std::vector<char>	_responseBody;
 

@@ -22,7 +22,6 @@ std::deque<std::string>	get_status_infos(int status_code, std::string &file_path
 		case 415:	status_infos.push_back(error_path + "/415.html"); status_infos.push_back("Unsupported Media Type"); break;
 		case 422:	status_infos.push_back(error_path + "/422.html"); status_infos.push_back("Unprocessable Content"); break;
 		case 500:	status_infos.push_back(error_path + "/500.html"); status_infos.push_back("Internal Server Error");	break;
-		case 504:	status_infos.push_back(error_path + "/504.html"); status_infos.push_back("Gateway Timeout"); 	break;
 		case 1001:	status_infos.push_back(file_path); status_infos.push_back("OK");	 break;
 	}
 	return (status_infos);
@@ -51,7 +50,9 @@ std::string	ResponseFormatting::parse_headers(std::deque<std::string> &status_in
 	else
 		headers = http_version + " " + to_string(status_code) + " " + status_infos[1] + "\n";	
 
-	if (status_code == 1001)
+	if (status_code == 204)
+		headers += "Content-Length: " + to_string(content_length) + "\n";
+	else if (status_code == 1001)
 	{
 		headers += "Content-Type: text/html\n";
 		headers += "Content-Length: " + to_string(content_length) + "\n";
@@ -83,17 +84,25 @@ std::string	ResponseFormatting::parse_cgi_headers(std::string http_version,
 		headers += "Content-Type: text/html\n";
 		headers += "Content-Length: " + to_string(content_length) + "\n";
 	}
+	if (status_code == 408)
+		headers += "Connection: close\n";
 	return (headers);
 }
 
-void	ResponseFormatting::parse_body(std::string file_path, int const &status_code, std::vector<char>& body)
+void	ResponseFormatting::parse_body(std::string file_path, int &status_code, std::vector<char>& body)
 {
-	if (status_code == 301 || status_code == 408)
+	std::cout << "parsebody(): " << status_code << std::endl;
+	std::cout << "parsebody() filepath: " << file_path << std::endl;
+	if (status_code == 204 || status_code == 301) // || status_code == 408
 		return;
 
-	if (file_path.find(".jpg") != NPOS || file_path.find(".ico") != NPOS)
+	if (file_path.find(".jpg") != NPOS || file_path.find(".png")
+		|| file_path.find(".ico") != NPOS)
 	{
-		std::ifstream	binaryFile(file_path, std::ios::binary);
+		std::ifstream	binaryFile(file_path.c_str(), std::ios::binary);
+
+		if (!binaryFile.is_open())
+			return;
 		binaryFile.seekg(0, std::ios::end);
 
 		std::streamsize	fileSize = binaryFile.tellg();
@@ -102,13 +111,13 @@ void	ResponseFormatting::parse_body(std::string file_path, int const &status_cod
 		binaryFile.seekg(0, std::ios::beg);
 
 		if (!binaryFile.read(body.data(), fileSize)) {
-			std::cerr << "parse_body(): Set status code to 500!" << std::endl;
-			// status_code = 500; // Internal Server Error
+			status_code = 500;
 		}
 		binaryFile.close();
 	}
 	else {
-		std::ifstream	inputFile(file_path);
+		std::cout << "408 file path: " << file_path.c_str() << std::endl;
+		std::ifstream	inputFile(file_path.c_str());
 		if (!inputFile.is_open())
 			return;
 		
@@ -117,6 +126,7 @@ void	ResponseFormatting::parse_body(std::string file_path, int const &status_cod
 			line += '\n';
 			body.insert(body.end(), line.begin(), line.end());
 		}
+		std::cout << "body size: " << body.size() << std::endl;
 		inputFile.close();
 	}
 }
@@ -134,7 +144,7 @@ std::string	ResponseFormatting::format_response(HttpRequest &request, int &statu
 	if (status_code == 1001)
 	{
 		try {
-			get_directory_listing(file_path, request, config, body);
+			get_directory_listing(file_path, request, body);
 			headers = parse_headers(status_infos, request.http_version, status_code,
 						config, body.size());
 		} catch (const std::ios_base::failure& e) {
@@ -144,10 +154,15 @@ std::string	ResponseFormatting::format_response(HttpRequest &request, int &statu
 			parse_body(status_infos[0], status_code, body);
 		}
 	}
+	else if (status_code == 204) {
+		headers = parse_headers(status_infos, request.http_version,
+					status_code, config, 0);
+	}
 	else
 	{
 		parse_body(status_infos[0], status_code, body);
-		if (status_infos[0].find(".jpg") != NPOS || status_infos[0].find(".ico") != NPOS)
+		if (status_infos[0].find(".jpg") != NPOS || status_infos[0].find(".png") != NPOS
+			|| status_infos[0].find(".ico") != NPOS)
 			headers = parse_headers(status_infos, request.http_version,
 					status_code, config, body.size());
 		else

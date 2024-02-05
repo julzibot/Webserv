@@ -6,7 +6,7 @@
 /*   By: mstojilj <mstojilj@student.42nice.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/21 16:16:58 by mstojilj          #+#    #+#             */
-/*   Updated: 2024/01/28 21:33:43 by mstojilj         ###   ########.fr       */
+/*   Updated: 2024/02/04 08:27:56 by mstojilj         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ void	WebServ::deleteResource( const std::string& resource ) {
 	std::string	reqHost = _request.hostIP;
 	std::string	root = _config.getServMain(reqHost, _request.port_number, p, true)["root"];
 	if (root.empty()) {
-		std::cerr << "deleteResource: 'root' not found" << std::endl;
+		std::cerr << RED << "Error: deleteResource(): 'root' not found" << RESETCLR << std::endl;
 		_status = 500; // 500 Internal Server Error
 		return;
 	}
@@ -37,7 +37,7 @@ void	WebServ::deleteResource( const std::string& resource ) {
 	}
 	if (std::remove(pathToResource.c_str()) < 0) {
 		_status = 500;
-		std::cerr << "Error: deleteResource(): Couldn't delete file" << std::endl;
+		std::cerr << RED << "Error: deleteResource(): Couldn't delete file" << RESETCLR << std::endl;
 	}
 	_status = 204;
 }

@@ -4,6 +4,17 @@
 #include <fcntl.h>
 #include <signal.h>
 
+void	freeCharArray(char **array, size_t size)
+{
+	for (size_t i = 0; array && i < size; ++i) {
+		if (array[i])
+			delete array[i];
+	}
+	if (array)
+		delete[] array;
+	array = NULL;
+}
+
 void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 	int &status_code, std::vector<char>& output)
 {
@@ -22,15 +33,21 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 	pid = fork();
 	if (pid == -1)
 		throw std::exception();
+	char **args = NULL;
+	char **envp = NULL;
 	if (pid == 0)
 	{
 		close(fd[0]);
 		dup2(fd[1], STDOUT_FILENO);
 		close(fd[1]);
-		if (execve(cgi->get_cgi_path().c_str(), cgi->get_cgi_args(), cgi->get_envp()) == -1)
+		args = cgi->get_cgi_args();
+		envp = cgi->get_envp();
+		if (execve(cgi->get_cgi_path().c_str(), args, envp) == -1)
 		{
-			std::cerr << "The CGI code crashed" << std::endl;
-			throw std::exception();
+			freeCharArray(args, cgi_args.size());
+			freeCharArray(envp, cgi_envp.size());
+			std::cerr << RED << "Error: The CGI code crashed" << RESETCLR << std::endl;
+			exit(EXIT_FAILURE);
 		}
 	}
 	else
@@ -50,6 +67,7 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 		if (result > 0)
 		{
 			waitpid(pid, &status, 0);
+			kill(pid, SIGKILL);
 			if (WIFEXITED(status))
 			{
 				if (WEXITSTATUS(status) != 0)
@@ -59,31 +77,36 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 				}
 				else
 				{
+
 					status_code = 200;
 					char buffer[1024];
-					std::memset(buffer, 0, 1024);
-					int bytes_read = read(fd[0], buffer, 1023);
-					std::string	toAppend(buffer);
-					output.insert(output.end(), toAppend.begin(), toAppend.end());
-					while ((bytes_read = read(fd[0], buffer, 1023)) > 0) {
-
-						if (bytes_read <= 0)
-							break;
+					int	bytes_read;
+					std::string	toAppend;
+					do
+					{
+						std::memset(buffer, 0, 1024);
 						toAppend.clear();
+						bytes_read = read(fd[0], buffer, 1023);
+						if (bytes_read == -1 || bytes_read == 0)
+							break;
 						toAppend = buffer;
 						output.insert(output.end(), toAppend.begin(), toAppend.end());
-						std::memset(buffer, 0, 1024);
 					}
+					while (bytes_read > 0);
 				}
 			}
 		}
 		else if (result == 0)
-		{
-			status_code = 408;
-			output.clear();
-		}
+        {
+            kill(pid, SIGKILL);
+            sleep(1);
+            status_code = 408;
+            output.clear();
+        }
 		close(fd[0]);
 	}
+	freeCharArray(args, cgi_args.size());
+	freeCharArray(envp, cgi_envp.size());
 }
 
 /**
@@ -106,10 +129,8 @@ CGI::CGI(char ** cgi_env, std::string & executable)
 
 CGI::~CGI()
 {
-	// for (unsigned int i = 0; i < this->cgi_args.size(); ++i)
-	// 	delete this->cgi_args[i];
-	// for (unsigned int i = 0; i < this->cgi_envp.size(); ++i)
-	// 	delete this->cgi_envp[i];
+	for (unsigned int i = 0; i < this->cgi_args.size(); ++i)
+		delete this->cgi_args[i];
 }
 
 char ** CGI::get_envp()
@@ -117,10 +138,7 @@ char ** CGI::get_envp()
 	int size = this->cgi_envp.size();
 	char ** envp = new char *[size + 1];
 	for (int i = 0; i < size; ++i)
-	{
-		// std::cerr << "The envp of " << i << " is " << this->cgi_envp[i] << std::endl;
 		envp[i] = this->cgi_envp[i];
-	}
 	envp[size] = NULL;
 	return envp;
 }

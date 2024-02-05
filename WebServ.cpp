@@ -43,14 +43,13 @@ void    printErrno(int func, bool ex)
         default: std::cerr << "errno: Unknown error code, should update: " << errno << std::endl;
     }
 
-    if (ex)
+    if (ex) {
         exit(errno);
+	}
 }
 
 void	WebServ::initSelectFDs( const unsigned int& size ) {
 
-	_timeoutSelect.tv_usec = 20;
-	_timeoutSelect.tv_sec = 0;
 	_maxFD = _servsock[0];
 
     FD_ZERO(&_currentSockets);
@@ -71,7 +70,7 @@ WebServ::WebServ( const std::string& confFilenamePath, char **envp ) : _status(2
 		_config = parse_config_file(confFilenamePath);
 	}
 	catch (std::invalid_argument &e) {
-		std::cerr << "Error: " << e.what() << std::endl;
+		std::cerr << RED << "Error: " << e.what() << RESETCLR << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	this->envp = envp;
@@ -114,23 +113,18 @@ void	WebServ::bindAndListen( const std::vector<int>& servsock, const std::vector
 		std::cout << "[SERVER] Now listening on port " << portnums[i] << std::endl;
 	}
 	std::map<int, int>::const_iterator	it;
-	for (it = _sockPortMap.cbegin(); it != _sockPortMap.cend(); ++it)
+	for (it = _sockPortMap.begin(); it != _sockPortMap.end(); ++it)
 		std::cout << "[" << it->first << "] = " << it->second << std::endl;
 }
 
 void	WebServ::checkClientTimeout(const struct timeval& currentTime,
 	const int& keepAliveTimeout, const int& clientSock )
 {
-	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout) {
-		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to " << _socketTimeoutValue << "s)" << RESETCLR << std::endl;
-		_request.http_version = "HTTP/1.1";
-		_request.port_number = _sockPortMap[clientSock];
-		std::string			emptyStr = "";
-		std::vector<char>	emptyVec;
+	if (currentTime.tv_sec - _socketTimeoutMap[clientSock].tv_sec > keepAliveTimeout)
+	{
+		std::cerr << RED << "Socket ["<< clientSock <<"]" << ": Timeout (set to "
+			<< _socketTimeoutValue << "s)" << RESETCLR << std::endl;
 		_status = 408;
-		_output = _formatter.format_response(_request, _status, emptyStr, _config, emptyVec);
-		std::cout << CYAN << "Sending response:" << RESETCLR << std::endl;
-		send(clientSock, _output.c_str(), _output.length(), 0);
 		close(clientSock);
 		if (clientSock == _maxFD)
 			_maxFD -= 1;
@@ -188,10 +182,11 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 			std::string	bodyStr(body.begin(), body.end());
 			std::deque<std::string> status_infos = get_status_infos(status,
 				bodyStr, config.getServMain(reqHost, request.port_number, p, true)["error_pages"]);
+			std::cout << "status infos[0]: " << status_infos[0] << std::endl;
 			if (status != 200) {
 				ResponseFormatting::parse_body(status_infos[0], status, body);
 			}
-			std::string headers = ResponseFormatting::parse_cgi_headers(request.http_version, body.size(),
+			std::string headers = ResponseFormatting::parse_cgi_headers("HTTP/1.1", body.size(),
 					status, status_infos);
 			std::string response = headers + "\r\n";
 			delete cgi;
@@ -204,23 +199,29 @@ std::string	WebServ::get_response(std::string &filepath, int &status,
 void	WebServ::sendToClient(const int& sockClient)
 {
 	_output = WebServ::get_response(_filepath, _status, _request, _config, _responseBody);
-	std::cout << CYAN << "[socket: " << sockClient << "] Sending response:" << RESETCLR << std::endl;
-	std::cout << _output.c_str() << std::endl;
+	if (!_output.empty()) {
+		std::cout << CYAN << "[socket: " << sockClient << "] Sending response:" << RESETCLR << std::endl;
+		std::cout << _output.c_str() << std::endl;
+	}
 
 	std::vector<char>	fullResponse(_output.begin(), _output.end());
+
 	size_t	totalSent = 0;
 	int		bytesSent = 0;
 
-	if (!_responseBody.empty())
+	if (!_responseBody.empty()) {
 		fullResponse.insert(fullResponse.end(), _responseBody.begin(), _responseBody.end());
+	}
 	size_t	bytesLeft = fullResponse.size();
 
 	while (totalSent < fullResponse.size()) {
 		bytesSent = send(sockClient, fullResponse.data() + totalSent, bytesLeft, 0);
-		if (bytesSent != -1) {
+		if (bytesSent >= 0) {
 			totalSent += bytesSent;
 			bytesLeft -= bytesSent;
 		}
+		else if (bytesSent == -1)
+			continue;
 	}
 	FD_CLR(sockClient, &_writeSockets);
 	FD_SET(sockClient, &_readSockets);
@@ -261,9 +262,13 @@ bool	WebServ::receiveRequest(const int& sockClient, std::vector<char> &totalBuff
         bytesRead = 1;
         while (bytesRead > 0)
         {
-            std::memset(buff, '\0', 4096);
+            memset(buff, '\0', 4096);
             bytesRead = recv(sockClient, buff, 4096, 0);
-            if (bytesRead > 0) {
+			if (bytesRead == 0)
+				return (false);
+			else if (bytesRead == -1)
+				continue ;
+            else if (bytesRead > 0) {
                 _recvsize += bytesRead;
 				for (int j = 0; j < bytesRead; j++)
 					totalBuff.push_back(buff[j]);
@@ -273,6 +278,10 @@ bool	WebServ::receiveRequest(const int& sockClient, std::vector<char> &totalBuff
 				totalBuff.end(), crlf, crlf + 4) != totalBuff.end())
 		{
 			HttpRequestParse::parse(tempRequest, totalBuff, _sockPortMap[sockClient]);
+			if (!tempRequest.accepted_method)
+			{
+				_status = 405;
+			}
 			headersParsed = true;
 		}
         if (headersParsed && tempRequest.content_length > 0
@@ -285,7 +294,7 @@ bool	WebServ::receiveRequest(const int& sockClient, std::vector<char> &totalBuff
     }
 	_request = tempRequest;
 	_request.body = totalBuff;
-	if (!headersParsed)
+	if (!headersParsed && bytesRead != 0)
 		return (false);
 	return (true);
 }
@@ -298,7 +307,7 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 	_socketTimeoutMap[sockClient] = timeoutUpdate;
 
 	std::vector<char>	totalBuff;
-	
+
 	bool	recvBool = receiveRequest(sockClient, totalBuff);
 
 	if (!recvBool) {
@@ -318,35 +327,40 @@ void	WebServ::receiveFromExistingClient(const int& sockClient)
 		reqHost.erase(std::remove(reqHost.begin(), reqHost.end(), '\r'), reqHost.end());
 		request_ip_check(reqHost, _config, _status);
 		_request.hostIP = reqHost;
-
-		if (_status == 200) {
-			_filepath = get_file_path(_request, _config, _status);
-		}
-		if (_request.method == "POST") {
+		_filepath = get_file_path(_request, _config, _status);
+		if (_request.method == "POST" && _status != 405) {
 			if (_request.content_length > _config.get_max_body())
 				_status = 413;
 			else
 				receiveBody();
 		}
-		else if (_request.method == "DELETE")
+		else if (_request.method == "DELETE" && _status != 405)
 			deleteResource(_request.path);
 	}
-	FD_CLR(sockClient, &_readSockets);
-	FD_SET(sockClient, &_writeSockets);
+	if (FD_ISSET(sockClient, &_currentSockets))
+	{
+		FD_CLR(sockClient, &_readSockets);
+		FD_SET(sockClient, &_writeSockets);
+	}
 	_request.fullRequest.clear();
 	totalBuff.clear();
-	// _request.binaryBody.clear();
 }
 
-void	WebServ::startServer( void ) {
+void	WebServ::startServer( void )
+{
+	struct timeval	selectTimeout;
 
 	signal(SIGINT, sigHandler);
     while (isTrue)
     {
         _status = 200;
 		_readSockets = _currentSockets;
-		if (select(_maxFD + 1, &_readSockets, &_writeSockets, NULL, &_timeoutSelect) < 0)
-			printErrno(SELECT, EXIT);
+		selectTimeout.tv_usec = 0;
+		selectTimeout.tv_sec = 1;
+		if (select(_maxFD + 1, &_readSockets, &_writeSockets, NULL, &selectTimeout) < 0) {
+			printErrno(SELECT, NO_EXIT);
+			break;
+		}
 
 		for (int i = 0; i < _maxFD + 1; ++i)
 		{
@@ -364,8 +378,10 @@ void	WebServ::startServer( void ) {
     	}
 	}
 	for (int i = 0; i < _maxFD + 1; ++i) {
-		close(i);
-		FD_CLR(i, &_currentSockets);
+		if (FD_ISSET(i, &_currentSockets)) {
+			FD_CLR(i, &_currentSockets);
+			close(i);
+		}
 	}
 	for (unsigned int i = 0; i < _servsock.size(); ++i) {
 		close(_servsock[i]);
