@@ -1,6 +1,6 @@
 #include "Config.hpp"
 
-LocationDir::LocationDir( void )
+LocationDir::LocationDir( void ) : autoindex(false)
 {
 	this->methods_allowed.push_back("GET");
 	this->methods_allowed.push_back("POST");

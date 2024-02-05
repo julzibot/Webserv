@@ -24,7 +24,8 @@ void    HttpRequestParse::parse_headers(std::istringstream &rs, HttpRequest &req
 		{
 			std::string headername = line.substr(0, sepPos);
 			std::string headervalue = line.substr(sepPos + 2);
-			headervalue.erase(std::find(headervalue.begin(), headervalue.end(), '\r'));
+			if (std::find(headervalue.begin(), headervalue.end(), '\r') != headervalue.end())
+				headervalue.erase(std::find(headervalue.begin(), headervalue.end(), '\r'));
 			request.headers[headername] = headervalue;
 		}
 		else
