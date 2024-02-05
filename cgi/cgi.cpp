@@ -77,21 +77,22 @@ void	CGI::execute_cgi(HttpRequest &request, CGI *cgi, std::string filepath,
 				}
 				else
 				{
+
 					status_code = 200;
 					char buffer[1024];
-					std::memset(buffer, 0, 1024);
-					int bytes_read = read(fd[0], buffer, 1023);
-					std::string	toAppend(buffer);
-					output.insert(output.end(), toAppend.begin(), toAppend.end());
-					while ((bytes_read = read(fd[0], buffer, 1023)) > 0) {
-
-						if (bytes_read <= 0)
-							break;
+					int	bytes_read;
+					std::string	toAppend;
+					do
+					{
+						std::memset(buffer, 0, 1024);
 						toAppend.clear();
+						bytes_read = read(fd[0], buffer, 1023);
+						if (bytes_read == -1 || bytes_read == 0)
+							break;
 						toAppend = buffer;
 						output.insert(output.end(), toAppend.begin(), toAppend.end());
-						std::memset(buffer, 0, 1024);
 					}
+					while (bytes_read > 0);
 				}
 			}
 		}

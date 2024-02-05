@@ -216,10 +216,12 @@ void	WebServ::sendToClient(const int& sockClient)
 
 	while (totalSent < fullResponse.size()) {
 		bytesSent = send(sockClient, fullResponse.data() + totalSent, bytesLeft, 0);
-		if (bytesSent != -1) {
+		if (bytesSent >= 0) {
 			totalSent += bytesSent;
 			bytesLeft -= bytesSent;
 		}
+		else if (bytesSent == -1)
+			std::cerr << RED << "Error: Problem encountered while sending to client" << RESETCLR << std::endl;
 	}
 	FD_CLR(sockClient, &_writeSockets);
 	FD_SET(sockClient, &_readSockets);
@@ -263,11 +265,10 @@ bool	WebServ::receiveRequest(const int& sockClient, std::vector<char> &totalBuff
             memset(buff, '\0', 4096);
             bytesRead = recv(sockClient, buff, 4096, 0);
 			if (bytesRead == 0)
-			{
-				std::cout << "BREAKING " << std::endl;
 				return (false);
-			}
-            if (bytesRead > 0) {
+			else if (bytesRead == -1)
+				continue ;
+            else if (bytesRead > 0) {
                 _recvsize += bytesRead;
 				for (int j = 0; j < bytesRead; j++)
 					totalBuff.push_back(buff[j]);

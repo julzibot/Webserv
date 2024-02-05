@@ -36,7 +36,7 @@
 #define NO_EXIT false
 
 #define CLIENT_TIMEOUT 40
-#define CLIENT_TIMEOUT_CGI 10
+#define CLIENT_TIMEOUT_CGI 5
 
 #define RESETCLR "\033[0m"
 #define BOLD "\033[1m"
