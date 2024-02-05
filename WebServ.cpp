@@ -221,7 +221,7 @@ void	WebServ::sendToClient(const int& sockClient)
 			bytesLeft -= bytesSent;
 		}
 		else if (bytesSent == -1)
-			std::cerr << RED << "Error: Problem encountered while sending to client" << RESETCLR << std::endl;
+			continue;
 	}
 	FD_CLR(sockClient, &_writeSockets);
 	FD_SET(sockClient, &_readSockets);
