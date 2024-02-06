@@ -1,7 +1,7 @@
 RFCs used for reference : 7230, 7231
 
 This project is a basic HTTP 1.1 server implementation, emulating NGINX's simplest functionalities.
-It allows GET, POST and DELETE routes, both static and CGI.
+It allows GET, POST and DELETE methods, both static and CGI.
 
 
 IMPORTANT SETUP INFORMATION:
