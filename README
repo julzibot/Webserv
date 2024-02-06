@@ -1,41 +1,42 @@
 RFCs used for reference : 7230, 7231
 
-First steps
-1. Parsing the required data for the CGI routes into the config file.
-2. Identifying which request is a CGI request and routing it to the wrapper function.
-3. Ensuring that the wrapper function is able to handle the request and return the response.
-4. POST and GET routes to upload images
-5. Are we doing separate output formatting?
+This project is a basic HTTP 1.1 server implementation, emulating NGINX's simplest functionalities.
+It allows GET, POST and DELETE methods, both static and CGI.
 
-1. --> Can provide direct path to the executable, no need for roundabout execution.
-2. --> Inside the first request you get, you read until the `Content-Length` is satisfied
-3. --> Using the `nc localhost 9999` command, you can send a request in broken pieces
-And the user should be able to handle it until it is sorted out
-4. `Transfer-encoding` is used to identify a chunked request.
-	You have to go through the entire chunked request (Or the whole size of the data)
-5. `Multi-part form/data` is used to send images over in our request
-Figure out syntax for multipart handling... Or use content-length maybe
-Tests to run:
 
-0. Arguments test, bad .config file
+IMPORTANT SETUP INFORMATION:
 
-1. Basic GET, POST, DELETE 
-  a. Incorrect route/location/youpi
-  b. Incorrect method
-2. Autoindexing
-3. Redirection
-4. Accessing a file inside a certain route
-5. Error pages
-  * 404
-  * 405 - method not implemented
-  * 408
-6. Multiple port access (testing throughout all open ports)
-7. Multiserver-level access (testing same port multiple server access)
-8. Connection timeout
+in the conf_parsing folder, there are 3 '.types' files.
+mime.types must remain untouched, nothing to change there.
+In cgi.types, the paths for py and php must match your device's paths to the executables (try whereis python3 / php).
+In hosts.types, the hosts must mirror your device's 'hosts' file (sudo vi /etc/hosts, on mac).
+The hosts defined in hosts.types will be the only ones accepted by the server.
 
-To fix ASAP:
-  1. Allow only authorised METHODS
-  2. Redirect is working now
-  3. How to test 405?
-  4. What if someone sends invalid method in a request:
-    How will output be sent to it? ReceiveFromExistingClient needs updating, (_recvsize > 0)
+In all the .conf files, you should update the paths ('root' and 'error_pages' directives) to match your device's.
+
+To test all the project's features, you should have python, php and siege installed on your device.
+Postman is a very useful tool as well, allowing to easily test various types of request with any content inside.
+
+
+RUNNING THE SERVER:
+
+Each one of us established a list of tests (.md files) in relation to our respective tasks on the project, which can serve as a baseline for testing and understanding all the server's functionalities.
+
+Jules' tests are focused on the config file, preventing any bad scenario from crashing the server and handling multiple port numbers, hosts, servernames, and scenarios combining all these options.
+Tosh's tests revolve around all the required funtionalities, such as redirection, directory listing, methods_except, etc.
+They also test CGI implementation.
+Milan's tests are made to stress-test the server using siege, and trying POST and DELETE methods.
+
+
+CONFIG FILE:
+
+Use the .conf files in server_files/configuration_files as reference.
+Includes and max_bodysize can be in or out of 'http' directive (which doesn't really serve any purpose to be honest, not removed for lack of time).
+The structure of 'server' and 'location' directives closely resemble that of NGINX.
+Each server has a host (written as IP address) and portnumbers it listens to, given in the 'listen' directive.
+If no host IP is entered, the server will accept any IP.
+The server_name directive is optional, and tells what host name should be used for any given IP. If not entered, the server will accept any host name.
+For the rest, RTFM !
+
+
+Enjoy our server's features, Milan's magnificent (and completely non-uniform) error pages CSS, and may this repo help fellow 42 students get a hang of the project !
